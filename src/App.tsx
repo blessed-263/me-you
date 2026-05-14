@@ -3,8 +3,8 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { motion, useScroll, useTransform } from 'motion/react';
-import { MapPin, Calendar, Clock } from 'lucide-react';
+import { motion, useScroll, useSpring, useTransform } from 'motion/react';
+import { MapPin, Calendar, Clock, ChevronDown } from 'lucide-react';
 import { useState, useEffect, type FormEvent } from 'react';
 
 const marqueeImages: { src: string; alt: string }[] = [
@@ -144,9 +144,20 @@ export default function App() {
   const { scrollYProgress } = useScroll();
   const yHero = useTransform(scrollYProgress, [0, 1], ['0%', '50%']);
   const opacityHero = useTransform(scrollYProgress, [0, 0.2], [1, 0]);
+  const progressScaleX = useSpring(scrollYProgress, {
+    stiffness: 120,
+    damping: 24,
+    mass: 0.4,
+    restDelta: 0.001,
+  });
 
   return (
     <div className="min-h-screen bg-brand-bg text-brand-text font-sans selection:bg-brand-accent/30 selection:text-brand-text">
+      <motion.div
+        aria-hidden
+        style={{ scaleX: progressScaleX }}
+        className="fixed left-0 top-0 right-0 h-[2px] origin-left bg-brand-text/70 z-[60] pointer-events-none"
+      />
       {/* Navigation */}
       <nav className="absolute top-0 left-0 right-0 z-50 px-6 py-8 md:px-12 flex justify-between items-center">
         <a href="/" className="shrink-0 flex items-center group">
@@ -201,7 +212,15 @@ export default function App() {
           </motion.div>
         </motion.div>
 
-
+        <motion.a
+          href="#vision"
+          aria-label="Scroll to explore"
+          style={{ opacity: opacityHero }}
+          className="absolute bottom-8 md:bottom-10 left-1/2 -translate-x-1/2 z-10 flex flex-col items-center gap-3 text-brand-text/80 hover:text-brand-text transition-colors"
+        >
+          <span className="text-[9px] uppercase tracking-[0.35em] font-medium">Scroll</span>
+          <ChevronDown className="w-4 h-4 stroke-1 animate-scroll-cue" aria-hidden />
+        </motion.a>
       </section>
 
       {/* Vision Statement */}
@@ -322,14 +341,20 @@ export default function App() {
 
       {/* Gallery / Atmosphere Marquee */}
       <section className="py-20 md:py-24 relative overflow-hidden">
-        <div className="text-center px-6 mb-12">
+        <motion.div
+          initial={{ opacity: 0, y: 30 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          viewport={{ once: true, margin: '-80px' }}
+          transition={{ duration: 1.1, ease: [0.16, 1, 0.3, 1] }}
+          className="text-center px-6 mb-12"
+        >
           <h4 className="text-[10px] uppercase tracking-[0.3em] text-brand-accent mb-6">
             A Space To Breathe
           </h4>
           <h3 className="font-serif text-4xl md:text-6xl font-light text-brand-text">
             The <span className="italic text-brand-muted">Memory</span>
           </h3>
-        </div>
+        </motion.div>
 
         <div className="w-full relative mt-8 cursor-ew-resize">
           <div className="absolute left-0 top-0 bottom-0 w-24 md:w-32 bg-gradient-to-r from-brand-bg to-transparent z-10 pointer-events-none"></div>
