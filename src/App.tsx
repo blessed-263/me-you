@@ -173,9 +173,22 @@ export default function App() {
           <a href="#details" className="hover:opacity-100 transition-opacity">Location</a>
           <a href="#newsletter" className="hover:opacity-100 transition-opacity">Newsletter</a>
         </div>
-        <a href="https://www.ampex.store/event/01KQVZ98HQX52PJ15TACANTR2X" target="_blank" rel="noopener noreferrer" className="text-[10px] border border-white/30 rounded-full px-8 py-3 uppercase tracking-[0.2em] font-medium hover:bg-white hover:text-black transition-colors text-white">
-          Tickets
-        </a>
+        <div className="flex items-center gap-4 md:gap-6">
+          <a
+            href="#newsletter"
+            className="md:hidden text-[10px] uppercase tracking-[0.25em] font-medium text-white/80 hover:text-white transition-colors"
+          >
+            Newsletter
+          </a>
+          <a
+            href="https://www.ampex.store/event/01KQVZ98HQX52PJ15TACANTR2X"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="text-[10px] border border-white/30 rounded-full px-6 py-3 md:px-8 uppercase tracking-[0.2em] font-medium hover:bg-white hover:text-black transition-colors text-white"
+          >
+            Tickets
+          </a>
+        </div>
       </nav>
 
       {/* Hero Section */}
