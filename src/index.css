@@ -90,12 +90,3 @@ body {
 .animate-marquee:hover {
   animation-play-state: paused;
 }
-
-/* Hero scroll indicator */
-@keyframes scroll-cue {
-  0%, 100% { transform: translateY(0); opacity: 0.6; }
-  50%      { transform: translateY(8px); opacity: 1; }
-}
-.animate-scroll-cue {
-  animation: scroll-cue 2.2s ease-in-out infinite;
-}

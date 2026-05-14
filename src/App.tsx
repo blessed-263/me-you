@@ -4,7 +4,7 @@
  */
 
 import { motion, useScroll, useSpring, useTransform } from 'motion/react';
-import { MapPin, Calendar, Clock, ChevronDown } from 'lucide-react';
+import { MapPin, Calendar, Clock } from 'lucide-react';
 import { useState, useEffect, type FormEvent } from 'react';
 
 const marqueeImages: { src: string; alt: string }[] = [
@@ -212,15 +212,6 @@ export default function App() {
           </motion.div>
         </motion.div>
 
-        <motion.a
-          href="#vision"
-          aria-label="Scroll to explore"
-          style={{ opacity: opacityHero }}
-          className="absolute bottom-8 md:bottom-10 left-1/2 -translate-x-1/2 z-10 flex flex-col items-center gap-3 text-brand-text/80 hover:text-brand-text transition-colors"
-        >
-          <span className="text-[9px] uppercase tracking-[0.35em] font-medium">Scroll</span>
-          <ChevronDown className="w-4 h-4 stroke-1 animate-scroll-cue" aria-hidden />
-        </motion.a>
       </section>
 
       {/* Vision Statement */}
@@ -445,23 +436,30 @@ export default function App() {
           />
         </div>
 
-        <div className="flex flex-col items-center gap-6 w-full border-t border-brand-border/30 pt-6 mt-2 md:pt-8 md:mt-4">
-          <span className="text-[9px] uppercase tracking-[0.3em] text-brand-muted text-center">Partners & Sponsors</span>
-          <div className="grid w-full grid-cols-[1fr_auto_1fr] items-center gap-x-4 sm:gap-x-8 md:gap-x-12">
-            <div className="flex justify-start items-center min-w-0">
-              <div className="flex h-14 w-[11rem] max-w-full shrink-0 items-center justify-start sm:h-16 sm:w-[13rem] md:h-[4.5rem] md:w-[15rem] lg:h-20 lg:w-[16.5rem]">
-                <img
-                  src="/sponsors/nelas-kitchen.png"
-                  alt="Nela's Kitchen"
-                  className="max-h-full max-w-full object-contain object-left"
-                />
-              </div>
-            </div>
+        <div className="flex flex-col items-center gap-8 w-full max-w-5xl mx-auto border-t border-brand-border/30 pt-8 mt-2 md:pt-10 md:mt-4">
+          <div className="flex items-center gap-4 text-brand-muted">
+            <span className="hidden sm:block w-10 h-px bg-brand-border" aria-hidden />
+            <span className="text-[9px] uppercase tracking-[0.35em] text-center">Partners & Sponsors</span>
+            <span className="hidden sm:block w-10 h-px bg-brand-border" aria-hidden />
+          </div>
+          <div className="flex flex-row flex-wrap items-center justify-center gap-4 sm:gap-6 md:gap-8 w-full">
+            <a
+              href="#"
+              aria-label="Nela's Kitchen"
+              className="group flex items-center justify-center h-20 w-36 sm:h-24 sm:w-44 md:h-28 md:w-52 rounded-xl bg-brand-surface/40 border border-brand-border/40 px-4 py-3 transition-colors duration-300 hover:bg-brand-surface/70"
+            >
+              <img
+                src="/sponsors/nelas-kitchen.png"
+                alt="Nela's Kitchen"
+                className="max-h-full max-w-full object-contain object-center"
+              />
+            </a>
             <a
               href="https://www.martell.com"
               target="_blank"
               rel="noopener noreferrer sponsored"
-              className="flex h-24 w-auto max-w-[min(50vw,240px)] shrink-0 items-center justify-center sm:h-28 sm:max-w-[320px] md:h-40 md:max-w-[440px] lg:h-48 lg:max-w-[540px] justify-self-center"
+              aria-label="Martell — main sponsor"
+              className="group flex items-center justify-center h-28 w-56 sm:h-36 sm:w-72 md:h-44 md:w-[22rem] lg:h-48 lg:w-[26rem] rounded-2xl bg-brand-surface/60 border border-brand-border/50 px-6 py-4 shadow-sm transition-colors duration-300 hover:bg-brand-surface"
             >
               <img
                 src="/sponsors/martell.png"
@@ -469,21 +467,20 @@ export default function App() {
                 className="max-h-full max-w-full object-contain object-center"
               />
             </a>
-            <div className="flex justify-end items-center min-w-0">
-              <a
-                href="https://www.stellaartois.com"
-                target="_blank"
-                rel="noopener noreferrer sponsored"
-                className="flex h-14 w-[11rem] max-w-full shrink-0 items-center justify-end sm:h-16 sm:w-[13rem] md:h-[4.5rem] md:w-[15rem] lg:h-20 lg:w-[16.5rem]"
-              >
-                <img
-                  src="/sponsors/stella-artois.png"
-                  alt="Stella Artois"
-                  className="max-h-full max-w-full object-contain object-right"
-                  decoding="async"
-                />
-              </a>
-            </div>
+            <a
+              href="https://www.stellaartois.com"
+              target="_blank"
+              rel="noopener noreferrer sponsored"
+              aria-label="Stella Artois"
+              className="group flex items-center justify-center h-20 w-36 sm:h-24 sm:w-44 md:h-28 md:w-52 rounded-xl bg-brand-surface/40 border border-brand-border/40 px-4 py-3 transition-colors duration-300 hover:bg-brand-surface/70"
+            >
+              <img
+                src="/sponsors/stella-artois.png"
+                alt="Stella Artois"
+                className="max-h-[80%] max-w-full object-contain object-center"
+                decoding="async"
+              />
+            </a>
           </div>
         </div>
 
