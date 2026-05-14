@@ -164,19 +164,19 @@ export default function App() {
           <img 
             src="https://gallery.youandmeafrica.com/site-icon/you-me.jpeg" 
             alt="You & Me Africa" 
-            className="h-10 w-10 md:h-12 md:w-12 rounded-full object-cover group-hover:opacity-80 transition-opacity duration-300 border border-white/30 p-[2px]"
+            className="h-10 w-10 md:h-12 md:w-12 rounded-full object-cover group-hover:opacity-80 transition-opacity duration-300 border border-brand-text/30 p-[2px]"
           />
         </a>
-        <div className="hidden md:flex gap-12 text-[10px] uppercase tracking-[0.25em] font-medium opacity-80 text-white">
-          <a href="#vision" className="hover:opacity-100 transition-opacity">Philosophy</a>
-          <a href="#experiences" className="hover:opacity-100 transition-opacity">The Gathering</a>
-          <a href="#details" className="hover:opacity-100 transition-opacity">Location</a>
-          <a href="#newsletter" className="hover:opacity-100 transition-opacity">Newsletter</a>
+        <div className="hidden md:flex gap-12 text-[10px] uppercase tracking-[0.25em] font-medium text-brand-text/80">
+          <a href="#vision" className="hover:text-brand-text transition-colors">Philosophy</a>
+          <a href="#experiences" className="hover:text-brand-text transition-colors">The Gathering</a>
+          <a href="#details" className="hover:text-brand-text transition-colors">Location</a>
+          <a href="#newsletter" className="hover:text-brand-text transition-colors">Newsletter</a>
         </div>
         <div className="flex items-center gap-4 md:gap-6">
           <a
             href="#newsletter"
-            className="md:hidden text-[10px] uppercase tracking-[0.25em] font-medium text-white/80 hover:text-white transition-colors"
+            className="md:hidden text-[10px] uppercase tracking-[0.25em] font-medium text-brand-text/80 hover:text-brand-text transition-colors"
           >
             Newsletter
           </a>
@@ -184,7 +184,7 @@ export default function App() {
             href="https://www.ampex.store/event/01KQVZ98HQX52PJ15TACANTR2X"
             target="_blank"
             rel="noopener noreferrer"
-            className="text-[10px] border border-white/30 rounded-full px-6 py-3 md:px-8 uppercase tracking-[0.2em] font-medium hover:bg-white hover:text-black transition-colors text-white"
+            className="text-[10px] border border-brand-text/40 rounded-full px-6 py-3 md:px-8 uppercase tracking-[0.2em] font-medium text-brand-text hover:bg-brand-text hover:text-brand-bg transition-colors"
           >
             Tickets
           </a>
