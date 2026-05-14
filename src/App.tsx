@@ -4,7 +4,7 @@
  */
 
 import { motion, useScroll, useSpring, useTransform } from 'motion/react';
-import { MapPin, Calendar, Clock } from 'lucide-react';
+import { MapPin, Calendar, Clock, ArrowUpRight } from 'lucide-react';
 import { useState, useEffect, type FormEvent } from 'react';
 
 const marqueeImages: { src: string; alt: string }[] = [
@@ -409,6 +409,15 @@ export default function App() {
               <MapPin className="w-5 h-5 text-brand-accent mb-4 stroke-1" />
               <h5 className="text-[9px] uppercase tracking-[0.3em] text-brand-muted">The Setting</h5>
               <p className="font-serif text-3xl lg:text-4xl font-light text-brand-text">Rosebank, <span className="italic text-brand-muted">JHB</span></p>
+              <a
+                href="https://www.google.com/maps/dir/?api=1&destination=16+Baker+St,+Rosebank,+Johannesburg"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="group inline-flex items-center gap-2 text-[10px] uppercase tracking-[0.3em] text-brand-accent hover:text-brand-text transition-colors"
+              >
+                Get Directions
+                <ArrowUpRight className="w-3 h-3 stroke-[1.5] transition-transform group-hover:translate-x-0.5 group-hover:-translate-y-0.5" aria-hidden />
+              </a>
             </div>
           </motion.div>
         </div>
