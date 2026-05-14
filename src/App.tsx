@@ -7,13 +7,15 @@ import { motion, useScroll, useTransform } from 'motion/react';
 import { MapPin, Calendar, Clock } from 'lucide-react';
 import { useState, useEffect, type FormEvent } from 'react';
 
-const marqueeImages = [
-  "/images/gallery-corn.jpeg",
-  "/images/gallery-cognac.jpeg",
-  "/images/gallery-guests.jpeg",
-  "/images/gallery-table.jpeg",
-  "/images/gallery-charcuterie.jpeg",
-  "/images/gallery-dj.jpeg",
+const marqueeImages: { src: string; alt: string }[] = [
+  { src: '/images/harvest-table.png', alt: 'Harvest Table' },
+  { src: '/images/event-cake.png', alt: 'Cake unveiling' },
+  { src: '/images/event-martell-bar.png', alt: 'Martell bar' },
+  { src: '/images/event-dj.png', alt: 'DJ set' },
+  { src: '/images/after-party.png', alt: 'After party' },
+  { src: '/images/event-guests-couch.png', alt: 'Guests on lounge' },
+  { src: '/images/event-guests-duo.png', alt: 'Guests portrait' },
+  { src: '/images/martell-bottles.png', alt: 'Martell selection' },
 ];
 
 function Countdown() {
@@ -176,8 +178,10 @@ export default function App() {
             playsInline 
             className="w-full h-full object-cover object-center scale-105 opacity-80"
           >
-            {/* Elegant nature/landscape video */}
-            <source src="https://videos.pexels.com/video-files/856173/856173-hd_1920_1080_25fps.mp4" type="video/mp4" />
+            <source
+              src="https://videos.pexels.com/video-files/1409899/1409899-hd_1920_1080_25fps.mp4"
+              type="video/mp4"
+            />
           </video>
           <div className="absolute inset-0 bg-gradient-to-b from-brand-bg/40 via-transparent to-brand-bg"></div>
         </motion.div>
@@ -230,7 +234,7 @@ export default function App() {
               className="aspect-[4/5] object-cover relative group max-w-sm mx-auto"
             >
               <img 
-                src="/images/gallery-table.jpeg" 
+                src="/images/harvest-table.png"
                 alt="Harvest Table"
                 className="w-full h-full object-cover grayscale-[30%] sepia-[15%] group-hover:scale-105 transition-transform duration-[2s] ease-out"
               />
@@ -301,8 +305,8 @@ export default function App() {
               className="aspect-[4/5] object-cover relative group max-w-sm mx-auto"
             >
               <img 
-                src="/images/gallery-dj.jpeg" 
-                alt="After Lunch Gathering"
+                src="/images/after-party.png" 
+                alt="After party gathering"
                 className="w-full h-full object-cover grayscale-[20%] sepia-[10%] group-hover:scale-105 transition-transform duration-[2s] ease-out"
               />
               <div className="absolute inset-0 bg-brand-bg/20 group-hover:bg-transparent transition-colors duration-1000"></div>
@@ -332,12 +336,12 @@ export default function App() {
           <div className="absolute right-0 top-0 bottom-0 w-24 md:w-32 bg-gradient-to-l from-brand-bg to-transparent z-10 pointer-events-none"></div>
           
           <div className="animate-marquee">
-            {[...marqueeImages, ...marqueeImages].map((src, i) => (
+            {[...marqueeImages, ...marqueeImages].map((img, i) => (
               <div key={i} className="w-[240px] md:w-[320px] shrink-0 pr-4 md:pr-8">
                 <div className="aspect-[4/5] w-full overflow-hidden relative group rounded-sm shadow-sm">
                   <img 
-                    src={src} 
-                    alt="Gallery" 
+                    src={img.src} 
+                    alt={img.alt} 
                     className="w-full h-full object-cover grayscale-[30%] sepia-[10%] opacity-90 group-hover:grayscale-0 group-hover:opacity-100 group-hover:scale-105 transition-all duration-[1.5s] ease-out" 
                   />
                 </div>
@@ -407,8 +411,8 @@ export default function App() {
       </section>
 
       {/* Footer */}
-      <footer className="border-t border-brand-border/50 py-16 px-6 md:px-12 flex flex-col items-center gap-16 bg-brand-bg">
-        <div className="flex flex-col items-center gap-6">
+      <footer className="border-t border-brand-border/50 py-16 px-6 md:px-12 flex flex-col items-center gap-8 md:gap-10 bg-brand-bg">
+        <div className="flex flex-col items-center gap-4">
           <img 
             src="https://gallery.youandmeafrica.com/site-icon/you-me.jpeg" 
             alt="You & Me Africa" 
@@ -416,18 +420,49 @@ export default function App() {
           />
         </div>
 
-        <div className="flex flex-col items-center gap-8 w-full max-w-4xl border-t border-brand-border/30 pt-16 mt-8">
+        <div className="flex flex-col items-center gap-6 w-full border-t border-brand-border/30 pt-6 mt-2 md:pt-8 md:mt-4">
           <span className="text-[9px] uppercase tracking-[0.3em] text-brand-muted text-center">Partners & Sponsors</span>
-          <div className="flex flex-wrap justify-center items-center gap-8 md:gap-16 opacity-50 grayscale hover:grayscale-0 transition-all duration-700 mt-4">
-            {/* SPONSOR LOGOS PLACEHOLDERS */}
-            <div className="text-sm tracking-widest font-bold font-sans uppercase">Sponsor 1</div>
-            <div className="text-xl font-serif italic text-brand-text">Sponsor Two</div>
-            <div className="text-sm font-mono uppercase tracking-[0.2em] font-light">Sponsor 3</div>
-            <div className="w-12 h-12 rounded-full border border-brand-border flex items-center justify-center text-[10px]">LOGO</div>
+          <div className="grid w-full grid-cols-[1fr_auto_1fr] items-center gap-x-4 sm:gap-x-8 md:gap-x-12">
+            <div className="flex justify-start items-center min-w-0">
+              <div className="flex h-14 w-[11rem] max-w-full shrink-0 items-center justify-start sm:h-16 sm:w-[13rem] md:h-[4.5rem] md:w-[15rem] lg:h-20 lg:w-[16.5rem]">
+                <img
+                  src="/sponsors/nelas-kitchen.png"
+                  alt="Nela's Kitchen"
+                  className="max-h-full max-w-full object-contain object-left"
+                />
+              </div>
+            </div>
+            <a
+              href="https://www.martell.com"
+              target="_blank"
+              rel="noopener noreferrer sponsored"
+              className="flex h-24 w-auto max-w-[min(50vw,240px)] shrink-0 items-center justify-center sm:h-28 sm:max-w-[320px] md:h-40 md:max-w-[440px] lg:h-48 lg:max-w-[540px] justify-self-center"
+            >
+              <img
+                src="/sponsors/martell.png"
+                alt="Martell"
+                className="max-h-full max-w-full object-contain object-center"
+              />
+            </a>
+            <div className="flex justify-end items-center min-w-0">
+              <a
+                href="https://www.stellaartois.com"
+                target="_blank"
+                rel="noopener noreferrer sponsored"
+                className="flex h-14 w-[11rem] max-w-full shrink-0 items-center justify-end sm:h-16 sm:w-[13rem] md:h-[4.5rem] md:w-[15rem] lg:h-20 lg:w-[16.5rem]"
+              >
+                <img
+                  src="/sponsors/stella-artois.png"
+                  alt="Stella Artois"
+                  className="max-h-full max-w-full object-contain object-right"
+                  decoding="async"
+                />
+              </a>
+            </div>
           </div>
         </div>
 
-        <div className="w-full flex flex-col md:flex-row justify-between items-center gap-8 pt-8 mt-8 border-t border-brand-border/30">
+        <div className="w-full flex flex-col md:flex-row justify-between items-center gap-8 pt-6 mt-6 border-t border-brand-border/30">
           <div className="text-[9px] uppercase tracking-[0.3em] text-brand-muted/60">
             © {new Date().getFullYear()} You & Me Africa. All Rights Reserved.
           </div>
