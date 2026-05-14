@@ -218,7 +218,12 @@ export default function App() {
             <h1 className="font-serif text-6xl sm:text-8xl md:text-[9rem] xl:text-[11rem] leading-[0.8] font-light tracking-tight text-balance text-brand-text">
               You & Me<br/><span className="italic font-normal text-brand-muted">Africa</span>
             </h1>
-            <a href="#tickets" className="mt-12 inline-block px-10 py-4 border border-brand-text/50 text-[10px] uppercase tracking-[0.3em] font-medium text-brand-text hover:bg-brand-text hover:text-brand-bg transition-colors duration-500">
+            <a
+              href="https://www.ampex.store/event/01KQVZ98HQX52PJ15TACANTR2X"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="mt-12 inline-block px-10 py-4 border border-brand-text/50 text-[10px] uppercase tracking-[0.3em] font-medium text-brand-text hover:bg-brand-text hover:text-brand-bg transition-colors duration-500"
+            >
               Buy Tickets
             </a>
           </motion.div>
