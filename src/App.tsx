@@ -171,12 +171,11 @@ export default function App() {
           <a href="#vision" className="hover:text-brand-text transition-colors">Philosophy</a>
           <a href="#experiences" className="hover:text-brand-text transition-colors">The Gathering</a>
           <a href="#details" className="hover:text-brand-text transition-colors">Location</a>
-          <a href="#newsletter" className="hover:text-brand-text transition-colors">Newsletter</a>
         </div>
-        <div className="flex items-center gap-3 md:gap-6">
+        <div className="flex items-center gap-3">
           <a
             href="#newsletter"
-            className="md:hidden text-[10px] border border-brand-text/40 rounded-full px-5 py-3 uppercase tracking-[0.2em] font-medium text-brand-text hover:bg-brand-text hover:text-brand-bg transition-colors"
+            className="text-[10px] border border-brand-text/40 rounded-full px-5 py-3 md:px-7 uppercase tracking-[0.2em] font-medium text-brand-text hover:bg-brand-text hover:text-brand-bg transition-colors whitespace-nowrap"
           >
             Newsletter
           </a>
@@ -184,7 +183,7 @@ export default function App() {
             href="https://www.ampex.store/event/01KQVZ98HQX52PJ15TACANTR2X"
             target="_blank"
             rel="noopener noreferrer"
-            className="text-[10px] border border-brand-text/40 rounded-full px-5 py-3 md:px-8 uppercase tracking-[0.2em] font-medium text-brand-text hover:bg-brand-text hover:text-brand-bg transition-colors whitespace-nowrap"
+            className="text-[10px] border border-brand-text/40 rounded-full px-5 py-3 md:px-7 uppercase tracking-[0.2em] font-medium text-brand-text hover:bg-brand-text hover:text-brand-bg transition-colors whitespace-nowrap"
           >
             Buy Tickets
           </a>
