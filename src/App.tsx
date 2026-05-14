@@ -173,10 +173,10 @@ export default function App() {
           <a href="#details" className="hover:text-brand-text transition-colors">Location</a>
           <a href="#newsletter" className="hover:text-brand-text transition-colors">Newsletter</a>
         </div>
-        <div className="flex items-center gap-4 md:gap-6">
+        <div className="flex items-center gap-3 md:gap-6">
           <a
             href="#newsletter"
-            className="md:hidden text-[10px] uppercase tracking-[0.25em] font-medium text-brand-text/80 hover:text-brand-text transition-colors"
+            className="md:hidden text-[10px] border border-brand-text/40 rounded-full px-5 py-3 uppercase tracking-[0.2em] font-medium text-brand-text hover:bg-brand-text hover:text-brand-bg transition-colors"
           >
             Newsletter
           </a>
@@ -184,9 +184,9 @@ export default function App() {
             href="https://www.ampex.store/event/01KQVZ98HQX52PJ15TACANTR2X"
             target="_blank"
             rel="noopener noreferrer"
-            className="text-[10px] border border-brand-text/40 rounded-full px-6 py-3 md:px-8 uppercase tracking-[0.2em] font-medium text-brand-text hover:bg-brand-text hover:text-brand-bg transition-colors"
+            className="text-[10px] border border-brand-text/40 rounded-full px-5 py-3 md:px-8 uppercase tracking-[0.2em] font-medium text-brand-text hover:bg-brand-text hover:text-brand-bg transition-colors whitespace-nowrap"
           >
-            Tickets
+            Buy Tickets
           </a>
         </div>
       </nav>
@@ -455,24 +455,13 @@ export default function App() {
             <span className="text-[9px] uppercase tracking-[0.35em] text-center">Partners & Sponsors</span>
             <span className="hidden sm:block w-10 h-px bg-brand-border" aria-hidden />
           </div>
-          <div className="flex flex-row flex-wrap items-center justify-center gap-4 sm:gap-6 md:gap-8 w-full">
-            <a
-              href="#"
-              aria-label="Nela's Kitchen"
-              className="group flex items-center justify-center h-20 w-36 sm:h-24 sm:w-44 md:h-28 md:w-52 rounded-xl bg-brand-surface/40 border border-brand-border/40 px-4 py-3 transition-colors duration-300 hover:bg-brand-surface/70"
-            >
-              <img
-                src="/sponsors/nelas-kitchen.png"
-                alt="Nela's Kitchen"
-                className="max-h-full max-w-full object-contain object-center"
-              />
-            </a>
+          <div className="grid grid-cols-2 md:flex md:flex-row items-center justify-items-center md:justify-center gap-4 sm:gap-6 md:gap-8 w-full">
             <a
               href="https://www.martell.com"
               target="_blank"
               rel="noopener noreferrer sponsored"
               aria-label="Martell — main sponsor"
-              className="group flex items-center justify-center h-28 w-56 sm:h-36 sm:w-72 md:h-44 md:w-[22rem] lg:h-48 lg:w-[26rem] rounded-2xl bg-brand-surface/60 border border-brand-border/50 px-6 py-4 shadow-sm transition-colors duration-300 hover:bg-brand-surface"
+              className="col-span-2 md:col-span-1 md:order-2 group flex items-center justify-center h-28 w-56 sm:h-36 sm:w-72 md:h-44 md:w-[22rem] lg:h-48 lg:w-[26rem] rounded-2xl bg-brand-surface/60 border border-brand-border/50 px-6 py-4 shadow-sm transition-colors duration-300 hover:bg-brand-surface"
             >
               <img
                 src="/sponsors/martell.png"
@@ -481,11 +470,22 @@ export default function App() {
               />
             </a>
             <a
+              href="#"
+              aria-label="Nela's Kitchen"
+              className="md:order-1 justify-self-end md:justify-self-auto group flex items-center justify-center h-20 w-36 sm:h-24 sm:w-44 md:h-28 md:w-52 rounded-xl bg-brand-surface/40 border border-brand-border/40 px-4 py-3 transition-colors duration-300 hover:bg-brand-surface/70"
+            >
+              <img
+                src="/sponsors/nelas-kitchen.png"
+                alt="Nela's Kitchen"
+                className="max-h-full max-w-full object-contain object-center"
+              />
+            </a>
+            <a
               href="https://www.stellaartois.com"
               target="_blank"
               rel="noopener noreferrer sponsored"
               aria-label="Stella Artois"
-              className="group flex items-center justify-center h-20 w-36 sm:h-24 sm:w-44 md:h-28 md:w-52 rounded-xl bg-brand-surface/40 border border-brand-border/40 px-4 py-3 transition-colors duration-300 hover:bg-brand-surface/70"
+              className="md:order-3 justify-self-start md:justify-self-auto group flex items-center justify-center h-20 w-36 sm:h-24 sm:w-44 md:h-28 md:w-52 rounded-xl bg-brand-surface/40 border border-brand-border/40 px-4 py-3 transition-colors duration-300 hover:bg-brand-surface/70"
             >
               <img
                 src="/sponsors/stella-artois.png"
