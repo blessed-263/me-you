@@ -478,7 +478,7 @@ export default function App() {
               target="_blank"
               rel="noopener noreferrer sponsored"
               aria-label="Martell"
-              className="flex items-center justify-center h-32 w-full max-w-56 sm:h-40 sm:max-w-72 md:h-48 md:max-w-80"
+              className="flex items-center justify-center h-36 w-full max-w-64 sm:h-44 sm:max-w-80 md:h-56 md:max-w-96"
             >
               <img
                 src="/sponsors/martell brown .png"
