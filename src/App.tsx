@@ -3,9 +3,17 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { motion, useScroll, useSpring, useTransform } from 'motion/react';
-import { MapPin, Calendar, Clock, ArrowUpRight } from 'lucide-react';
-import { useState, useEffect, type FormEvent } from 'react';
+import { AnimatePresence, motion, useScroll, useSpring, useTransform } from 'motion/react';
+import { MapPin, Calendar, Clock, ArrowUpRight, Menu, X } from 'lucide-react';
+import { useState, useEffect, useRef } from 'react';
+
+const TICKETS_URL = 'https://www.ampex.store/event/01KQVZ98HQX52PJ15TACANTR2X';
+
+const navLinks = [
+  { href: '#vision', label: 'Philosophy' },
+  { href: '#experiences', label: 'The Gathering' },
+  { href: '#details', label: 'Location' },
+] as const;
 
 const marqueeImages: { src: string; alt: string }[] = [
   { src: '/images/harvest-table.png', alt: 'Harvest Table' },
@@ -64,82 +72,6 @@ function Countdown() {
   );
 }
 
-type NewsletterStatus = 'idle' | 'loading' | 'success' | 'error';
-
-function NewsletterForm() {
-  const [email, setEmail] = useState('');
-  const [status, setStatus] = useState<NewsletterStatus>('idle');
-  const [message, setMessage] = useState('');
-
-  async function onSubmit(e: FormEvent) {
-    e.preventDefault();
-    setStatus('loading');
-    setMessage('');
-
-    try {
-      const res = await fetch('/api/newsletter', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email: email.trim() }),
-      });
-      const data = (await res.json().catch(() => ({}))) as {
-        error?: string;
-        alreadySubscribed?: boolean;
-      };
-
-      if (!res.ok) {
-        setStatus('error');
-        setMessage(data.error || 'Something went wrong. Please try again.');
-        return;
-      }
-
-      setStatus('success');
-      if (data.alreadySubscribed) {
-        setMessage("You're already on the list. Thank you for your interest.");
-      } else {
-        setMessage("You're subscribed. We'll be in touch.");
-      }
-      setEmail('');
-    } catch {
-      setStatus('error');
-      setMessage('Network error. Check your connection and try again.');
-    }
-  }
-
-  return (
-    <form className="flex flex-col gap-4" onSubmit={onSubmit}>
-      <div className="flex flex-col sm:flex-row gap-4">
-        <input
-          type="email"
-          value={email}
-          onChange={(e) => {
-            setEmail(e.target.value);
-            if (status !== 'idle') setStatus('idle');
-          }}
-          placeholder="Enter your email address"
-          required
-          disabled={status === 'loading'}
-          autoComplete="email"
-          className="px-6 py-4 bg-transparent border border-brand-border text-brand-text placeholder:text-brand-muted/50 focus:outline-none focus:border-brand-text flex-1 transition-colors disabled:opacity-60"
-        />
-        <button
-          type="submit"
-          disabled={status === 'loading'}
-          className="px-8 py-4 bg-brand-text text-brand-bg text-[10px] uppercase tracking-[0.3em] font-medium hover:bg-brand-text/90 transition-colors whitespace-nowrap disabled:opacity-60"
-        >
-          {status === 'loading' ? 'Sending…' : 'Subscribe'}
-        </button>
-      </div>
-      {status === 'success' && (
-        <p className="text-sm text-brand-muted font-light text-center">{message}</p>
-      )}
-      {status === 'error' && (
-        <p className="text-sm text-red-400/90 font-light text-center">{message}</p>
-      )}
-    </form>
-  );
-}
-
 export default function App() {
   const { scrollYProgress } = useScroll();
   const yHero = useTransform(scrollYProgress, [0, 1], ['0%', '50%']);
@@ -151,47 +83,113 @@ export default function App() {
     restDelta: 0.001,
   });
 
+  const [menuOpen, setMenuOpen] = useState(false);
+  const [navHidden, setNavHidden] = useState(false);
+  const lastScrollY = useRef(0);
+
+  useEffect(() => {
+    const onScroll = () => {
+      const y = window.scrollY;
+      if (y < 72) {
+        setNavHidden(false);
+      } else if (y > lastScrollY.current + 8) {
+        setNavHidden(true);
+      } else if (y < lastScrollY.current - 8) {
+        setNavHidden(false);
+      }
+      lastScrollY.current = y;
+    };
+    window.addEventListener('scroll', onScroll, { passive: true });
+    return () => window.removeEventListener('scroll', onScroll);
+  }, []);
+
+  useEffect(() => {
+    document.body.style.overflow = menuOpen ? 'hidden' : '';
+    return () => {
+      document.body.style.overflow = '';
+    };
+  }, [menuOpen]);
+
+  const closeMenu = () => setMenuOpen(false);
+
   return (
     <div className="min-h-screen bg-brand-bg text-brand-text font-sans selection:bg-brand-accent/30 selection:text-brand-text">
       <motion.div
         aria-hidden
         style={{ scaleX: progressScaleX }}
-        className="fixed left-0 top-0 right-0 h-[2px] origin-left bg-brand-text/70 z-[60] pointer-events-none"
+        className="fixed left-0 top-0 right-0 h-[2px] origin-left bg-brand-text/70 z-[70] pointer-events-none"
       />
-      {/* Navigation */}
-      <nav className="absolute top-0 left-0 right-0 z-50 px-6 py-8 md:px-12 flex justify-between items-center">
-        <a href="/" className="shrink-0 flex items-center group">
+
+      <motion.header
+        initial={false}
+        animate={{ y: navHidden ? '-100%' : 0 }}
+        transition={{ duration: 0.35, ease: [0.16, 1, 0.3, 1] }}
+        className="fixed top-0 left-0 right-0 z-[60] bg-brand-bg border-b border-brand-border shadow-sm"
+      >
+        <nav className="px-5 py-4 md:px-12 md:py-5 flex justify-between items-center gap-4">
+        <a href="/" className="shrink-0 flex items-center group" onClick={closeMenu}>
           <img 
             src="https://gallery.youandmeafrica.com/site-icon/you-me.jpeg" 
             alt="You & Me Africa" 
             className="h-10 w-10 md:h-12 md:w-12 rounded-full object-cover group-hover:opacity-80 transition-opacity duration-300 border border-brand-text/30 p-[2px]"
           />
         </a>
-        <div className="hidden md:flex gap-12 text-[10px] uppercase tracking-[0.25em] font-medium text-brand-text/80">
-          <a href="#vision" className="hover:text-brand-text transition-colors">Philosophy</a>
-          <a href="#experiences" className="hover:text-brand-text transition-colors">The Gathering</a>
-          <a href="#details" className="hover:text-brand-text transition-colors">Location</a>
+        <div className="hidden md:flex gap-10 text-[10px] uppercase tracking-[0.25em] font-medium text-brand-text/80">
+            {navLinks.map((link) => (
+              <a key={link.href} href={link.href} className="hover:text-brand-text transition-colors">
+                {link.label}
+              </a>
+            ))}
         </div>
-        <div className="flex items-center gap-3">
+        <div className="flex items-center gap-2 md:gap-3">
+            <button
+              type="button"
+              className="md:hidden p-2 -mr-1 text-brand-text"
+              aria-expanded={menuOpen}
+              aria-label={menuOpen ? 'Close menu' : 'Open menu'}
+              onClick={() => setMenuOpen((open) => !open)}
+            >
+              {menuOpen ? <X className="w-5 h-5 stroke-[1.5]" /> : <Menu className="w-5 h-5 stroke-[1.5]" />}
+            </button>
           <a
-            href="#newsletter"
-            className="text-[10px] border border-brand-text/40 rounded-full px-5 py-3 md:px-7 uppercase tracking-[0.2em] font-medium text-brand-text hover:bg-brand-text hover:text-brand-bg transition-colors whitespace-nowrap"
-          >
-            Newsletter
-          </a>
-          <a
-            href="https://www.ampex.store/event/01KQVZ98HQX52PJ15TACANTR2X"
+            href={TICKETS_URL}
             target="_blank"
             rel="noopener noreferrer"
-            className="text-[10px] border border-brand-text/40 rounded-full px-5 py-3 md:px-7 uppercase tracking-[0.2em] font-medium text-brand-text hover:bg-brand-text hover:text-brand-bg transition-colors whitespace-nowrap"
+            className="text-[10px] rounded-full px-4 py-2.5 md:px-8 md:py-3 uppercase tracking-[0.2em] font-medium bg-brand-text text-brand-bg hover:bg-brand-text/90 transition-colors whitespace-nowrap"
           >
             Buy Tickets
           </a>
         </div>
       </nav>
 
+        <AnimatePresence>
+          {menuOpen && (
+            <motion.div
+              initial={{ height: 0, opacity: 0 }}
+              animate={{ height: 'auto', opacity: 1 }}
+              exit={{ height: 0, opacity: 0 }}
+              transition={{ duration: 0.3, ease: [0.16, 1, 0.3, 1] }}
+              className="md:hidden overflow-hidden border-t border-brand-border bg-brand-bg"
+            >
+              <div className="px-6 py-6 flex flex-col gap-5 text-[10px] uppercase tracking-[0.25em] font-medium text-brand-text/80">
+                {navLinks.map((link) => (
+                  <a
+                    key={link.href}
+                    href={link.href}
+                    className="hover:text-brand-text transition-colors"
+                    onClick={closeMenu}
+                  >
+                    {link.label}
+                  </a>
+                ))}
+              </div>
+            </motion.div>
+          )}
+        </AnimatePresence>
+      </motion.header>
+
       {/* Hero Section */}
-      <section className="relative h-screen min-h-[600px] flex items-center justify-center overflow-hidden">
+      <section className="relative h-[min(84vh,780px)] min-h-[520px] pt-20 md:pt-24 flex items-center justify-center overflow-hidden">
         {/* Parallax Background */}
         <motion.div style={{ y: yHero }} className="absolute inset-0 z-0 bg-brand-surface border-b border-brand-border/30">
           <video 
@@ -209,20 +207,23 @@ export default function App() {
           <div className="absolute inset-0 bg-gradient-to-b from-brand-bg/40 via-transparent to-brand-bg"></div>
         </motion.div>
 
-        <motion.div style={{ opacity: opacityHero }} className="relative z-10 text-center flex flex-col items-center mt-16 px-4">
+        <motion.div style={{ opacity: opacityHero }} className="relative z-10 text-center flex flex-col items-center -mt-4 md:-mt-2 px-4">
           <motion.div
             initial={{ opacity: 0, scale: 0.95 }}
             animate={{ opacity: 1, scale: 1 }}
             transition={{ duration: 1.5, ease: [0.16, 1, 0.3, 1] }}
           >
-            <h1 className="font-serif text-6xl sm:text-8xl md:text-[9rem] xl:text-[11rem] leading-[0.8] font-light tracking-tight text-balance text-brand-text">
-              You & Me<br/><span className="italic font-normal text-brand-muted">Africa</span>
-            </h1>
+            <img
+              src="/sponsors/youandme brown .png"
+              alt="You & Me Africa"
+              className="mx-auto w-[min(68vw,440px)] md:w-[min(46vw,560px)] object-contain"
+              decoding="async"
+            />
             <a
-              href="https://www.ampex.store/event/01KQVZ98HQX52PJ15TACANTR2X"
+              href={TICKETS_URL}
               target="_blank"
               rel="noopener noreferrer"
-              className="mt-12 inline-block px-10 py-4 border border-brand-text/50 text-[10px] uppercase tracking-[0.3em] font-medium text-brand-text hover:bg-brand-text hover:text-brand-bg transition-colors duration-500"
+              className="mt-[1cm] inline-block px-10 py-4 bg-brand-text text-brand-bg text-[10px] uppercase tracking-[0.3em] font-medium hover:bg-brand-text/90 transition-colors duration-500"
             >
               Buy Tickets
             </a>
@@ -232,7 +233,7 @@ export default function App() {
       </section>
 
       {/* Vision Statement */}
-      <section id="vision" className="py-20 md:py-32 px-6 relative bg-brand-bg">
+      <section id="vision" className="scroll-mt-24 py-20 md:py-32 px-6 relative bg-brand-bg">
         <div className="max-w-4xl mx-auto text-center relative z-10">
           <motion.h2 
             initial={{ opacity: 0, y: 30 }}
@@ -249,7 +250,7 @@ export default function App() {
       </section>
 
       {/* Experiences / Split Layout */}
-      <section id="experiences" className="py-16 md:py-24 px-6 md:px-12 max-w-[1400px] mx-auto">
+      <section id="experiences" className="scroll-mt-24 py-16 md:py-24 px-6 md:px-12 max-w-[1400px] mx-auto">
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-16 lg:gap-8 items-center pt-8 md:pt-12">
           
           <div className="lg:col-span-5 lg:col-start-2 relative order-2 lg:order-1">
@@ -385,7 +386,7 @@ export default function App() {
       </section>
 
       {/* Details Section / Big Layout */}
-      <section id="details" className="py-20 md:py-24 px-6 mt-8 relative">
+      <section id="details" className="scroll-mt-24 py-20 md:py-24 px-6 mt-8 relative">
         <div className="absolute inset-0 bg-brand-surface border-y border-brand-border -z-10"></div>
         <div className="max-w-5xl mx-auto">
           <motion.div 
@@ -443,15 +444,6 @@ export default function App() {
         </div>
       </section>
 
-      {/* Newsletter Section */}
-      <section id="newsletter" className="py-24 px-6 relative bg-brand-bg border-y border-brand-border/50 flex justify-center">
-        <div className="max-w-xl w-full text-center">
-          <span className="text-[9px] uppercase tracking-[0.3em] text-brand-muted mb-6 block">Stay in the Loop</span>
-          <h2 className="font-serif text-3xl md:text-5xl font-light text-brand-text mb-8 italic">Join our Newsletter</h2>
-          <NewsletterForm />
-        </div>
-      </section>
-
       {/* Footer */}
       <footer className="border-t border-brand-border/50 py-16 px-6 md:px-12 flex flex-col items-center gap-8 md:gap-10 bg-brand-bg">
         <div className="flex flex-col items-center gap-4">
@@ -468,29 +460,31 @@ export default function App() {
             <span className="text-[9px] uppercase tracking-[0.35em] text-center">Partners & Sponsors</span>
             <span className="hidden sm:block w-10 h-px bg-brand-border" aria-hidden />
           </div>
-          <div className="grid grid-cols-2 md:flex md:flex-row items-center justify-items-center md:justify-center gap-4 sm:gap-6 md:gap-8 w-full">
+          <div className="grid grid-cols-1 sm:grid-cols-3 items-center justify-items-center gap-4 sm:gap-6 md:gap-8 w-full">
+            <a
+              href="#"
+              aria-label="Nela's Kitchen"
+              className="flex items-center justify-center h-24 w-full max-w-40 sm:h-28 sm:max-w-52 md:h-32"
+            >
+              <img
+                src="/sponsors/nelas brown .png"
+                alt="Nela's Kitchen"
+                className="max-h-full max-w-full object-contain object-center"
+                decoding="async"
+              />
+            </a>
             <a
               href="https://www.martell.com"
               target="_blank"
               rel="noopener noreferrer sponsored"
-              aria-label="Martell — main sponsor"
-              className="col-span-2 md:col-span-1 md:order-2 group flex items-center justify-center h-28 w-56 sm:h-36 sm:w-72 md:h-44 md:w-[22rem] lg:h-48 lg:w-[26rem] rounded-2xl bg-brand-surface/60 border border-brand-border/50 px-6 py-4 shadow-sm transition-colors duration-300 hover:bg-brand-surface"
+              aria-label="Martell"
+              className="flex items-center justify-center h-32 w-full max-w-56 sm:h-40 sm:max-w-72 md:h-48 md:max-w-80"
             >
               <img
-                src="/sponsors/martell.png"
+                src="/sponsors/martell brown .png"
                 alt="Martell"
                 className="max-h-full max-w-full object-contain object-center"
-              />
-            </a>
-            <a
-              href="#"
-              aria-label="Nela's Kitchen"
-              className="md:order-1 justify-self-end md:justify-self-auto group flex items-center justify-center h-20 w-36 sm:h-24 sm:w-44 md:h-28 md:w-52 rounded-xl bg-brand-surface/40 border border-brand-border/40 px-4 py-3 transition-colors duration-300 hover:bg-brand-surface/70"
-            >
-              <img
-                src="/sponsors/nelas-kitchen.png"
-                alt="Nela's Kitchen"
-                className="max-h-full max-w-full object-contain object-center"
+                decoding="async"
               />
             </a>
             <a
@@ -498,12 +492,12 @@ export default function App() {
               target="_blank"
               rel="noopener noreferrer sponsored"
               aria-label="Stella Artois"
-              className="md:order-3 justify-self-start md:justify-self-auto group flex items-center justify-center h-20 w-36 sm:h-24 sm:w-44 md:h-28 md:w-52 rounded-xl bg-brand-surface/40 border border-brand-border/40 px-4 py-3 transition-colors duration-300 hover:bg-brand-surface/70"
+              className="flex items-center justify-center h-24 w-full max-w-40 sm:h-28 sm:max-w-52 md:h-32"
             >
               <img
-                src="/sponsors/stella-artois.png"
+                src="/sponsors/stella brown .png"
                 alt="Stella Artois"
-                className="max-h-[80%] max-w-full object-contain object-center"
+                className="max-h-full max-w-full object-contain object-center"
                 decoding="async"
               />
             </a>
