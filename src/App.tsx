@@ -3,16 +3,11 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { AnimatePresence, motion, useScroll, useSpring, useTransform } from 'motion/react';
-import { MapPin, Calendar, Clock, ArrowUpRight, Menu, X } from 'lucide-react';
+import { motion, useScroll, useSpring, useTransform } from 'motion/react';
+import { MapPin, Calendar, Clock, ArrowUpRight } from 'lucide-react';
 import { useState, useEffect, useRef } from 'react';
 
 const TICKETS_URL = 'https://www.ampex.store/event/01KQVZ98HQX52PJ15TACANTR2X';
-
-const navLinks = [
-  { href: '#vision', label: 'About Us' },
-  { href: '#experiences', label: 'The Gathering' },
-] as const;
 
 const marqueeImages: { src: string; alt: string }[] = [
   { src: '/images/harvest-table.png', alt: 'Harvest Table' },
@@ -82,7 +77,6 @@ export default function App() {
     restDelta: 0.001,
   });
 
-  const [menuOpen, setMenuOpen] = useState(false);
   const [navHidden, setNavHidden] = useState(false);
   const lastScrollY = useRef(0);
 
@@ -102,15 +96,6 @@ export default function App() {
     return () => window.removeEventListener('scroll', onScroll);
   }, []);
 
-  useEffect(() => {
-    document.body.style.overflow = menuOpen ? 'hidden' : '';
-    return () => {
-      document.body.style.overflow = '';
-    };
-  }, [menuOpen]);
-
-  const closeMenu = () => setMenuOpen(false);
-
   return (
     <div className="min-h-screen bg-brand-bg text-brand-text font-sans selection:bg-brand-accent/30 selection:text-brand-text">
       <motion.div
@@ -126,65 +111,24 @@ export default function App() {
         className="fixed top-0 left-0 right-0 z-[60] bg-brand-bg border-b border-brand-border shadow-sm"
       >
         <nav className="relative px-5 py-4 md:px-12 md:py-5 flex justify-between items-center gap-4">
-        <a href="/" className="shrink-0 flex items-center group" onClick={closeMenu}>
+        <a href="/" className="shrink-0 flex items-center group">
           <img 
             src="https://gallery.youandmeafrica.com/site-icon/you-me.jpeg" 
             alt="You & Me Africa" 
             className="h-10 w-10 md:h-12 md:w-12 rounded-full object-cover group-hover:opacity-80 transition-opacity duration-300 border border-brand-text/30 p-[2px]"
           />
         </a>
-        <div className="hidden md:flex absolute left-1/2 -translate-x-1/2 gap-10 text-[10px] uppercase tracking-[0.25em] font-medium text-brand-text/80">
-            {navLinks.map((link) => (
-              <a key={link.href} href={link.href} className="hover:text-brand-text transition-colors">
-                {link.label}
-              </a>
-            ))}
-        </div>
         <div className="flex items-center gap-2 md:gap-3">
-            <button
-              type="button"
-              className="md:hidden p-2 -mr-1 text-brand-text"
-              aria-expanded={menuOpen}
-              aria-label={menuOpen ? 'Close menu' : 'Open menu'}
-              onClick={() => setMenuOpen((open) => !open)}
-            >
-              {menuOpen ? <X className="w-5 h-5 stroke-[1.5]" /> : <Menu className="w-5 h-5 stroke-[1.5]" />}
-            </button>
           <a
             href={TICKETS_URL}
             target="_blank"
             rel="noopener noreferrer"
-            className="text-[10px] rounded-full px-4 py-2.5 md:px-8 md:py-3 uppercase tracking-[0.2em] font-medium bg-brand-text text-brand-bg hover:bg-brand-text/90 transition-colors whitespace-nowrap"
+            className="text-[10px] rounded-full px-4 py-2.5 md:px-8 md:py-3 uppercase tracking-[0.14em] font-semibold bg-brand-text text-brand-bg hover:bg-brand-text/90 transition-colors whitespace-nowrap"
           >
             Buy Tickets
           </a>
         </div>
       </nav>
-
-        <AnimatePresence>
-          {menuOpen && (
-            <motion.div
-              initial={{ height: 0, opacity: 0 }}
-              animate={{ height: 'auto', opacity: 1 }}
-              exit={{ height: 0, opacity: 0 }}
-              transition={{ duration: 0.3, ease: [0.16, 1, 0.3, 1] }}
-              className="md:hidden overflow-hidden border-t border-brand-border bg-brand-bg"
-            >
-              <div className="px-6 py-6 flex flex-col gap-5 text-[10px] uppercase tracking-[0.25em] font-medium text-brand-text/80">
-                {navLinks.map((link) => (
-                  <a
-                    key={link.href}
-                    href={link.href}
-                    className="hover:text-brand-text transition-colors"
-                    onClick={closeMenu}
-                  >
-                    {link.label}
-                  </a>
-                ))}
-              </div>
-            </motion.div>
-          )}
-        </AnimatePresence>
       </motion.header>
 
       {/* Hero Section */}
@@ -222,7 +166,7 @@ export default function App() {
               href={TICKETS_URL}
               target="_blank"
               rel="noopener noreferrer"
-              className="mt-[1cm] inline-block px-10 py-4 bg-brand-text text-brand-bg text-[10px] uppercase tracking-[0.3em] font-medium hover:bg-brand-text/90 transition-colors duration-500"
+              className="mt-[1cm] inline-block px-10 py-4 bg-brand-text text-brand-bg text-[10px] uppercase tracking-[0.16em] font-semibold hover:bg-brand-text/90 transition-colors duration-500"
             >
               Buy Tickets
             </a>
@@ -239,7 +183,7 @@ export default function App() {
             whileInView={{ opacity: 1, y: 0 }}
             viewport={{ once: true, margin: "-100px" }}
             transition={{ duration: 1.2, ease: [0.16, 1, 0.3, 1] }}
-            className="font-serif text-3xl md:text-5xl lg:text-5xl leading-[1.4] font-light text-balance text-brand-text/90"
+            className="font-serif text-3xl md:text-5xl lg:text-5xl leading-[1.35] font-medium text-balance text-brand-text"
           >
             YOU &amp; ME is a cultural gathering
             <br className="hidden md:block" />
@@ -282,12 +226,12 @@ export default function App() {
               viewport={{ once: true, margin: "-100px" }}
               transition={{ duration: 1, delay: 0.2 }}
             >
-              <h4 className="text-[10px] uppercase tracking-[0.3em] text-brand-accent mb-8 flex items-center gap-6">
+              <h4 className="text-[10px] uppercase tracking-[0.16em] font-semibold text-brand-accent mb-8 flex items-center gap-6">
                 <span className="w-12 h-[1px] bg-brand-accent/50"></span>
                 Part I
               </h4>
-              <h3 className="font-serif text-5xl md:text-6xl lg:text-6xl mb-10 font-light text-brand-text uppercase leading-tight">
-                The Harvest<br/><span className="italic text-[0.8em] text-brand-muted normal-case tracking-normal">Table Experience</span>
+              <h3 className="font-serif text-5xl md:text-6xl lg:text-6xl mb-10 font-semibold text-brand-text uppercase leading-tight">
+                The Harvest<br/><span className="text-brand-text">Table Experience</span>
               </h3>
               <div className="text-brand-muted text-sm md:text-base leading-[1.8] font-light max-w-md space-y-4">
                 <p>A long-table experience curated by Nela's Kitchen.</p>
@@ -308,12 +252,12 @@ export default function App() {
               viewport={{ once: true, margin: "-100px" }}
               transition={{ duration: 1, delay: 0.2 }}
             >
-              <h4 className="text-[10px] uppercase tracking-[0.3em] text-brand-accent mb-8 flex items-center gap-6">
+              <h4 className="text-[10px] uppercase tracking-[0.16em] font-semibold text-brand-accent mb-8 flex items-center gap-6">
                 <span className="w-12 h-[1px] bg-brand-accent/50"></span>
                 Part II
               </h4>
-              <h3 className="font-serif text-5xl md:text-6xl lg:text-7xl mb-10 font-light text-brand-text">
-                The After lunch<br/><span className="italic text-brand-muted">Gathering</span>
+              <h3 className="font-serif text-5xl md:text-6xl lg:text-7xl mb-10 font-semibold text-brand-text">
+                The After Lunch<br/><span className="text-brand-text">Gathering</span>
               </h3>
               <div className="text-brand-muted text-sm md:text-base leading-[1.8] font-light max-w-md space-y-4">
                 <p>A sonic experience as the day shifts into night.</p>
@@ -354,11 +298,11 @@ export default function App() {
           transition={{ duration: 1.1, ease: [0.16, 1, 0.3, 1] }}
           className="text-center px-6 mb-12"
         >
-          <h4 className="text-[10px] uppercase tracking-[0.3em] text-brand-accent mb-6">
+          <h4 className="text-[10px] uppercase tracking-[0.16em] font-semibold text-brand-accent mb-6">
             A Space To Breathe
           </h4>
-          <h3 className="font-serif text-4xl md:text-6xl font-light text-brand-text">
-            The <span className="italic text-brand-muted">Memory</span>
+          <h3 className="font-serif text-4xl md:text-6xl font-semibold text-brand-text">
+            The <span className="text-brand-text">Memory</span>
           </h3>
         </motion.div>
 
@@ -395,23 +339,23 @@ export default function App() {
           >
             <div className="flex flex-col gap-6 items-center text-center px-4">
               <Calendar className="w-5 h-5 text-brand-accent mb-4 stroke-1" />
-              <h5 className="text-[9px] uppercase tracking-[0.3em] text-brand-muted">The Date</h5>
-              <p className="font-serif text-3xl lg:text-4xl font-light text-brand-text">31 May <span className="italic text-brand-muted">2026</span></p>
+              <h5 className="text-[9px] uppercase tracking-[0.16em] font-semibold text-brand-muted">The Date</h5>
+              <p className="font-serif text-3xl lg:text-4xl font-medium text-brand-text">31 May <span className="italic text-brand-muted">2026</span></p>
             </div>
             <div className="flex flex-col gap-6 items-center text-center px-4">
               <Clock className="w-5 h-5 text-brand-accent mb-4 stroke-1" />
-              <h5 className="text-[9px] uppercase tracking-[0.3em] text-brand-muted">The Time</h5>
-              <p className="font-serif text-3xl lg:text-4xl font-light text-brand-text">11:00 AM <span className="italic text-brand-muted">to Late</span></p>
+              <h5 className="text-[9px] uppercase tracking-[0.16em] font-semibold text-brand-muted">The Time</h5>
+              <p className="font-serif text-3xl lg:text-4xl font-medium text-brand-text">11:00 AM <span className="italic text-brand-muted">to Late</span></p>
             </div>
             <div className="flex flex-col gap-6 items-center text-center px-4">
               <MapPin className="w-5 h-5 text-brand-accent mb-4 stroke-1" />
-              <h5 className="text-[9px] uppercase tracking-[0.3em] text-brand-muted">The Setting</h5>
-              <p className="font-serif text-3xl lg:text-4xl font-light text-brand-text">Rosebank, <span className="italic text-brand-muted">JHB</span></p>
+              <h5 className="text-[9px] uppercase tracking-[0.16em] font-semibold text-brand-muted">The Setting</h5>
+              <p className="font-serif text-3xl lg:text-4xl font-medium text-brand-text">Rosebank, <span className="italic text-brand-muted">JHB</span></p>
               <a
                 href="https://www.google.com/maps/dir/?api=1&destination=16+Baker+St,+Rosebank,+Johannesburg"
                 target="_blank"
                 rel="noopener noreferrer"
-                className="group inline-flex items-center gap-2 text-[10px] uppercase tracking-[0.3em] text-brand-accent hover:text-brand-text transition-colors"
+                className="group inline-flex items-center gap-2 text-[10px] uppercase tracking-[0.16em] font-semibold text-brand-accent hover:text-brand-text transition-colors"
               >
                 Get Directions
                 <ArrowUpRight className="w-3 h-3 stroke-[1.5] transition-transform group-hover:translate-x-0.5 group-hover:-translate-y-0.5" aria-hidden />
@@ -429,11 +373,11 @@ export default function App() {
               initial={{ opacity: 0, y: 20 }}
               whileInView={{ opacity: 1, y: 0 }}
               viewport={{ once: true }}
-              className="font-serif text-3xl md:text-5xl font-light tracking-tight mb-6 text-brand-text"
+              className="font-serif text-3xl md:text-5xl font-semibold tracking-tight mb-6 text-brand-text"
             >
-              The Second edition is ready for the <span className="italic text-brand-muted">31st of May.</span>
+              The Second edition is ready for the <span className="text-brand-text">31st of May.</span>
             </motion.h2>
-            <p className="text-[10px] uppercase tracking-[0.3em] text-brand-accent">
+            <p className="text-[10px] uppercase tracking-[0.16em] font-semibold text-brand-accent">
               Countdown to doors opening at 11:00 AM:
             </p>
           </div>

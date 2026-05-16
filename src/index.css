@@ -2,7 +2,7 @@
 @import "tailwindcss";
 
 @theme {
-  --color-brand-bg: #ffffff;
+  --color-brand-bg: #f6f1e8;
   --color-brand-surface: #e8e4dc;
   --color-brand-border: #dcd8cf;
   --color-brand-accent: #5a5a40;
@@ -22,6 +22,8 @@ body {
   color: var(--color-brand-text);
   font-family: var(--font-sans);
   -webkit-font-smoothing: antialiased;
+  background-image: radial-gradient(1200px 700px at 10% 0, #e4d2b86b, #e4d2b800 62%), radial-gradient(1100px 680px at 90% 12%, #bcac9147, #bcac9100 64%), linear-gradient(165deg, #f6f1e8, #eee6d8 48%, #e6dccd), url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)' opacity='0.05'/%3E%3C/svg%3E");
+  background-attachment: fixed;
 }
 
 @media (prefers-reduced-motion: reduce) {
