@@ -10,9 +10,8 @@ import { useState, useEffect, useRef } from 'react';
 const TICKETS_URL = 'https://www.ampex.store/event/01KQVZ98HQX52PJ15TACANTR2X';
 
 const navLinks = [
-  { href: '#vision', label: 'Philosophy' },
+  { href: '#vision', label: 'About Us' },
   { href: '#experiences', label: 'The Gathering' },
-  { href: '#details', label: 'Location' },
 ] as const;
 
 const marqueeImages: { src: string; alt: string }[] = [
@@ -126,7 +125,7 @@ export default function App() {
         transition={{ duration: 0.35, ease: [0.16, 1, 0.3, 1] }}
         className="fixed top-0 left-0 right-0 z-[60] bg-brand-bg border-b border-brand-border shadow-sm"
       >
-        <nav className="px-5 py-4 md:px-12 md:py-5 flex justify-between items-center gap-4">
+        <nav className="relative px-5 py-4 md:px-12 md:py-5 flex justify-between items-center gap-4">
         <a href="/" className="shrink-0 flex items-center group" onClick={closeMenu}>
           <img 
             src="https://gallery.youandmeafrica.com/site-icon/you-me.jpeg" 
@@ -134,7 +133,7 @@ export default function App() {
             className="h-10 w-10 md:h-12 md:w-12 rounded-full object-cover group-hover:opacity-80 transition-opacity duration-300 border border-brand-text/30 p-[2px]"
           />
         </a>
-        <div className="hidden md:flex gap-10 text-[10px] uppercase tracking-[0.25em] font-medium text-brand-text/80">
+        <div className="hidden md:flex absolute left-1/2 -translate-x-1/2 gap-10 text-[10px] uppercase tracking-[0.25em] font-medium text-brand-text/80">
             {navLinks.map((link) => (
               <a key={link.href} href={link.href} className="hover:text-brand-text transition-colors">
                 {link.label}
