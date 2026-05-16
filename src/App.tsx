@@ -135,19 +135,13 @@ export default function App() {
       <section className="relative h-[min(78vh,720px)] min-h-[460px] md:h-[min(84vh,780px)] md:min-h-[520px] pt-20 md:pt-24 flex items-center justify-center overflow-hidden">
         {/* Parallax Background */}
         <motion.div style={{ y: yHero }} className="absolute inset-0 z-0 bg-brand-surface border-b border-brand-border/30">
-          <video 
-            autoPlay 
-            loop 
-            muted 
-            playsInline 
-            className="w-full h-full object-cover object-center scale-105 opacity-80"
-          >
-            <source
-              src="https://videos.pexels.com/video-files/1409899/1409899-hd_1920_1080_25fps.mp4"
-              type="video/mp4"
-            />
-          </video>
-          <div className="absolute inset-0 bg-gradient-to-b from-brand-bg/40 via-transparent to-brand-bg"></div>
+          <img
+            src="/images/hero-martell-conversation.jpg"
+            alt=""
+            aria-hidden="true"
+            className="w-full h-full object-cover object-center"
+            decoding="async"
+          />
         </motion.div>
 
         <motion.div style={{ opacity: opacityHero }} className="relative z-10 text-center flex flex-col items-center -mt-4 md:-mt-2 px-4">
