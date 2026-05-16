@@ -264,9 +264,8 @@ export default function App() {
               <img 
                 src="/images/harvest-table.png"
                 alt="Harvest Table"
-                className="w-full h-full object-cover grayscale-[30%] sepia-[15%] group-hover:scale-105 transition-transform duration-[2s] ease-out"
+                className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-[2s] ease-out"
               />
-              <div className="absolute inset-0 bg-brand-bg/20 group-hover:bg-transparent transition-colors duration-1000"></div>
             </motion.div>
             
             {/* Vertical Accent Label */}
@@ -333,11 +332,10 @@ export default function App() {
               className="aspect-[4/5] object-cover relative group max-w-sm mx-auto"
             >
               <img 
-                src="/images/after-party.png" 
-                alt="After party gathering"
-                className="w-full h-full object-cover grayscale-[20%] sepia-[10%] group-hover:scale-105 transition-transform duration-[2s] ease-out"
+                src="/images/event-dj.png" 
+                alt="DJ at the after lunch gathering"
+                className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-[2s] ease-out"
               />
-              <div className="absolute inset-0 bg-brand-bg/20 group-hover:bg-transparent transition-colors duration-1000"></div>
             </motion.div>
 
             <div className="absolute top-1/2 -translate-y-1/2 writing-vertical text-[9px] uppercase tracking-[0.4em] text-brand-muted hidden lg:block -right-12">
@@ -376,7 +374,7 @@ export default function App() {
                   <img 
                     src={img.src} 
                     alt={img.alt} 
-                    className="w-full h-full object-cover grayscale-[30%] sepia-[10%] opacity-90 group-hover:grayscale-0 group-hover:opacity-100 group-hover:scale-105 transition-all duration-[1.5s] ease-out" 
+                    className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-[1.5s] ease-out" 
                   />
                 </div>
               </div>
