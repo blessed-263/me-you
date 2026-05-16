@@ -189,7 +189,7 @@ export default function App() {
       </motion.header>
 
       {/* Hero Section */}
-      <section className="relative h-[min(84vh,780px)] min-h-[520px] pt-20 md:pt-24 flex items-center justify-center overflow-hidden">
+      <section className="relative h-[min(78vh,720px)] min-h-[460px] md:h-[min(84vh,780px)] md:min-h-[520px] pt-20 md:pt-24 flex items-center justify-center overflow-hidden">
         {/* Parallax Background */}
         <motion.div style={{ y: yHero }} className="absolute inset-0 z-0 bg-brand-surface border-b border-brand-border/30">
           <video 
