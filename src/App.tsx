@@ -509,8 +509,14 @@ export default function App() {
             © {new Date().getFullYear()} You & Me Africa. All Rights Reserved.
           </div>
           <div className="flex gap-8 text-[9px] uppercase tracking-[0.3em] text-brand-muted">
-            <a href="#" className="hover:text-brand-text transition-colors">Instagram</a>
-            <a href="#" className="hover:text-brand-text transition-colors">Contact</a>
+            <a
+              href="https://www.instagram.com/youandmeafrica/"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="hover:text-brand-text transition-colors"
+            >
+              Instagram
+            </a>
           </div>
         </div>
       </footer>
