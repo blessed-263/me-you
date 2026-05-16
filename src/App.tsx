@@ -241,7 +241,7 @@ export default function App() {
             transition={{ duration: 1.2, ease: [0.16, 1, 0.3, 1] }}
             className="font-serif text-3xl md:text-5xl lg:text-5xl leading-[1.4] font-light text-balance text-brand-text/90"
           >
-            YOU &amp; ME is a bi-monthly cultural gathering
+            YOU &amp; ME is a cultural gathering
             <br className="hidden md:block" />
             <span className="italic text-brand-muted">centered around music, food, conversation and community.</span>
           </motion.h2>
