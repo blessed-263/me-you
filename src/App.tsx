@@ -136,10 +136,10 @@ export default function App() {
         {/* Parallax Background */}
         <motion.div style={{ y: yHero }} className="absolute inset-0 z-0 bg-brand-surface border-b border-brand-border/30">
           <img
-            src="/images/hero-martell-conversation.jpg"
+            src="/images/_DSC6656.jpg"
             alt=""
             aria-hidden="true"
-            className="w-full h-full object-cover object-center"
+            className="w-full h-full object-cover object-[center_42%]"
             decoding="async"
           />
         </motion.div>
