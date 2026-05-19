@@ -134,12 +134,12 @@ export default function App() {
       {/* Hero Section */}
       <section className="relative h-[min(78vh,720px)] min-h-[460px] md:h-[min(84vh,780px)] md:min-h-[520px] pt-20 md:pt-24 flex items-center justify-center overflow-hidden">
         {/* Parallax Background */}
-        <motion.div style={{ y: yHero }} className="absolute inset-0 z-0 bg-brand-surface border-b border-brand-border/30">
+        <motion.div style={{ y: yHero }} className="absolute inset-0 z-0 overflow-hidden bg-brand-surface border-b border-brand-border/30">
           <img
-            src="/images/_DSC6656.jpg"
+            src="/images/_DSC6449.jpg"
             alt=""
             aria-hidden="true"
-            className="w-full h-full object-cover object-[center_42%]"
+            className="h-[112%] w-full object-cover object-top [clip-path:inset(0_0_calc(11%+1cm)_0)]"
             decoding="async"
           />
         </motion.div>
