@@ -344,9 +344,9 @@ export default function App() {
             <div className="flex flex-col gap-6 items-center text-center px-4">
               <MapPin className="w-5 h-5 text-brand-accent mb-4 stroke-1" />
               <h5 className="text-[9px] uppercase tracking-[0.16em] font-semibold text-brand-muted">The Setting</h5>
-              <p className="font-serif text-3xl lg:text-4xl font-medium text-brand-text">Rosebank, <span className="italic text-brand-muted">JHB</span></p>
+              <p className="font-serif text-3xl lg:text-4xl font-medium text-brand-text">Primedia Rooftop, <span className="italic text-brand-muted">Freeman Drive, Sandton</span></p>
               <a
-                href="https://www.google.com/maps/dir/?api=1&destination=16+Baker+St,+Rosebank,+Johannesburg"
+                href="https://www.google.com/maps/dir/?api=1&destination=Primedia+Rooftop,+Freeman+Drive,+Sandton,+South+Africa"
                 target="_blank"
                 rel="noopener noreferrer"
                 className="group inline-flex items-center gap-2 text-[10px] uppercase tracking-[0.16em] font-semibold text-brand-accent hover:text-brand-text transition-colors"
