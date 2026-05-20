@@ -146,9 +146,6 @@ function serveStaticSite(): boolean {
 }
 
 async function main() {
-  await ensureNewsletterTable();
-  await ensureRsvpTable(getPool);
-
   const listenPort = isProd ? port : apiPort;
   const withStatic = isProd && serveStaticSite();
 
@@ -173,15 +170,25 @@ async function main() {
     }
   }
 
-  app.listen(listenPort, '0.0.0.0', () => {
-    if (withStatic) {
-      console.log(`[server] production (site + API) on ${listenPort}`);
-    } else if (isProd) {
-      console.log(`[server] API-only on ${listenPort}`);
-    } else {
-      console.log(`[server] API on ${listenPort} (vite proxies /api)`);
-    }
+  await new Promise<void>((resolve) => {
+    app.listen(listenPort, '0.0.0.0', () => {
+      if (withStatic) {
+        console.log(`[server] production (site + API) on ${listenPort}`);
+      } else if (isProd) {
+        console.log(`[server] API-only on ${listenPort}`);
+      } else {
+        console.log(`[server] API on ${listenPort} (vite proxies /api)`);
+      }
+      resolve();
+    });
   });
+
+  try {
+    await ensureNewsletterTable();
+    await ensureRsvpTable(getPool);
+  } catch (err) {
+    console.error('[server] Database setup failed (API stays up):', err);
+  }
 }
 
 main().catch((err) => {
