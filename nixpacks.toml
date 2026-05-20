@@ -1,0 +1,21 @@
+# API-only deploy on Railway (frontend is on Vercel).
+# Without this, Nixpacks sees root index.html and adds Caddy, which breaks /api/health.
+
+providers = ["node"]
+
+[variables]
+NODE_ENV = "production"
+SERVE_STATIC = "false"
+NIXPACKS_NODE_VERSION = "22"
+
+[phases.setup]
+nixPkgs = ["nodejs_22"]
+
+[phases.install]
+cmds = ["npm ci --include=dev"]
+
+[phases.build]
+cmds = ["npm run build:server"]
+
+[start]
+cmd = "node dist-server/index.js"
