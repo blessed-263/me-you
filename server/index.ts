@@ -3,6 +3,7 @@ import express from 'express';
 import path from 'path';
 import { fileURLToPath } from 'url';
 import { Pool, type PoolConfig } from 'pg';
+import { createRsvpHandler, ensureRsvpTable } from './rsvp.js';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const isProd =
@@ -64,11 +65,41 @@ async function ensureNewsletterTable(): Promise<void> {
 }
 
 const app = express();
+
+const allowedOrigins = (
+  process.env.ALLOWED_ORIGINS ||
+  process.env.FRONTEND_URL ||
+  ''
+)
+  .split(',')
+  .map((o) => o.trim())
+  .filter(Boolean);
+
+app.use((req, res, next) => {
+  const origin = req.headers.origin;
+  if (
+    origin &&
+    (allowedOrigins.length === 0 || allowedOrigins.includes(origin))
+  ) {
+    res.setHeader('Access-Control-Allow-Origin', origin);
+    res.setHeader('Vary', 'Origin');
+  }
+  res.setHeader('Access-Control-Allow-Methods', 'GET, POST, OPTIONS');
+  res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
+  if (req.method === 'OPTIONS') {
+    res.sendStatus(204);
+    return;
+  }
+  next();
+});
+
 app.use(express.json({ limit: '32kb' }));
 
 app.get('/api/health', (_req, res) => {
   res.json({ ok: true });
 });
+
+app.post('/api/rsvp', createRsvpHandler({ getPool }));
 
 app.post('/api/newsletter', async (req, res) => {
   const p = getPool();
@@ -109,23 +140,48 @@ app.post('/api/newsletter', async (req, res) => {
   }
 });
 
+/** Frontend is on Vercel. Only serve static files when SERVE_STATIC=true. */
+function serveStaticSite(): boolean {
+  return process.env.SERVE_STATIC === 'true';
+}
+
 async function main() {
   await ensureNewsletterTable();
+  await ensureRsvpTable(getPool);
 
-  if (isProd) {
+  const listenPort = isProd ? port : apiPort;
+  const withStatic = isProd && serveStaticSite();
+
+  if (withStatic) {
     const staticDir = path.join(__dirname, '../dist');
     app.use(express.static(staticDir));
     app.get(/^(?!\/api).*/, (_req, res) => {
       res.sendFile(path.join(staticDir, 'index.html'));
     });
-    app.listen(port, '0.0.0.0', () => {
-      console.log(`[server] production listening on ${port}`);
-    });
   } else {
-    app.listen(apiPort, '0.0.0.0', () => {
-      console.log(`[server] API listening on ${apiPort} (vite proxies /api here)`);
+    app.get('/', (_req, res) => {
+      res.json({
+        service: 'You & Me API',
+        health: '/api/health',
+        rsvp: 'POST /api/rsvp',
+      });
     });
+    if (isProd && allowedOrigins.length === 0) {
+      console.warn(
+        '[server] API-only: set ALLOWED_ORIGINS or FRONTEND_URL for Vercel CORS.',
+      );
+    }
   }
+
+  app.listen(listenPort, '0.0.0.0', () => {
+    if (withStatic) {
+      console.log(`[server] production (site + API) on ${listenPort}`);
+    } else if (isProd) {
+      console.log(`[server] API-only on ${listenPort}`);
+    } else {
+      console.log(`[server] API on ${listenPort} (vite proxies /api)`);
+    }
+  });
 }
 
 main().catch((err) => {

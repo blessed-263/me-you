@@ -1,6 +1,6 @@
 # You & Me Africa — event site
 
-Vite + React + TypeScript + Tailwind CSS, with a small **Express + PostgreSQL** API for newsletter signups.
+Vite + React + TypeScript + Tailwind CSS, with a small **Express + PostgreSQL** API for newsletter signups and a **secret RSVP** form (Resend emails).
 
 ## Prerequisites
 
@@ -13,10 +13,13 @@ Copy [.env.example](.env.example) to `.env` (or edit the included `.env`) and se
 
 | Variable | Required | Description |
 | -------- | -------- | ----------- |
-| `DATABASE_URL` | Yes (for newsletter) | Postgres connection string (Railway provides this). |
+| `DATABASE_URL` | Yes (for newsletter & RSVP) | Postgres connection string (Railway provides this). |
 | `API_PORT` | Dev only | API listen port; default `3001`. Vite proxies `/api` here. |
+| `RESEND_API_KEY` | For RSVP emails | From [Resend](https://resend.com/api-keys). |
+| `RESEND_FROM_EMAIL` | For RSVP emails | Verified sender, e.g. `You & Me <hello@yourdomain.com>`. |
+| `RSVP_NOTIFY_EMAIL` | Optional | Inbox that receives a copy of each new RSVP. |
 
-On **Railway**, add the same `DATABASE_URL` to your **web** service (reference the variable from your Postgres plugin if offered). The app creates table `newsletter_subscribers` on boot if it does not exist.
+On **Railway**, add the same `DATABASE_URL` to your **web** service (reference the variable from your Postgres plugin if offered). The app creates `newsletter_subscribers` and `rsvp_submissions` on boot if they do not exist.
 
 ## Local development
 
@@ -48,15 +51,57 @@ npm start
 
 `npm start` serves the built SPA from `dist/` and handles `/api/*` on the same port (`cross-env` sets `NODE_ENV=production`). Railway sets `PORT` automatically.
 
-## Railway deploy
+## Deploy: Vercel (frontend) + Railway (backend)
 
-1. Create a **PostgreSQL** database on Railway.
-2. Create a **Node** (or empty) service from this repo; set **Root** if needed.
-3. **Build command:** `npm run build`
-4. **Start command:** `npm start`
-5. In the web service **Variables**, add `DATABASE_URL` (use "Variable Reference" from the Postgres service if available).
+Use **Vercel** for the React site and **Railway** for the API, Postgres, and Resend.
 
-Health check path: `GET /api/health`
+### Railway (API + database)
+
+1. Create a **PostgreSQL** plugin on Railway.
+2. Create a **new service** from this GitHub repo (same repo as Vercel).
+3. Railway reads `railway.toml` automatically:
+   - **Build:** `npm run build:server`
+   - **Start:** `npm start` (API only — does not serve the Vercel frontend)
+4. **Variables** on the Railway service:
+
+| Variable | Example |
+| -------- | ------- |
+| `DATABASE_URL` | Reference from Postgres plugin |
+| `ALLOWED_ORIGINS` | `https://your-site.vercel.app,https://www.youandmeafrica.com` |
+| `RESEND_API_KEY` | From Resend |
+| `RESEND_FROM_EMAIL` | `You & Me <rsvp@events.youandmeafrica.com>` |
+| `RSVP_NOTIFY_EMAIL` | Your inbox |
+
+5. Copy the Railway public URL (e.g. `https://me-you-production.up.railway.app`).
+6. Health check: `GET /api/health` → `{ "ok": true }`.
+
+### Vercel (frontend)
+
+1. Import the same repo on [vercel.com](https://vercel.com).
+2. Framework: **Vite** (or use the included `vercel.json`).
+3. **Environment variable** (Production + Preview):
+
+| Variable | Value |
+| -------- | ----- |
+| `VITE_API_URL` | Your Railway URL (no trailing slash) |
+
+4. Deploy. The site builds with `npm run build:web` and does **not** need `DATABASE_URL` or Resend keys on Vercel.
+
+5. Private RSVP link: `https://your-vercel-domain/rsvp`
+
+### Verify split setup
+
+- Open `https://<railway-url>/api/health` → OK
+- Open `https://<vercel-domain>/rsvp`, submit a test RSVP
+- Check Postgres / Resend / notify inbox
+
+### All-in-one Railway (optional)
+
+To host site + API on Railway only (no Vercel):
+
+- **Build:** `npm run build`
+- **Start:** `npm run start:full`
+- Omit `VITE_API_URL` and `ALLOWED_ORIGINS` if everything is same origin.
 
 ## Scripts
 
@@ -69,8 +114,18 @@ Health check path: `GET /api/health`
 | `npm run preview` | Vite preview of `dist/` only (no API) |
 | `npm run lint` | Typecheck client (`tsc --noEmit`) |
 
+## Private RSVP (secret link)
+
+The RSVP form is **not linked** on the public site. Share the URL only with invited guests:
+
+`https://yoursite.com/rsvp`
+
+1. Set `RESEND_API_KEY` and `RESEND_FROM_EMAIL` in `.env` (and Railway variables in production).
+2. Submissions are stored in Postgres (`rsvp_submissions`). Guests receive a confirmation email; `RSVP_NOTIFY_EMAIL` gets an admin copy if set.
+
 ## API
 
+- `POST /api/rsvp` — JSON `{ "fullName", "email", "guestCount", "phone?", "dietaryNotes?", "notes?" }` → `201` saved, `200` if email already RSVP'd, `503` if DB not configured.
 - `POST /api/newsletter` — JSON `{ "email": "you@example.com" }` → `201` new subscriber, `200` already subscribed, `400` / `503` / `500` with `{ "error": "..." }`.
 - `GET /api/health` — `{ "ok": true }`.
 
