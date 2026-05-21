@@ -4,6 +4,12 @@ import {
   EVENT_DATE_SHORT,
   RSVP_SESSION_META,
 } from './rsvpSessions.js';
+import {
+  VENUE_AREA,
+  VENUE_MAPS_URL,
+  VENUE_NAME,
+  VENUE_STREET,
+} from './venue.js';
 
 /** Brand tokens aligned with src/index.css */
 const colors = {
@@ -39,9 +45,6 @@ const FONTS_URL =
 
 const LOGO_URL =
   'https://gallery.youandmeafrica.com/site-icon/you-me.jpeg';
-const MAPS_URL =
-  'https://www.google.com/maps/dir/?api=1&destination=Primedia+Rooftop,+Fredman+Drive,+Sandton,+South+Africa';
-
 export const EVENT_TITLE = 'YOU&ME with Martel';
 
 function escapeHtml(value: string): string {
@@ -146,8 +149,9 @@ function locationBlock(): string {
       </tr>
       <tr>
         <td style="color:${colors.text};">
-          <span style="display:block;${type.locationValue}">Primedia Rooftop</span>
-          <span style="display:block;${type.locationSub}color:${colors.muted};">Fredman Drive, Sandton</span>
+          <span style="display:block;${type.locationValue}">${VENUE_NAME}</span>
+          <span style="display:block;${type.locationSub}color:${colors.muted};">${VENUE_STREET}</span>
+          <span style="display:block;${type.locationSub}color:${colors.muted};">${VENUE_AREA}</span>
         </td>
       </tr>
     </table>
@@ -208,7 +212,7 @@ export function renderRsvpConfirmationEmail(
           </tr>
           <tr>
             <td style="padding:0 28px 36px;text-align:center;">
-              <a href="${MAPS_URL}" style="display:inline-block;background-color:${colors.text};color:${colors.bg};${type.button}padding:16px 40px;">
+              <a href="${VENUE_MAPS_URL}" style="display:inline-block;background-color:${colors.text};color:${colors.bg};${type.button}padding:16px 40px;">
                 Get directions
               </a>
             </td>

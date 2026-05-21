@@ -7,6 +7,7 @@ import { motion, useScroll, useSpring, useTransform } from 'motion/react';
 import { MapPin, Calendar, Clock, ArrowUpRight } from 'lucide-react';
 import { useState, useEffect, useRef } from 'react';
 import Sponsors from './components/Sponsors.tsx';
+import { VENUE_AREA, VENUE_MAPS_URL, VENUE_NAME, VENUE_STREET } from './lib/venue.ts';
 
 const TICKETS_URL = 'https://www.ampex.store/event/01KQVZ98HQX52PJ15TACANTR2X';
 
@@ -345,9 +346,14 @@ export default function App() {
             <div className="flex flex-col gap-6 items-center text-center px-4">
               <MapPin className="w-5 h-5 text-brand-accent mb-4 stroke-1" />
               <h5 className="text-[9px] uppercase tracking-[0.16em] font-semibold text-brand-muted">The Setting</h5>
-              <p className="font-serif text-3xl lg:text-4xl font-medium text-brand-text">Primedia Rooftop, <span className="italic text-brand-muted">Fredman Drive, Sandton</span></p>
+              <p className="font-serif text-3xl lg:text-4xl font-medium text-brand-text">
+                {VENUE_NAME},{' '}
+                <span className="italic text-brand-muted">
+                  {VENUE_STREET}, {VENUE_AREA}
+                </span>
+              </p>
               <a
-                href="https://www.google.com/maps/dir/?api=1&destination=Primedia+Rooftop,+Fredman+Drive,+Sandton,+South+Africa"
+                href={VENUE_MAPS_URL}
                 target="_blank"
                 rel="noopener noreferrer"
                 className="group inline-flex items-center gap-2 text-[10px] uppercase tracking-[0.16em] font-semibold text-brand-accent hover:text-brand-text transition-colors"
