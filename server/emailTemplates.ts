@@ -35,7 +35,12 @@ const LOGO_URL =
 const MAPS_URL =
   'https://www.google.com/maps/dir/?api=1&destination=Primedia+Rooftop,+Freeman+Drive,+Sandton,+South+Africa';
 
-export const EVENT_TITLE = 'YOU & ME: The Second Edition';
+export const EVENT_TITLE = 'YOU&ME with Martel';
+
+/** HTML-safe event name for email bodies. */
+function eventTitleHtml(): string {
+  return EVENT_TITLE.replace(/&/g, '&amp;');
+}
 
 function emailShell(content: string): string {
   return `<!DOCTYPE html>
@@ -44,7 +49,7 @@ function emailShell(content: string): string {
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <meta name="color-scheme" content="light" />
-  <title>You &amp; Me</title>
+  <title>${eventTitleHtml()}</title>
   <link href="${FONTS_URL}" rel="stylesheet" />
   <style>
     body, table, td, p, h1, a {
@@ -85,12 +90,9 @@ export function renderRsvpConfirmationEmail(
   return emailShell(`
     <tr>
       <td style="padding:0 0 28px;text-align:center;">
-        <img src="${LOGO_URL}" alt="You &amp; Me Africa" width="48" height="48" style="display:inline-block;border-radius:50%;border:1px solid ${colors.border};padding:2px;" />
-        <p style="margin:20px 0 4px;${type.headingSection}font-size:32px;color:${colors.text};">
-          YOU &amp; ME
-        </p>
-        <p style="margin:0;${type.label}color:${colors.accent};">
-          The Second Edition
+        <img src="${LOGO_URL}" alt="${eventTitleHtml()}" width="48" height="48" style="display:inline-block;border-radius:50%;border:1px solid ${colors.border};padding:2px;" />
+        <p style="margin:20px 0 0;${type.headingSection}font-size:32px;color:${colors.text};">
+          ${eventTitleHtml()}
         </p>
       </td>
     </tr>
@@ -109,7 +111,7 @@ export function renderRsvpConfirmationEmail(
                 Thank you, ${safeName}
               </h1>
               <p style="margin:0;${type.bodyLight}color:${colors.muted};max-width:420px;margin-left:auto;margin-right:auto;">
-                Your place at <strong style="font-family:${sans};font-weight:500;color:${colors.text};">${EVENT_TITLE}</strong> is reserved.
+                Your place at <strong style="font-family:${sans};font-weight:500;color:${colors.text};">${eventTitleHtml()}</strong> is reserved.
                 We look forward to sharing the gathering with you.
               </p>
             </td>
@@ -176,7 +178,7 @@ export function renderRsvpConfirmationEmail(
     <tr>
       <td style="padding:24px 12px 0;text-align:center;">
         <p style="margin:0;${type.bodySm}color:${colors.muted};">
-          <span style="font-family:${serif};font-size:20px;font-weight:600;color:${colors.text};display:block;margin-bottom:8px;">${EVENT_TITLE}</span>
+          <span style="font-family:${serif};font-size:20px;font-weight:600;color:${colors.text};display:block;margin-bottom:8px;">${eventTitleHtml()}</span>
           A cultural gathering centered around music, food, conversation and community.
         </p>
       </td>
@@ -193,7 +195,7 @@ export function renderRsvpNotifyEmail(
     <tr>
       <td style="padding:0 0 20px;">
         <p style="margin:0;${type.label}color:${colors.accent};">
-          New RSVP
+          New RSVP — ${eventTitleHtml()}
         </p>
         <h1 style="margin:12px 0 0;${type.headingSection}color:${colors.text};">
           ${safeName}
