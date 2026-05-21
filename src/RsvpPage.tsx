@@ -128,7 +128,7 @@ export default function RsvpPage({ session }: RsvpPageProps) {
                 <span className="text-brand-muted/80"> · </span>
                 31 May 2026
               </p>
-              <p>Primedia Rooftop, Freeman Drive, Sandton</p>
+              <p>Primedia Rooftop, Fredman Drive, Sandton</p>
               <p className="text-sm leading-[1.7] md:text-[15px]">{session.description}</p>
             </div>
           </header>

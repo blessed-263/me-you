@@ -40,7 +40,7 @@ const FONTS_URL =
 const LOGO_URL =
   'https://gallery.youandmeafrica.com/site-icon/you-me.jpeg';
 const MAPS_URL =
-  'https://www.google.com/maps/dir/?api=1&destination=Primedia+Rooftop,+Freeman+Drive,+Sandton,+South+Africa';
+  'https://www.google.com/maps/dir/?api=1&destination=Primedia+Rooftop,+Fredman+Drive,+Sandton,+South+Africa';
 
 export const EVENT_TITLE = 'YOU&ME with Martel';
 
@@ -147,7 +147,7 @@ function locationBlock(): string {
       <tr>
         <td style="color:${colors.text};">
           <span style="display:block;${type.locationValue}">Primedia Rooftop</span>
-          <span style="display:block;${type.locationSub}color:${colors.muted};">Freeman Drive, Sandton</span>
+          <span style="display:block;${type.locationSub}color:${colors.muted};">Fredman Drive, Sandton</span>
         </td>
       </tr>
     </table>
