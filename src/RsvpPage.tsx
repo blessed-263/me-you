@@ -1,6 +1,6 @@
 import { motion } from 'motion/react';
-import { useState, type ChangeEvent, type FormEvent } from 'react';
-import RsvpSponsors from './components/RsvpSponsors.tsx';
+import { useState, type ChangeEvent, type FormEvent, type ReactNode } from 'react';
+import Sponsors from './components/Sponsors.tsx';
 import { apiUrl } from './lib/api.ts';
 import type { RsvpSession } from './lib/rsvpSessions.ts';
 
@@ -14,6 +14,23 @@ type FormState = {
 type RsvpPageProps = {
   session: RsvpSession;
 };
+
+function StatusCard({
+  title,
+  children,
+}: {
+  title: string;
+  children: ReactNode;
+}) {
+  return (
+    <div className="mt-14 rounded-sm border border-brand-border bg-brand-surface/50 px-8 py-12 text-center md:px-10 md:py-14">
+      <p className="font-serif text-[1.75rem] md:text-[2rem] font-semibold leading-tight text-brand-text">
+        {title}
+      </p>
+      <div className="mt-4 text-[15px] leading-[1.7] text-brand-muted">{children}</div>
+    </div>
+  );
+}
 
 export default function RsvpPage({ session }: RsvpPageProps) {
   const [form, setForm] = useState<FormState>({
@@ -75,133 +92,138 @@ export default function RsvpPage({ session }: RsvpPageProps) {
   }
 
   return (
-    <div className="min-h-screen bg-brand-bg text-brand-text font-sans">
-      <header className="border-b border-brand-border bg-brand-bg px-5 py-5 md:px-12">
-        <div className="mx-auto flex max-w-xl items-center justify-between gap-4">
-          <a href="/" className="shrink-0">
+    <div className="min-h-screen bg-brand-bg font-sans text-brand-text selection:bg-brand-accent/25 selection:text-brand-text">
+      <header className="border-b border-brand-border/80 bg-brand-bg/90 px-6 py-5 md:px-10 md:py-6">
+        <div className="mx-auto flex max-w-lg items-center justify-between gap-6">
+          <a href="/" className="shrink-0 rounded-full focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand-accent">
             <img
               src="https://gallery.youandmeafrica.com/site-icon/you-me.jpeg"
               alt="You & Me Africa"
-              className="h-10 w-10 rounded-full border border-brand-text/30 object-cover p-[2px] md:h-12 md:w-12"
+              className="h-11 w-11 rounded-full border border-brand-text/25 object-cover p-[2px] md:h-12 md:w-12"
             />
           </a>
-          <p className="text-[9px] uppercase tracking-[0.16em] font-semibold text-brand-muted">
+          <p className="text-[10px] font-semibold uppercase tracking-[0.16em] text-brand-muted">
             Private RSVP
           </p>
         </div>
       </header>
 
-      <main className="mx-auto max-w-xl px-6 py-16 md:py-24">
+      <main className="mx-auto max-w-lg px-6 pb-20 pt-14 md:px-8 md:pb-28 md:pt-20">
         <motion.div
           initial={{ opacity: 0, y: 16 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.8, ease: [0.16, 1, 0.3, 1] }}
+          className="space-y-10"
         >
-          <p className="text-[9px] uppercase tracking-[0.16em] font-semibold text-brand-accent">
-            {session.time}
-          </p>
-          <h1 className="mt-2 font-serif text-4xl md:text-5xl font-semibold text-brand-text leading-tight">
-            {session.title}
-          </h1>
-          <p className="mt-4 text-brand-muted text-sm md:text-base leading-relaxed">
-            <span className="font-medium text-brand-text">YOU&amp;ME with Martel</span> · 31 May 2026
-            <br />
-            Primedia Rooftop, Freeman Drive, Sandton
-          </p>
-          <p className="mt-4 text-sm text-brand-muted leading-relaxed">{session.description}</p>
+          <header className="space-y-5">
+            <p className="text-[10px] font-semibold uppercase tracking-[0.16em] text-brand-accent">
+              {session.time}
+            </p>
+            <h1 className="font-serif text-[2.5rem] font-semibold leading-[1.1] text-brand-text md:text-[3rem]">
+              {session.title}
+            </h1>
+            <div className="space-y-3 text-[15px] leading-[1.65] text-brand-muted">
+              <p>
+                <span className="font-medium text-brand-text">YOU&amp;ME with Martel</span>
+                <span className="text-brand-muted/80"> · </span>
+                31 May 2026
+              </p>
+              <p>Primedia Rooftop, Freeman Drive, Sandton</p>
+              <p className="text-sm leading-[1.7] md:text-[15px]">{session.description}</p>
+            </div>
+          </header>
 
-          <div className="mt-6 border border-brand-border bg-brand-surface/50 px-4 py-3 text-sm text-brand-text">
-            <span className="text-[9px] uppercase tracking-[0.16em] font-semibold text-brand-muted block mb-1">
+          <div className="border border-brand-border bg-brand-surface/40 px-5 py-4 md:px-6 md:py-5">
+            <p className="text-[10px] font-semibold uppercase tracking-[0.16em] text-brand-muted">
               This invitation
-            </span>
-            {session.title} · {session.time}
-            <span className="block mt-2 text-xs text-brand-muted">
+            </p>
+            <p className="mt-2 font-serif text-xl font-medium leading-snug text-brand-text md:text-[1.35rem]">
+              {session.title}
+            </p>
+            <p className="mt-1 text-sm text-brand-accent md:text-[15px]">{session.time}</p>
+            <p className="mt-3 text-xs leading-relaxed text-brand-muted md:text-[13px]">
               One guest per RSVP. Use only the link you were sent.
-            </span>
+            </p>
           </div>
 
           {status === 'success' ? (
-            <div className="mt-12 border border-brand-border bg-brand-surface/60 px-6 py-10 text-center">
-              <p className="font-serif text-2xl font-semibold text-brand-text">You&apos;re on the list.</p>
-              <p className="mt-3 text-sm text-brand-muted">
-                Confirmed for <strong className="text-brand-text">{session.title}</strong> ({session.time}).
-                A confirmation has been sent to your email.
+            <StatusCard title="You're on the list.">
+              <p>
+                Confirmed for{' '}
+                <strong className="font-medium text-brand-text">{session.title}</strong> ({session.time}
+                ). A confirmation has been sent to your email.
               </p>
               <a
                 href="/"
-                className="mt-8 inline-block text-[10px] uppercase tracking-[0.16em] font-semibold text-brand-accent hover:text-brand-text transition-colors"
+                className="mt-8 inline-block text-[10px] font-semibold uppercase tracking-[0.16em] text-brand-accent transition-colors hover:text-brand-text focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand-accent"
               >
                 Back to site
               </a>
-            </div>
+            </StatusCard>
           ) : status === 'duplicate' ? (
-            <div className="mt-12 border border-brand-border bg-brand-surface/60 px-6 py-10 text-center">
-              <p className="font-serif text-2xl font-semibold text-brand-text">Already registered.</p>
-              <p className="mt-3 text-sm text-brand-muted">
-                This email already has an RSVP. Each guest may register once only.
-              </p>
-            </div>
+            <StatusCard title="Already registered.">
+              <p>This email already has an RSVP. Each guest may register once only.</p>
+            </StatusCard>
           ) : (
-            <form onSubmit={handleSubmit} className="mt-12 space-y-8">
-              <p className="text-xs text-brand-muted -mt-4">
-                RSVP is for <strong className="text-brand-text">one person</strong> only (no plus-ones).
-              </p>
+            <form onSubmit={handleSubmit} className="space-y-7 border-t border-brand-border/60 pt-10">
+              <fieldset className="space-y-7" disabled={status === 'submitting'}>
+                <legend className="sr-only">RSVP details</legend>
 
-              <label className="block">
-                <span className="text-[9px] uppercase tracking-[0.16em] font-semibold text-brand-muted">
-                  Full name *
-                </span>
-                <input
-                  type="text"
-                  required
-                  autoComplete="name"
-                  value={form.fullName}
-                  onChange={update('fullName')}
-                  className="mt-2 w-full border border-brand-border bg-brand-bg px-4 py-3 text-sm text-brand-text outline-none focus:border-brand-accent transition-colors"
-                />
-              </label>
+                <label className="block">
+                  <span className="rsvp-label">Full name *</span>
+                  <input
+                    type="text"
+                    required
+                    autoComplete="name"
+                    placeholder="Your full name"
+                    value={form.fullName}
+                    onChange={update('fullName')}
+                    className="rsvp-field"
+                  />
+                </label>
 
-              <label className="block">
-                <span className="text-[9px] uppercase tracking-[0.16em] font-semibold text-brand-muted">
-                  Email *
-                </span>
-                <input
-                  type="email"
-                  required
-                  autoComplete="email"
-                  value={form.email}
-                  onChange={update('email')}
-                  className="mt-2 w-full border border-brand-border bg-brand-bg px-4 py-3 text-sm text-brand-text outline-none focus:border-brand-accent transition-colors"
-                />
-              </label>
+                <label className="block">
+                  <span className="rsvp-label">Email *</span>
+                  <input
+                    type="email"
+                    required
+                    autoComplete="email"
+                    placeholder="you@example.com"
+                    value={form.email}
+                    onChange={update('email')}
+                    className="rsvp-field"
+                  />
+                </label>
 
-              <label className="block">
-                <span className="text-[9px] uppercase tracking-[0.16em] font-semibold text-brand-muted">
-                  Phone
-                </span>
-                <input
-                  type="tel"
-                  autoComplete="tel"
-                  value={form.phone}
-                  onChange={update('phone')}
-                  className="mt-2 w-full border border-brand-border bg-brand-bg px-4 py-3 text-sm text-brand-text outline-none focus:border-brand-accent transition-colors"
-                />
-              </label>
+                <label className="block">
+                  <span className="rsvp-label">Phone</span>
+                  <input
+                    type="tel"
+                    autoComplete="tel"
+                    placeholder="Optional"
+                    value={form.phone}
+                    onChange={update('phone')}
+                    className="rsvp-field"
+                  />
+                </label>
 
-              <label className="block">
-                <span className="text-[9px] uppercase tracking-[0.16em] font-semibold text-brand-muted">
-                  Dietary requirements
-                </span>
-                <textarea
-                  rows={3}
-                  value={form.dietaryNotes}
-                  onChange={update('dietaryNotes')}
-                  className="mt-2 w-full resize-y border border-brand-border bg-brand-bg px-4 py-3 text-sm text-brand-text outline-none focus:border-brand-accent transition-colors"
-                />
-              </label>
+                <label className="block">
+                  <span className="rsvp-label">Dietary requirements</span>
+                  <textarea
+                    rows={3}
+                    placeholder="Optional — allergies or preferences"
+                    value={form.dietaryNotes}
+                    onChange={update('dietaryNotes')}
+                    className="rsvp-field min-h-[6.5rem] resize-y"
+                  />
+                </label>
+              </fieldset>
 
               {status === 'error' && errorMessage && (
-                <p className="text-sm text-red-800/90" role="alert">
+                <p
+                  className="rounded-sm border border-red-900/15 bg-red-50/50 px-4 py-3 text-sm leading-relaxed text-red-900/85"
+                  role="alert"
+                >
                   {errorMessage}
                 </p>
               )}
@@ -209,14 +231,14 @@ export default function RsvpPage({ session }: RsvpPageProps) {
               <button
                 type="submit"
                 disabled={status === 'submitting'}
-                className="w-full bg-brand-text px-8 py-4 text-[10px] uppercase tracking-[0.16em] font-semibold text-brand-bg transition-colors hover:bg-brand-text/90 disabled:opacity-60"
+                className="w-full bg-brand-text px-8 py-4 text-[11px] font-semibold uppercase tracking-[0.14em] text-brand-bg transition-[background-color,opacity,transform] duration-200 hover:bg-brand-text/90 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand-accent active:scale-[0.99] disabled:cursor-not-allowed disabled:opacity-55"
               >
                 {status === 'submitting' ? 'Sending…' : `Confirm RSVP — ${session.title}`}
               </button>
             </form>
           )}
 
-          <RsvpSponsors />
+          <Sponsors compact className="!mt-16 !pt-12" />
         </motion.div>
       </main>
     </div>

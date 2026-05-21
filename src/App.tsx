@@ -6,6 +6,7 @@
 import { motion, useScroll, useSpring, useTransform } from 'motion/react';
 import { MapPin, Calendar, Clock, ArrowUpRight } from 'lucide-react';
 import { useState, useEffect, useRef } from 'react';
+import Sponsors from './components/Sponsors.tsx';
 
 const TICKETS_URL = 'https://www.ampex.store/event/01KQVZ98HQX52PJ15TACANTR2X';
 
@@ -389,55 +390,7 @@ export default function App() {
           />
         </div>
 
-        <div className="flex flex-col items-center gap-8 w-full max-w-5xl mx-auto border-t border-brand-border/30 pt-8 mt-2 md:pt-10 md:mt-4">
-          <div className="flex items-center gap-4 text-brand-muted">
-            <span className="hidden sm:block w-10 h-px bg-brand-border" aria-hidden />
-            <span className="text-[9px] uppercase tracking-[0.35em] text-center">Partners & Sponsors</span>
-            <span className="hidden sm:block w-10 h-px bg-brand-border" aria-hidden />
-          </div>
-          <div className="grid grid-cols-1 sm:grid-cols-3 items-center justify-items-center gap-4 sm:gap-6 md:gap-8 w-full">
-            <a
-              href="#"
-              aria-label="Nela's Kitchen"
-              className="flex items-center justify-center h-24 w-full max-w-40 sm:h-28 sm:max-w-52 md:h-32"
-            >
-              <img
-                src="/sponsors/nelas brown .png"
-                alt="Nela's Kitchen"
-                className="max-h-full max-w-full object-contain object-center"
-                decoding="async"
-              />
-            </a>
-            <a
-              href="https://www.martell.com"
-              target="_blank"
-              rel="noopener noreferrer sponsored"
-              aria-label="Martell"
-              className="flex items-center justify-center h-36 w-full max-w-64 sm:h-44 sm:max-w-80 md:h-56 md:max-w-96"
-            >
-              <img
-                src="/sponsors/martell brown .png"
-                alt="Martell"
-                className="max-h-full max-w-full object-contain object-center"
-                decoding="async"
-              />
-            </a>
-            <a
-              href="https://www.stellaartois.com"
-              target="_blank"
-              rel="noopener noreferrer sponsored"
-              aria-label="Stella Artois"
-              className="flex items-center justify-center h-24 w-full max-w-40 sm:h-28 sm:max-w-52 md:h-32"
-            >
-              <img
-                src="/sponsors/stella brown .png"
-                alt="Stella Artois"
-                className="max-h-full max-w-full object-contain object-center"
-                decoding="async"
-              />
-            </a>
-          </div>
-        </div>
+        <Sponsors className="max-w-5xl mx-auto mt-2 md:mt-4 pt-8 md:pt-10" />
 
         <div className="w-full flex flex-col md:flex-row justify-between items-center gap-8 pt-6 mt-6 border-t border-brand-border/30">
           <div className="text-[9px] uppercase tracking-[0.3em] text-brand-muted/60">

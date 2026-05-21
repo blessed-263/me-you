@@ -90,3 +90,48 @@ body {
 .animate-marquee:hover {
   animation-play-state: paused;
 }
+
+/* RSVP form */
+.rsvp-label {
+  display: block;
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: var(--color-brand-muted);
+}
+
+.rsvp-field {
+  margin-top: 0.625rem;
+  width: 100%;
+  border: 1px solid var(--color-brand-border);
+  background-color: rgb(255 255 255 / 0.35);
+  padding: 0.875rem 1rem;
+  font-size: 15px;
+  line-height: 1.5;
+  color: var(--color-brand-text);
+  outline: none;
+  transition:
+    border-color 0.2s ease,
+    box-shadow 0.2s ease,
+    background-color 0.2s ease;
+}
+
+.rsvp-field::placeholder {
+  color: color-mix(in srgb, var(--color-brand-muted) 55%, transparent);
+}
+
+.rsvp-field:hover {
+  border-color: color-mix(in srgb, var(--color-brand-muted) 45%, var(--color-brand-border));
+}
+
+.rsvp-field:focus {
+  border-color: var(--color-brand-accent);
+  background-color: rgb(255 255 255 / 0.65);
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--color-brand-accent) 18%, transparent);
+}
+
+.rsvp-field:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+}
