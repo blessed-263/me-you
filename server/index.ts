@@ -2,7 +2,7 @@ import 'dotenv/config';
 import express from 'express';
 import path from 'path';
 import { fileURLToPath } from 'url';
-import { Pool, type PoolConfig } from 'pg';
+import { checkDatabase, getPool, logDatabaseConfig } from './db.js';
 import { createRsvpHandler, ensureRsvpTable } from './rsvp.js';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
@@ -11,40 +11,6 @@ const isProd =
   process.env.RAILWAY_ENVIRONMENT === 'production';
 const apiPort = Number(process.env.API_PORT) || 3001;
 const port = Number(process.env.PORT) || apiPort;
-
-function sslOption(connectionString: string): PoolConfig['ssl'] | undefined {
-  try {
-    const u = new URL(connectionString);
-    const mode = u.searchParams.get('sslmode');
-    if (
-      mode === 'require' ||
-      mode === 'verify-full' ||
-      u.hostname.includes('railway') ||
-      u.hostname.endsWith('neon.tech')
-    ) {
-      return { rejectUnauthorized: false };
-    }
-  } catch {
-    /* ignore */
-  }
-  return undefined;
-}
-
-let pool: Pool | null = null;
-
-function getPool(): Pool | null {
-  const url = process.env.DATABASE_URL;
-  if (!url?.trim()) {
-    return null;
-  }
-  if (!pool) {
-    pool = new Pool({
-      connectionString: url,
-      ssl: sslOption(url),
-    });
-  }
-  return pool;
-}
 
 async function ensureNewsletterTable(): Promise<void> {
   const p = getPool();
@@ -95,8 +61,21 @@ app.use((req, res, next) => {
 
 app.use(express.json({ limit: '32kb' }));
 
-function healthHandler(_req: express.Request, res: express.Response): void {
-  res.json({ ok: true });
+async function healthHandler(
+  _req: express.Request,
+  res: express.Response,
+): Promise<void> {
+  const database = await checkDatabase();
+  const ok = database === 'connected' || database === 'not_configured';
+  res.status(ok ? 200 : 503).json({
+    ok: database === 'connected',
+    database,
+    ...(database === 'not_configured'
+      ? {
+          hint: 'Set DATABASE_URL on this Railway service (reference from Postgres plugin).',
+        }
+      : {}),
+  });
 }
 
 app.get('/api/health', healthHandler);
@@ -173,6 +152,8 @@ async function main() {
     }
   }
 
+  logDatabaseConfig();
+
   await new Promise<void>((resolve) => {
     app.listen(listenPort, '0.0.0.0', () => {
       if (withStatic) {
@@ -185,6 +166,17 @@ async function main() {
       resolve();
     });
   });
+
+  const dbStatus = await checkDatabase();
+  if (dbStatus === 'not_configured') {
+    console.error(
+      '[server] RSVP and newsletter will return "Database not configured" until DATABASE_URL is set on this service.',
+    );
+  } else if (dbStatus === 'error') {
+    console.error(
+      '[server] DATABASE_URL is set but Postgres connection failed. Check credentials and SSL.',
+    );
+  }
 
   try {
     await ensureNewsletterTable();

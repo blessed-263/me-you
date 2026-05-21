@@ -3,34 +3,18 @@
  * Usage: npm run db:migrate
  */
 import 'dotenv/config';
-import { Pool } from 'pg';
+import { getDatabaseUrl, getPool, logDatabaseConfig } from '../server/db.js';
 import { ensureRsvpTable } from '../server/rsvp.js';
 
-function sslOption(connectionString: string) {
-  try {
-    const u = new URL(connectionString);
-    const mode = u.searchParams.get('sslmode');
-    if (
-      mode === 'require' ||
-      mode === 'verify-full' ||
-      u.hostname.includes('railway') ||
-      u.hostname.endsWith('neon.tech')
-    ) {
-      return { rejectUnauthorized: false as const };
-    }
-  } catch {
-    /* ignore */
-  }
-  return undefined;
-}
+logDatabaseConfig();
 
-const url = process.env.DATABASE_URL?.trim();
-if (!url) {
-  console.error('Set DATABASE_URL in .env (Railway Postgres connection string).');
+const pool = getPool();
+if (!pool) {
+  console.error(
+    'Set DATABASE_URL in .env (copy from Railway → Postgres → Connect).',
+  );
   process.exit(1);
 }
-
-const pool = new Pool({ connectionString: url, ssl: sslOption(url) });
 
 try {
   await pool.query(`

@@ -87,7 +87,9 @@ Use **Vercel** for the React site and **Railway** for the API, Postgres, and Res
 | `RSVP_NOTIFY_EMAIL` | Your inbox |
 
 5. Copy the Railway public URL (e.g. `https://me-you-production.up.railway.app`).
-6. Health check: `GET /api/health` → `{ "ok": true }`.
+6. Health check: `GET /api/health` → `{ "ok": true, "database": "connected" }`.
+
+**If RSVP returns `Database not configured`:** `DATABASE_URL` is missing on the **API service** (not Vercel). In Railway → your **API/web service** → **Variables** → **Add variable** → **Add reference** → choose the Postgres plugin → select `DATABASE_URL`. Redeploy. The API also accepts `DATABASE_PRIVATE_URL` if you reference that instead. Deploy logs should show `[db] Using DATABASE_URL for Postgres.` — if you see `No database URL found`, the variable is still not on that service.
 
 ### Vercel (frontend)
 
@@ -107,7 +109,7 @@ Use **Vercel** for the React site and **Railway** for the API, Postgres, and Res
 
 ### Verify split setup
 
-- Open `https://<railway-url>/api/health` → OK
+- Open `https://<railway-url>/api/health` → `"database": "connected"` (if `"not_configured"`, fix `DATABASE_URL` on the API service)
 - Open each RSVP URL and submit a test (one guest per email; duplicate email returns already registered)
 - Check Postgres / Resend / notify inbox
 
