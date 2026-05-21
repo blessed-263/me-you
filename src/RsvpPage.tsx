@@ -141,9 +141,6 @@ export default function RsvpPage({ session }: RsvpPageProps) {
               {session.title}
             </p>
             <p className="mt-1 text-sm text-brand-accent md:text-[15px]">{session.time}</p>
-            <p className="mt-3 text-xs leading-relaxed text-brand-muted md:text-[13px]">
-              One guest per RSVP. Use only the link you were sent.
-            </p>
           </div>
 
           {status === 'success' ? (

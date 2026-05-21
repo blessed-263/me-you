@@ -8,6 +8,7 @@ import {
   renderRsvpNotifyEmail,
 } from './emailTemplates.js';
 import {
+  RSVP_SESSION_IDS,
   RSVP_SESSION_META,
   normalizeRsvpSessionId,
   type RsvpSessionId,
@@ -19,6 +20,8 @@ export type RsvpDeps = {
 
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
+const VALID_SESSIONS_SQL = RSVP_SESSION_IDS.map((id) => `'${id}'`).join(', ');
+
 function escapeHtml(value: string): string {
   return value
     .replace(/&/g, '&amp;')
@@ -26,6 +29,10 @@ function escapeHtml(value: string): string {
     .replace(/>/g, '&gt;');
 }
 
+/**
+ * Idempotent schema setup for Railway/production Postgres.
+ * Runs on API boot when DATABASE_URL is set.
+ */
 export async function ensureRsvpTable(getPool: () => Pool | null): Promise<void> {
   const p = getPool();
   if (!p) {
@@ -34,6 +41,7 @@ export async function ensureRsvpTable(getPool: () => Pool | null): Promise<void>
     );
     return;
   }
+
   await p.query(`
     CREATE TABLE IF NOT EXISTS rsvp_submissions (
       id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
@@ -47,18 +55,93 @@ export async function ensureRsvpTable(getPool: () => Pool | null): Promise<void>
       CONSTRAINT rsvp_guest_count_range CHECK (guest_count >= 1 AND guest_count <= 20)
     );
   `);
+
   await p.query(`
     ALTER TABLE rsvp_submissions
     ADD COLUMN IF NOT EXISTS session text;
   `);
+
+  const renamed = await p.query(`
+    UPDATE rsvp_submissions
+    SET session = 'after-party-lunch'
+    WHERE session = 'the-after-party';
+  `);
+  if (renamed.rowCount && renamed.rowCount > 0) {
+    console.log(
+      `[rsvp] Migrated ${renamed.rowCount} row(s) from session the-after-party → after-party-lunch.`,
+    );
+  }
+
+  await p.query(`
+    ALTER TABLE rsvp_submissions
+    DROP CONSTRAINT IF EXISTS rsvp_session_valid;
+  `);
+  await p.query(`
+    ALTER TABLE rsvp_submissions
+    ADD CONSTRAINT rsvp_session_valid
+    CHECK (session IS NULL OR session IN (${VALID_SESSIONS_SQL}));
+  `);
+
   await p.query(`
     DROP INDEX IF EXISTS rsvp_submissions_email_session_uidx;
   `);
-  await p.query(`
-    CREATE UNIQUE INDEX IF NOT EXISTS rsvp_submissions_email_lower_idx
-    ON rsvp_submissions (lower(email));
+
+  const dupes = await p.query<{ n: string }>(`
+    SELECT COUNT(*)::text AS n
+    FROM (
+      SELECT lower(email) AS em
+      FROM rsvp_submissions
+      GROUP BY lower(email)
+      HAVING COUNT(*) > 1
+    ) d;
   `);
-  console.log('[rsvp] Table rsvp_submissions is ready.');
+  const duplicateGroups = Number(dupes.rows[0]?.n ?? 0);
+  if (duplicateGroups > 0) {
+    const removed = await p.query(`
+      WITH ranked AS (
+        SELECT
+          id,
+          ROW_NUMBER() OVER (
+            PARTITION BY lower(email)
+            ORDER BY created_at ASC, id ASC
+          ) AS rn
+        FROM rsvp_submissions
+      )
+      DELETE FROM rsvp_submissions r
+      USING ranked x
+      WHERE r.id = x.id AND x.rn > 1;
+    `);
+    console.warn(
+      `[rsvp] Removed ${removed.rowCount ?? 0} duplicate RSVP row(s) (kept earliest per email).`,
+    );
+  }
+
+  await p.query(`
+    DROP INDEX IF EXISTS rsvp_submissions_email_lower_idx;
+  `);
+
+  try {
+    await p.query(`
+      CREATE UNIQUE INDEX rsvp_submissions_email_lower_idx
+      ON rsvp_submissions (lower(email));
+    `);
+  } catch (err) {
+    console.error(
+      '[rsvp] Could not create unique index on lower(email). Check for duplicate emails.',
+      err,
+    );
+    throw err;
+  }
+
+  await p.query(`
+    CREATE INDEX IF NOT EXISTS rsvp_submissions_session_idx
+    ON rsvp_submissions (session)
+    WHERE session IS NOT NULL;
+  `);
+
+  console.log(
+    '[rsvp] Table rsvp_submissions is ready (session column, one RSVP per email).',
+  );
 }
 
 async function sendRsvpEmails(payload: {

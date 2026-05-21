@@ -39,26 +39,21 @@ const SPONSORS: SponsorItem[] = [
   },
 ];
 
-const rowHeights = (compact: boolean) =>
-  compact ? 'h-[4.5rem] sm:h-20' : 'h-20 sm:h-24 md:h-28';
-
 const imageHeights = (compact: boolean, size: 'side' | 'center') => {
   if (size === 'center') {
     return compact
-      ? 'max-h-[3.25rem] sm:max-h-[4.25rem]'
-      : 'max-h-[4.5rem] sm:max-h-[5.5rem] md:max-h-[6.75rem]';
+      ? 'h-[4.5rem] sm:h-[5.75rem] md:h-28'
+      : 'h-28 sm:h-36 md:h-44 lg:h-52';
   }
   return compact
-    ? 'max-h-[2.5rem] sm:max-h-[3rem]'
-    : 'max-h-[3rem] sm:max-h-[3.5rem] md:max-h-16';
+    ? 'h-14 sm:h-[4.25rem] md:h-20'
+    : 'h-20 sm:h-24 md:h-28 lg:h-32';
 };
 
 export default function Sponsors({ className = '', compact = false }: SponsorsProps) {
-  const row = rowHeights(compact);
-
   return (
     <div
-      className={`flex w-full flex-col items-center gap-6 border-t border-brand-border/30 pt-10 ${className}`}
+      className={`flex w-full flex-col items-center gap-6 overflow-visible border-t border-brand-border/30 pt-10 ${className}`}
     >
       <div className="flex items-center gap-4 text-brand-muted">
         <span className="hidden h-px w-10 bg-brand-border sm:block" aria-hidden />
@@ -69,31 +64,27 @@ export default function Sponsors({ className = '', compact = false }: SponsorsPr
       </div>
 
       <div
-        className={`grid w-full max-w-2xl grid-cols-3 items-center gap-2 px-1 sm:max-w-3xl sm:gap-6 md:max-w-4xl md:gap-10 ${compact ? 'max-w-lg sm:max-w-xl' : ''}`}
+        className="flex w-full flex-nowrap items-end justify-between gap-3 overflow-visible px-0 sm:justify-center sm:gap-8 md:gap-12 lg:gap-16"
         role="list"
       >
         {SPONSORS.map((sponsor) => (
-          <div
+          <a
             key={sponsor.label}
+            href={sponsor.href}
             role="listitem"
-            className={`flex min-w-0 items-center justify-center ${row}`}
+            aria-label={sponsor.label}
+            className="block shrink-0 leading-none"
+            {...(sponsor.external
+              ? { target: '_blank', rel: 'noopener noreferrer sponsored' }
+              : {})}
           >
-            <a
-              href={sponsor.href}
-              aria-label={sponsor.label}
-              className="flex h-full w-full max-w-[92%] items-center justify-center sm:max-w-full"
-              {...(sponsor.external
-                ? { target: '_blank', rel: 'noopener noreferrer sponsored' }
-                : {})}
-            >
-              <img
-                src={sponsor.src}
-                alt={sponsor.alt}
-                className={`w-auto max-w-full object-contain object-center ${imageHeights(compact, sponsor.size)}`}
-                decoding="async"
-              />
-            </a>
-          </div>
+            <img
+              src={sponsor.src}
+              alt={sponsor.alt}
+              className={`w-auto max-w-none object-contain ${imageHeights(compact, sponsor.size)} ${sponsor.size === 'center' ? '-mx-1 sm:mx-0' : ''}`}
+              decoding="async"
+            />
+          </a>
         ))}
       </div>
     </div>

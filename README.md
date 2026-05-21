@@ -19,7 +19,21 @@ Copy [.env.example](.env.example) to `.env` (or edit the included `.env`) and se
 | `RESEND_FROM_EMAIL` | For RSVP emails | Verified sender, e.g. `You & Me <hello@yourdomain.com>`. |
 | `RSVP_NOTIFY_EMAIL` | Optional | Inbox that receives a copy of each new RSVP. |
 
-On **Railway**, add the same `DATABASE_URL` to your **web** service (reference the variable from your Postgres plugin if offered). The app creates `newsletter_subscribers` and `rsvp_submissions` on boot if they do not exist.
+On **Railway**, add the same `DATABASE_URL` to your **web/API** service (reference the variable from your Postgres plugin if offered). On every deploy/restart the API runs an **idempotent migration** that:
+
+- Ensures `newsletter_subscribers` and `rsvp_submissions` exist
+- Adds `session` on RSVPs (`harvest-table` or `after-party-lunch`)
+- Renames legacy session `the-after-party` → `after-party-lunch`
+- Enforces **one RSVP per email** (unique index on `lower(email)`); duplicate rows from older per-session rules are removed (earliest kept)
+- Drops the old per-email+session unique index if present
+
+To run migrations manually (e.g. against Railway from your machine with `DATABASE_URL` in `.env`):
+
+```bash
+npm run db:migrate
+```
+
+Check Railway deploy logs for `[rsvp] Table rsvp_submissions is ready`.
 
 ## Local development
 

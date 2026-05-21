@@ -17,7 +17,8 @@
     "preview": "npx vite preview",
     "clean": "rm -rf dist",
     "lint": "tsc --noEmit",
-    "test:email": "npx tsx scripts/test-resend-email.ts"
+    "test:email": "npx tsx scripts/test-resend-email.ts",
+    "db:migrate": "npx tsx scripts/migrate-db.ts"
   },
   "dependencies": {
     "cross-env": "^7.0.3",
