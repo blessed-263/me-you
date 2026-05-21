@@ -30,7 +30,11 @@ const { data, error } = await resend.emails.send({
   from,
   to,
   subject: `${EVENT_TITLE} — Your RSVP is confirmed (test)`,
-  html: renderRsvpConfirmationEmail('Guest Name', 2),
+  html: renderRsvpConfirmationEmail(
+    'Guest Name',
+    'Harvest Table',
+    '11:00 – 14:30',
+  ),
 });
 
 if (error) {

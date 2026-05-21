@@ -87,12 +87,14 @@ Use **Vercel** for the React site and **Railway** for the API, Postgres, and Res
 
 4. Deploy. The site builds with `npm run build:web` and does **not** need `DATABASE_URL` or Resend keys on Vercel.
 
-5. Private RSVP link: `https://your-vercel-domain/rsvp`
+5. Private RSVP links (send separately — do not mix guest lists):
+   - `https://your-vercel-domain/harvest-table` — Harvest Table (11:00–14:30)
+   - `https://your-vercel-domain/after-party-lunch` — The After Lunch Party (15:00–20:00)
 
 ### Verify split setup
 
 - Open `https://<railway-url>/api/health` → OK
-- Open `https://<vercel-domain>/rsvp`, submit a test RSVP
+- Open each RSVP URL and submit a test (one guest per email; duplicate email returns already registered)
 - Check Postgres / Resend / notify inbox
 
 ### All-in-one Railway (optional)
@@ -114,18 +116,23 @@ To host site + API on Railway only (no Vercel):
 | `npm run preview` | Vite preview of `dist/` only (no API) |
 | `npm run lint` | Typecheck client (`tsc --noEmit`) |
 
-## Private RSVP (secret link)
+## Private RSVP (secret links)
 
-The RSVP form is **not linked** on the public site. Share the URL only with invited guests:
+The RSVP forms are **not linked** on the public site. Send each URL only to guests for that experience:
 
-`https://yoursite.com/rsvp`
+| URL | Session | Time |
+| ----- | ------- | ---- |
+| `/harvest-table` | Harvest Table | 11:00 – 14:30 |
+| `/after-party-lunch` | The After Lunch Party | 15:00 – 20:00 |
+
+Rules: **one guest per RSVP** (no plus-ones), **no notes field**, **one RSVP per email** (cannot register twice, including across both links).
 
 1. Set `RESEND_API_KEY` and `RESEND_FROM_EMAIL` in `.env` (and Railway variables in production).
-2. Submissions are stored in Postgres (`rsvp_submissions`). Guests receive a confirmation email; `RSVP_NOTIFY_EMAIL` gets an admin copy if set.
+2. Submissions are stored in Postgres (`rsvp_submissions`). Guests receive a session-specific confirmation email; `RSVP_NOTIFY_EMAIL` gets an admin copy if set.
 
 ## API
 
-- `POST /api/rsvp` — JSON `{ "fullName", "email", "guestCount", "phone?", "dietaryNotes?", "notes?" }` → `201` saved, `200` if email already RSVP'd, `503` if DB not configured.
+- `POST /api/rsvp` — JSON `{ "fullName", "email", "session", "phone?", "dietaryNotes?" }` where `session` is `harvest-table` or `after-party-lunch` → `201` saved, `200` if that email already RSVP'd, `503` if DB not configured.
 - `POST /api/newsletter` — JSON `{ "email": "you@example.com" }` → `201` new subscriber, `200` already subscribed, `400` / `503` / `500` with `{ "error": "..." }`.
 - `GET /api/health` — `{ "ok": true }`.
 

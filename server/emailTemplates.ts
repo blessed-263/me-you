@@ -76,16 +76,20 @@ export type RsvpEmailPayload = {
   fullName: string;
   email: string;
   phone: string | null;
-  guestCount: number;
+  sessionTitle: string;
+  sessionTime: string;
   dietaryNotes: string | null;
-  notes: string | null;
 };
 
 export function renderRsvpConfirmationEmail(
   safeName: string,
-  guestCount: number,
+  sessionTitle: string,
+  sessionTime: string,
 ): string {
-  const guestLabel = guestCount === 1 ? '1 guest' : `${guestCount} guests`;
+  const safeSessionTitle = sessionTitle
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;');
 
   return emailShell(`
     <tr>
@@ -111,7 +115,8 @@ export function renderRsvpConfirmationEmail(
                 Thank you, ${safeName}
               </h1>
               <p style="margin:0;${type.bodyLight}color:${colors.muted};max-width:420px;margin-left:auto;margin-right:auto;">
-                Your place at <strong style="font-family:${sans};font-weight:500;color:${colors.text};">${eventTitleHtml()}</strong> is reserved.
+                Your place at <strong style="font-family:${sans};font-weight:500;color:${colors.text};">${safeSessionTitle}</strong>
+                (${sessionTime}) for <strong style="font-family:${sans};font-weight:500;color:${colors.text};">${eventTitleHtml()}</strong> is reserved.
                 We look forward to sharing the gathering with you.
               </p>
             </td>
@@ -135,28 +140,28 @@ export function renderRsvpConfirmationEmail(
                       </tr>
                       <tr>
                         <td style="padding:12px 0;border-bottom:1px solid ${colors.border};${type.labelSm}color:${colors.muted};vertical-align:top;">
-                          The Time
+                          Experience
                         </td>
                         <td style="padding:12px 0;border-bottom:1px solid ${colors.border};${type.detailValue}color:${colors.text};vertical-align:top;">
-                          11:00 AM <span style="${type.detailItalic}color:${colors.muted};">to Late</span>
+                          ${safeSessionTitle}
                         </td>
                       </tr>
                       <tr>
                         <td style="padding:12px 0;border-bottom:1px solid ${colors.border};${type.labelSm}color:${colors.muted};vertical-align:top;">
-                          The Setting
+                          The Time
                         </td>
-                        <td style="padding:12px 0;border-bottom:1px solid ${colors.border};color:${colors.text};vertical-align:top;">
-                          <span style="display:block;${type.locationValue}">Primedia Rooftop</span>
-                          <span style="display:block;${type.locationSub}color:${colors.muted};">Freeman Drive</span>
-                          <span style="display:block;${type.locationSub}color:${colors.muted};">Sandton</span>
+                        <td style="padding:12px 0;border-bottom:1px solid ${colors.border};${type.detailValue}color:${colors.text};vertical-align:top;">
+                          ${sessionTime}
                         </td>
                       </tr>
                       <tr>
                         <td style="padding:12px 0;${type.labelSm}color:${colors.muted};vertical-align:top;">
-                          Party
+                          The Setting
                         </td>
-                        <td style="padding:12px 0;${type.detailValue}color:${colors.text};vertical-align:top;">
-                          ${guestLabel}
+                        <td style="padding:12px 0;color:${colors.text};vertical-align:top;">
+                          <span style="display:block;${type.locationValue}">Primedia Rooftop</span>
+                          <span style="display:block;${type.locationSub}color:${colors.muted};">Freeman Drive</span>
+                          <span style="display:block;${type.locationSub}color:${colors.muted};">Sandton</span>
                         </td>
                       </tr>
                     </table>

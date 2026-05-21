@@ -1,33 +1,37 @@
 import { motion } from 'motion/react';
 import { useState, type ChangeEvent, type FormEvent } from 'react';
+import RsvpSponsors from './components/RsvpSponsors.tsx';
 import { apiUrl } from './lib/api.ts';
+import type { RsvpSession } from './lib/rsvpSessions.ts';
 
 type FormState = {
   fullName: string;
   email: string;
   phone: string;
-  guestCount: string;
   dietaryNotes: string;
-  notes: string;
 };
 
-export default function RsvpPage() {
+type RsvpPageProps = {
+  session: RsvpSession;
+};
+
+export default function RsvpPage({ session }: RsvpPageProps) {
   const [form, setForm] = useState<FormState>({
     fullName: '',
     email: '',
     phone: '',
-    guestCount: '1',
     dietaryNotes: '',
-    notes: '',
   });
   const [status, setStatus] = useState<'idle' | 'submitting' | 'success' | 'duplicate' | 'error'>(
     'idle',
   );
   const [errorMessage, setErrorMessage] = useState('');
 
-  const update = (field: keyof FormState) => (e: ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
-    setForm((prev) => ({ ...prev, [field]: e.target.value }));
-  };
+  const update =
+    (field: keyof FormState) =>
+    (e: ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
+      setForm((prev) => ({ ...prev, [field]: e.target.value }));
+    };
 
   async function handleSubmit(e: FormEvent) {
     e.preventDefault();
@@ -42,9 +46,8 @@ export default function RsvpPage() {
           fullName: form.fullName,
           email: form.email,
           phone: form.phone || undefined,
-          guestCount: Number.parseInt(form.guestCount, 10),
+          session: session.id,
           dietaryNotes: form.dietaryNotes || undefined,
-          notes: form.notes || undefined,
         }),
       });
 
@@ -94,19 +97,34 @@ export default function RsvpPage() {
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.8, ease: [0.16, 1, 0.3, 1] }}
         >
-          <h1 className="font-serif text-4xl md:text-5xl font-semibold text-brand-text leading-tight">
-            RSVP
+          <p className="text-[9px] uppercase tracking-[0.16em] font-semibold text-brand-accent">
+            {session.time}
+          </p>
+          <h1 className="mt-2 font-serif text-4xl md:text-5xl font-semibold text-brand-text leading-tight">
+            {session.title}
           </h1>
           <p className="mt-4 text-brand-muted text-sm md:text-base leading-relaxed">
-            You & Me · 31 May 2026 · 11:00 AM
+            <span className="font-medium text-brand-text">YOU&amp;ME with Martel</span> · 31 May 2026
             <br />
             Primedia Rooftop, Freeman Drive, Sandton
           </p>
+          <p className="mt-4 text-sm text-brand-muted leading-relaxed">{session.description}</p>
+
+          <div className="mt-6 border border-brand-border bg-brand-surface/50 px-4 py-3 text-sm text-brand-text">
+            <span className="text-[9px] uppercase tracking-[0.16em] font-semibold text-brand-muted block mb-1">
+              This invitation
+            </span>
+            {session.title} · {session.time}
+            <span className="block mt-2 text-xs text-brand-muted">
+              One guest per RSVP. Use only the link you were sent.
+            </span>
+          </div>
 
           {status === 'success' ? (
             <div className="mt-12 border border-brand-border bg-brand-surface/60 px-6 py-10 text-center">
               <p className="font-serif text-2xl font-semibold text-brand-text">You&apos;re on the list.</p>
               <p className="mt-3 text-sm text-brand-muted">
+                Confirmed for <strong className="text-brand-text">{session.title}</strong> ({session.time}).
                 A confirmation has been sent to your email.
               </p>
               <a
@@ -120,11 +138,15 @@ export default function RsvpPage() {
             <div className="mt-12 border border-brand-border bg-brand-surface/60 px-6 py-10 text-center">
               <p className="font-serif text-2xl font-semibold text-brand-text">Already registered.</p>
               <p className="mt-3 text-sm text-brand-muted">
-                This email already has an RSVP on file.
+                This email already has an RSVP. Each guest may register once only.
               </p>
             </div>
           ) : (
             <form onSubmit={handleSubmit} className="mt-12 space-y-8">
+              <p className="text-xs text-brand-muted -mt-4">
+                RSVP is for <strong className="text-brand-text">one person</strong> only (no plus-ones).
+              </p>
+
               <label className="block">
                 <span className="text-[9px] uppercase tracking-[0.16em] font-semibold text-brand-muted">
                   Full name *
@@ -168,42 +190,12 @@ export default function RsvpPage() {
 
               <label className="block">
                 <span className="text-[9px] uppercase tracking-[0.16em] font-semibold text-brand-muted">
-                  Number of guests *
-                </span>
-                <select
-                  required
-                  value={form.guestCount}
-                  onChange={update('guestCount')}
-                  className="mt-2 w-full border border-brand-border bg-brand-bg px-4 py-3 text-sm text-brand-text outline-none focus:border-brand-accent transition-colors"
-                >
-                  {Array.from({ length: 10 }, (_, i) => i + 1).map((n) => (
-                    <option key={n} value={String(n)}>
-                      {n}
-                    </option>
-                  ))}
-                </select>
-              </label>
-
-              <label className="block">
-                <span className="text-[9px] uppercase tracking-[0.16em] font-semibold text-brand-muted">
                   Dietary requirements
                 </span>
                 <textarea
                   rows={3}
                   value={form.dietaryNotes}
                   onChange={update('dietaryNotes')}
-                  className="mt-2 w-full resize-y border border-brand-border bg-brand-bg px-4 py-3 text-sm text-brand-text outline-none focus:border-brand-accent transition-colors"
-                />
-              </label>
-
-              <label className="block">
-                <span className="text-[9px] uppercase tracking-[0.16em] font-semibold text-brand-muted">
-                  Notes
-                </span>
-                <textarea
-                  rows={3}
-                  value={form.notes}
-                  onChange={update('notes')}
                   className="mt-2 w-full resize-y border border-brand-border bg-brand-bg px-4 py-3 text-sm text-brand-text outline-none focus:border-brand-accent transition-colors"
                 />
               </label>
@@ -219,10 +211,12 @@ export default function RsvpPage() {
                 disabled={status === 'submitting'}
                 className="w-full bg-brand-text px-8 py-4 text-[10px] uppercase tracking-[0.16em] font-semibold text-brand-bg transition-colors hover:bg-brand-text/90 disabled:opacity-60"
               >
-                {status === 'submitting' ? 'Sending…' : 'Confirm RSVP'}
+                {status === 'submitting' ? 'Sending…' : `Confirm RSVP — ${session.title}`}
               </button>
             </form>
           )}
+
+          <RsvpSponsors />
         </motion.div>
       </main>
     </div>

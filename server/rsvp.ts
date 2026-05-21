@@ -7,6 +7,11 @@ import {
   renderRsvpConfirmationEmail,
   renderRsvpNotifyEmail,
 } from './emailTemplates.js';
+import {
+  RSVP_SESSION_META,
+  normalizeRsvpSessionId,
+  type RsvpSessionId,
+} from './rsvpSessions.js';
 
 export type RsvpDeps = {
   getPool: () => Pool | null;
@@ -18,8 +23,7 @@ function escapeHtml(value: string): string {
   return value
     .replace(/&/g, '&amp;')
     .replace(/</g, '&lt;')
-    .replace(/>/g, '&gt;')
-    .replace(/"/g, '&quot;');
+    .replace(/>/g, '&gt;');
 }
 
 export async function ensureRsvpTable(getPool: () => Pool | null): Promise<void> {
@@ -44,6 +48,13 @@ export async function ensureRsvpTable(getPool: () => Pool | null): Promise<void>
     );
   `);
   await p.query(`
+    ALTER TABLE rsvp_submissions
+    ADD COLUMN IF NOT EXISTS session text;
+  `);
+  await p.query(`
+    DROP INDEX IF EXISTS rsvp_submissions_email_session_uidx;
+  `);
+  await p.query(`
     CREATE UNIQUE INDEX IF NOT EXISTS rsvp_submissions_email_lower_idx
     ON rsvp_submissions (lower(email));
   `);
@@ -54,9 +65,8 @@ async function sendRsvpEmails(payload: {
   fullName: string;
   email: string;
   phone: string | null;
-  guestCount: number;
+  sessionId: RsvpSessionId;
   dietaryNotes: string | null;
-  notes: string | null;
 }): Promise<void> {
   const apiKey = process.env.RESEND_API_KEY?.trim();
   const from = process.env.RESEND_FROM_EMAIL?.trim();
@@ -70,11 +80,12 @@ async function sendRsvpEmails(payload: {
     return;
   }
 
+  const session = RSVP_SESSION_META[payload.sessionId];
   const resend = new Resend(apiKey);
   const safeName = escapeHtml(payload.fullName);
 
   const notifyFields: { label: string; value: string }[] = [
-    { label: 'Guests', value: String(payload.guestCount) },
+    { label: 'Session', value: `${session.title} (${session.time})` },
   ];
   if (payload.phone) {
     notifyFields.push({ label: 'Phone', value: escapeHtml(payload.phone) });
@@ -84,9 +95,6 @@ async function sendRsvpEmails(payload: {
       label: 'Dietary',
       value: escapeHtml(payload.dietaryNotes),
     });
-  }
-  if (payload.notes) {
-    notifyFields.push({ label: 'Notes', value: escapeHtml(payload.notes) });
   }
   const notifyRows = notifyFields
     .map((field, i) =>
@@ -98,19 +106,28 @@ async function sendRsvpEmails(payload: {
     )
     .join('');
 
+  const emailPayload = {
+    fullName: payload.fullName,
+    email: payload.email,
+    phone: payload.phone,
+    sessionTitle: session.title,
+    sessionTime: session.time,
+    dietaryNotes: payload.dietaryNotes,
+  };
+
   await resend.emails.send({
     from,
     to: payload.email,
-    subject: `${EVENT_TITLE} — Your RSVP is confirmed`,
-    html: renderRsvpConfirmationEmail(safeName, payload.guestCount),
+    subject: `${EVENT_TITLE} — ${session.title} confirmed`,
+    html: renderRsvpConfirmationEmail(safeName, session.title, session.time),
   });
 
   if (notifyTo.length > 0) {
     await resend.emails.send({
       from,
       to: notifyTo,
-      subject: `New RSVP — ${EVENT_TITLE} — ${payload.fullName}`,
-      html: renderRsvpNotifyEmail(safeName, payload, notifyRows),
+      subject: `New RSVP — ${session.title} — ${payload.fullName}`,
+      html: renderRsvpNotifyEmail(safeName, emailPayload, notifyRows),
     });
   }
 }
@@ -136,18 +153,8 @@ export function createRsvpHandler(deps: RsvpDeps) {
       typeof req.body?.dietaryNotes === 'string' && req.body.dietaryNotes.trim()
         ? req.body.dietaryNotes.trim().slice(0, 500)
         : null;
-    const notes =
-      typeof req.body?.notes === 'string' && req.body.notes.trim()
-        ? req.body.notes.trim().slice(0, 500)
-        : null;
-
-    const guestCountRaw = req.body?.guestCount;
-    const guestCount =
-      typeof guestCountRaw === 'number'
-        ? guestCountRaw
-        : typeof guestCountRaw === 'string'
-          ? Number.parseInt(guestCountRaw, 10)
-          : NaN;
+    const sessionRaw =
+      typeof req.body?.session === 'string' ? req.body.session.trim() : '';
 
     if (!fullName || fullName.length > 120) {
       res.status(400).json({ error: 'Full name is required' });
@@ -157,18 +164,29 @@ export function createRsvpHandler(deps: RsvpDeps) {
       res.status(400).json({ error: 'Valid email is required' });
       return;
     }
-    if (!Number.isInteger(guestCount) || guestCount < 1 || guestCount > 20) {
-      res.status(400).json({ error: 'Guest count must be between 1 and 20' });
+
+    const sessionId = normalizeRsvpSessionId(sessionRaw);
+    if (!sessionId) {
+      res.status(400).json({ error: 'A valid session is required' });
       return;
     }
 
     try {
+      const existing = await p.query(
+        `SELECT id FROM rsvp_submissions WHERE lower(email) = $1 LIMIT 1`,
+        [email],
+      );
+      if (existing.rowCount && existing.rowCount > 0) {
+        res.status(200).json({ ok: true, alreadySubmitted: true });
+        return;
+      }
+
       const result = await p.query(
-        `INSERT INTO rsvp_submissions (full_name, email, phone, guest_count, dietary_notes, notes)
-         VALUES ($1, $2, $3, $4, $5, $6)
+        `INSERT INTO rsvp_submissions (full_name, email, phone, guest_count, dietary_notes, session)
+         VALUES ($1, $2, $3, 1, $4, $5)
          ON CONFLICT ((lower(email))) DO NOTHING
          RETURNING id`,
-        [fullName, email, phone, guestCount, dietaryNotes, notes],
+        [fullName, email, phone, dietaryNotes, sessionId],
       );
 
       if (result.rowCount === 0) {
@@ -181,9 +199,8 @@ export function createRsvpHandler(deps: RsvpDeps) {
           fullName,
           email,
           phone,
-          guestCount,
+          sessionId,
           dietaryNotes,
-          notes,
         });
       } catch (mailErr) {
         console.error('[rsvp] email failed (submission saved)', mailErr);
