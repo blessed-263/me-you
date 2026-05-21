@@ -60,7 +60,10 @@ async function sendRsvpEmails(payload: {
 }): Promise<void> {
   const apiKey = process.env.RESEND_API_KEY?.trim();
   const from = process.env.RESEND_FROM_EMAIL?.trim();
-  const notifyTo = process.env.RSVP_NOTIFY_EMAIL?.trim();
+  const notifyTo = (process.env.RSVP_NOTIFY_EMAIL ?? '')
+    .split(',')
+    .map((e) => e.trim())
+    .filter((e) => EMAIL_RE.test(e));
 
   if (!apiKey || !from) {
     console.warn('[rsvp] RESEND_API_KEY or RESEND_FROM_EMAIL not set; skipping email.');
@@ -102,7 +105,7 @@ async function sendRsvpEmails(payload: {
     html: renderRsvpConfirmationEmail(safeName, payload.guestCount),
   });
 
-  if (notifyTo) {
+  if (notifyTo.length > 0) {
     await resend.emails.send({
       from,
       to: notifyTo,
