@@ -2,7 +2,6 @@ import type { Request, Response } from 'express';
 import { Resend } from 'resend';
 import type { Pool } from 'pg';
 import {
-  EVENT_TITLE,
   notifyDetailRow,
   renderRsvpConfirmationEmail,
   renderRsvpNotifyEmail,
@@ -11,6 +10,8 @@ import {
   RSVP_SESSION_IDS,
   RSVP_SESSION_META,
   normalizeRsvpSessionId,
+  rsvpConfirmationSubject,
+  rsvpNotifySubject,
   type RsvpSessionId,
 } from './rsvpSessions.js';
 
@@ -167,9 +168,7 @@ async function sendRsvpEmails(payload: {
   const resend = new Resend(apiKey);
   const safeName = escapeHtml(payload.fullName);
 
-  const notifyFields: { label: string; value: string }[] = [
-    { label: 'Session', value: `${session.title} (${session.time})` },
-  ];
+  const notifyFields: { label: string; value: string }[] = [];
   if (payload.phone) {
     notifyFields.push({ label: 'Phone', value: escapeHtml(payload.phone) });
   }
@@ -193,6 +192,7 @@ async function sendRsvpEmails(payload: {
     fullName: payload.fullName,
     email: payload.email,
     phone: payload.phone,
+    sessionId: payload.sessionId,
     sessionTitle: session.title,
     sessionTime: session.time,
     dietaryNotes: payload.dietaryNotes,
@@ -201,15 +201,15 @@ async function sendRsvpEmails(payload: {
   await resend.emails.send({
     from,
     to: payload.email,
-    subject: `${EVENT_TITLE} — ${session.title} confirmed`,
-    html: renderRsvpConfirmationEmail(safeName, session.title, session.time),
+    subject: rsvpConfirmationSubject(payload.sessionId),
+    html: renderRsvpConfirmationEmail(safeName, payload.sessionId),
   });
 
   if (notifyTo.length > 0) {
     await resend.emails.send({
       from,
       to: notifyTo,
-      subject: `New RSVP — ${session.title} — ${payload.fullName}`,
+      subject: rsvpNotifySubject(payload.sessionId, payload.fullName),
       html: renderRsvpNotifyEmail(safeName, emailPayload, notifyRows),
     });
   }
