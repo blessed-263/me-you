@@ -95,9 +95,12 @@ app.use((req, res, next) => {
 
 app.use(express.json({ limit: '32kb' }));
 
-app.get('/api/health', (_req, res) => {
+function healthHandler(_req: express.Request, res: express.Response): void {
   res.json({ ok: true });
-});
+}
+
+app.get('/api/health', healthHandler);
+app.get('/health', healthHandler);
 
 app.post('/api/rsvp', createRsvpHandler({ getPool }));
 
