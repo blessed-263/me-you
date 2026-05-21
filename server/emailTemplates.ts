@@ -45,7 +45,7 @@ const FONTS_URL =
 
 const LOGO_URL =
   'https://gallery.youandmeafrica.com/site-icon/you-me.jpeg';
-export const EVENT_TITLE = 'YOU&ME with Martel';
+export const EVENT_TITLE = 'YOU&ME with Martell';
 
 function escapeHtml(value: string): string {
   return value

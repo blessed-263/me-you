@@ -125,7 +125,7 @@ export default function RsvpPage({ session }: RsvpPageProps) {
             </h1>
             <div className="space-y-3 text-[15px] leading-[1.65] text-brand-muted">
               <p>
-                <span className="font-medium text-brand-text">YOU&amp;ME with Martel</span>
+                <span className="font-medium text-brand-text">YOU&amp;ME with Martell</span>
                 <span className="text-brand-muted/80"> · </span>
                 31 May 2026
               </p>
@@ -134,14 +134,14 @@ export default function RsvpPage({ session }: RsvpPageProps) {
             </div>
           </header>
 
-          <div className="border border-brand-border bg-brand-surface/40 px-5 py-4 md:px-6 md:py-5">
+          <div className="border border-brand-border bg-brand-surface/40 px-5 py-5 md:px-6 md:py-6">
             <p className="text-[10px] font-semibold uppercase tracking-[0.16em] text-brand-muted">
-              This invitation
+              Your invitation
             </p>
             <p className="mt-2 font-serif text-xl font-medium leading-snug text-brand-text md:text-[1.35rem]">
               {session.title}
             </p>
-            <p className="mt-1 text-sm text-brand-accent md:text-[15px]">{session.time}</p>
+            <p className="mt-1 text-sm font-medium text-brand-accent md:text-[15px]">{session.time}</p>
           </div>
 
           {status === 'success' ? (
