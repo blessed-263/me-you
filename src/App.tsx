@@ -115,9 +115,9 @@ export default function App() {
         <nav className="relative px-5 py-4 md:px-12 md:py-5 flex justify-between items-center gap-4">
         <a href="/" className="shrink-0 flex items-center group">
           <img 
-            src="https://gallery.youandmeafrica.com/site-icon/you-me.jpeg" 
-            alt="You & Me Africa" 
-            className="h-10 w-10 md:h-12 md:w-12 rounded-full object-cover group-hover:opacity-80 transition-opacity duration-300 border border-brand-text/30 p-[2px]"
+            src="/sponsors/youandme white.png"
+            alt="You & Me Africa"
+            className="h-9 w-auto md:h-10 object-contain invert group-hover:opacity-80 transition-opacity duration-300"
           />
         </a>
         <div className="flex items-center gap-2 md:gap-3">
@@ -153,7 +153,7 @@ export default function App() {
             transition={{ duration: 1.5, ease: [0.16, 1, 0.3, 1] }}
           >
             <img
-              src="/sponsors/youandme brown .png"
+              src="/sponsors/youandme white.png"
               alt="You & Me Africa"
               className="mx-auto w-[min(68vw,440px)] md:w-[min(46vw,560px)] object-contain"
               decoding="async"
@@ -390,9 +390,9 @@ export default function App() {
       <footer className="border-t border-brand-border/50 py-16 px-6 md:px-12 flex flex-col items-center gap-8 md:gap-10 bg-brand-bg">
         <div className="flex flex-col items-center gap-4">
           <img 
-            src="https://gallery.youandmeafrica.com/site-icon/you-me.jpeg" 
-            alt="You & Me Africa" 
-            className="w-16 h-16 rounded-full object-cover border border-brand-border/50 p-[2px]"
+            src="/sponsors/youandme white.png"
+            alt="You & Me Africa"
+            className="h-14 w-auto object-contain invert"
           />
         </div>
 

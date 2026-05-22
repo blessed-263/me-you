@@ -95,9 +95,9 @@ export default function RsvpPage({ session }: RsvpPageProps) {
         <div className="mx-auto flex max-w-lg items-center justify-between gap-6">
           <a href="/" className="shrink-0 rounded-full focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand-accent">
             <img
-              src="https://gallery.youandmeafrica.com/site-icon/you-me.jpeg"
+              src="/sponsors/youandme white.png"
               alt="You & Me Africa"
-              className="h-11 w-11 rounded-full border border-brand-text/25 object-cover p-[2px] md:h-12 md:w-12"
+              className="h-10 w-auto object-contain invert md:h-11"
             />
           </a>
           <p className="text-[10px] font-semibold uppercase tracking-[0.16em] text-brand-muted">
