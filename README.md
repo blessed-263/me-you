@@ -148,7 +148,7 @@ Rules: **one guest per RSVP** (no plus-ones), **no notes field**, **one RSVP per
 
 ## API
 
-- `POST /api/rsvp` — JSON `{ "fullName", "email", "session", "phone?", "dietaryNotes?" }` where `session` is `harvest-table` or `after-party-lunch` → `201` saved, `200` if that email already RSVP'd, `503` if DB not configured.
+- `POST /api/rsvp` — JSON `{ "fullName", "email", "session", "phone?" }` where `session` is `harvest-table` or `after-party-lunch` → `201` saved, `200` if that email already RSVP'd, `503` if DB not configured.
 - `POST /api/newsletter` — JSON `{ "email": "you@example.com" }` → `201` new subscriber, `200` already subscribed, `400` / `503` / `500` with `{ "error": "..." }`.
 - `GET /api/health` — `{ "ok": true }`.
 

@@ -9,7 +9,6 @@ type FormState = {
   fullName: string;
   email: string;
   phone: string;
-  dietaryNotes: string;
 };
 
 type RsvpPageProps = {
@@ -38,7 +37,6 @@ export default function RsvpPage({ session }: RsvpPageProps) {
     fullName: '',
     email: '',
     phone: '',
-    dietaryNotes: '',
   });
   const [status, setStatus] = useState<'idle' | 'submitting' | 'success' | 'duplicate' | 'error'>(
     'idle',
@@ -65,7 +63,6 @@ export default function RsvpPage({ session }: RsvpPageProps) {
           email: form.email,
           phone: form.phone || undefined,
           session: session.id,
-          dietaryNotes: form.dietaryNotes || undefined,
         }),
       });
 
@@ -202,17 +199,6 @@ export default function RsvpPage({ session }: RsvpPageProps) {
                     value={form.phone}
                     onChange={update('phone')}
                     className="rsvp-field"
-                  />
-                </label>
-
-                <label className="block">
-                  <span className="rsvp-label">Dietary requirements</span>
-                  <textarea
-                    rows={3}
-                    placeholder="Optional — allergies or preferences"
-                    value={form.dietaryNotes}
-                    onChange={update('dietaryNotes')}
-                    className="rsvp-field min-h-[6.5rem] resize-y"
                   />
                 </label>
               </fieldset>

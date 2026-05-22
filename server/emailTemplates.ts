@@ -165,7 +165,6 @@ export type RsvpEmailPayload = {
   sessionId: RsvpSessionId;
   sessionTitle: string;
   sessionTime: string;
-  dietaryNotes: string | null;
 };
 
 export function renderRsvpConfirmationEmail(

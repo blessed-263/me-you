@@ -150,7 +150,6 @@ async function sendRsvpEmails(payload: {
   email: string;
   phone: string | null;
   sessionId: RsvpSessionId;
-  dietaryNotes: string | null;
 }): Promise<void> {
   const apiKey = process.env.RESEND_API_KEY?.trim();
   const from = process.env.RESEND_FROM_EMAIL?.trim();
@@ -172,12 +171,6 @@ async function sendRsvpEmails(payload: {
   if (payload.phone) {
     notifyFields.push({ label: 'Phone', value: escapeHtml(payload.phone) });
   }
-  if (payload.dietaryNotes) {
-    notifyFields.push({
-      label: 'Dietary',
-      value: escapeHtml(payload.dietaryNotes),
-    });
-  }
   const notifyRows = notifyFields
     .map((field, i) =>
       notifyDetailRow(
@@ -195,7 +188,6 @@ async function sendRsvpEmails(payload: {
     sessionId: payload.sessionId,
     sessionTitle: session.title,
     sessionTime: session.time,
-    dietaryNotes: payload.dietaryNotes,
   };
 
   await resend.emails.send({
@@ -232,10 +224,6 @@ export function createRsvpHandler(deps: RsvpDeps) {
       typeof req.body?.phone === 'string' && req.body.phone.trim()
         ? req.body.phone.trim()
         : null;
-    const dietaryNotes =
-      typeof req.body?.dietaryNotes === 'string' && req.body.dietaryNotes.trim()
-        ? req.body.dietaryNotes.trim().slice(0, 500)
-        : null;
     const sessionRaw =
       typeof req.body?.session === 'string' ? req.body.session.trim() : '';
 
@@ -269,7 +257,7 @@ export function createRsvpHandler(deps: RsvpDeps) {
          VALUES ($1, $2, $3, 1, $4, $5)
          ON CONFLICT ((lower(email))) DO NOTHING
          RETURNING id`,
-        [fullName, email, phone, dietaryNotes, sessionId],
+        [fullName, email, phone, null, sessionId],
       );
 
       if (result.rowCount === 0) {
@@ -283,7 +271,6 @@ export function createRsvpHandler(deps: RsvpDeps) {
           email,
           phone,
           sessionId,
-          dietaryNotes,
         });
       } catch (mailErr) {
         console.error('[rsvp] email failed (submission saved)', mailErr);
