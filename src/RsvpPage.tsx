@@ -36,7 +36,7 @@ function FullBookedMessage({ session }: { session: RsvpSession }) {
   const afterParty = RSVP_SESSIONS['after-party-lunch'];
 
   return (
-    <div className="mt-14 rounded-sm border border-brand-border bg-brand-surface/50 px-8 py-12 text-center md:px-10 md:py-14">
+    <div className="flex min-h-[50vh] flex-col items-center justify-center px-6 py-16 text-center">
       <p className="font-serif text-[1.85rem] font-semibold leading-tight text-brand-text md:text-[2rem]">
         {session.title} is at capacity
       </p>
@@ -107,22 +107,37 @@ export default function RsvpPage({ session }: RsvpPageProps) {
     }
   }
 
+  const siteHeader = (
+    <header className="border-b border-brand-border/80 bg-brand-bg/90 px-6 py-5 md:px-10 md:py-6">
+      <div className="mx-auto flex max-w-lg items-center justify-between gap-6">
+        <a href="/" className="shrink-0 rounded-full focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand-accent">
+          <img
+            src="/sponsors/youandme white.png"
+            alt="You & Me Africa"
+            className="h-10 w-auto object-contain invert md:h-11"
+          />
+        </a>
+        <p className="text-[10px] font-semibold uppercase tracking-[0.16em] text-brand-muted">
+          Private RSVP
+        </p>
+      </div>
+    </header>
+  );
+
+  if (session.full) {
+    return (
+      <div className="min-h-screen bg-brand-bg font-sans text-brand-text selection:bg-brand-accent/25 selection:text-brand-text">
+        {siteHeader}
+        <main className="mx-auto max-w-lg">
+          <FullBookedMessage session={session} />
+        </main>
+      </div>
+    );
+  }
+
   return (
     <div className="min-h-screen bg-brand-bg font-sans text-brand-text selection:bg-brand-accent/25 selection:text-brand-text">
-      <header className="border-b border-brand-border/80 bg-brand-bg/90 px-6 py-5 md:px-10 md:py-6">
-        <div className="mx-auto flex max-w-lg items-center justify-between gap-6">
-          <a href="/" className="shrink-0 rounded-full focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand-accent">
-            <img
-              src="/sponsors/youandme white.png"
-              alt="You & Me Africa"
-              className="h-10 w-auto object-contain invert md:h-11"
-            />
-          </a>
-          <p className="text-[10px] font-semibold uppercase tracking-[0.16em] text-brand-muted">
-            Private RSVP
-          </p>
-        </div>
-      </header>
+      {siteHeader}
 
       <main className="mx-auto max-w-lg px-6 pb-20 pt-14 md:px-8 md:pb-28 md:pt-20">
         <motion.div
@@ -149,21 +164,17 @@ export default function RsvpPage({ session }: RsvpPageProps) {
             </div>
           </header>
 
-          {!session.full && (
-            <div className="border border-brand-border bg-brand-surface/40 px-5 py-5 md:px-6 md:py-6">
-              <p className="text-[10px] font-semibold uppercase tracking-[0.16em] text-brand-muted">
-                Your invitation
-              </p>
-              <p className="mt-2 font-serif text-xl font-medium leading-snug text-brand-text md:text-[1.35rem]">
-                {session.title}
-              </p>
-              <p className="mt-1 text-sm font-medium text-brand-accent md:text-[15px]">{session.time}</p>
-            </div>
-          )}
+          <div className="border border-brand-border bg-brand-surface/40 px-5 py-5 md:px-6 md:py-6">
+            <p className="text-[10px] font-semibold uppercase tracking-[0.16em] text-brand-muted">
+              Your invitation
+            </p>
+            <p className="mt-2 font-serif text-xl font-medium leading-snug text-brand-text md:text-[1.35rem]">
+              {session.title}
+            </p>
+            <p className="mt-1 text-sm font-medium text-brand-accent md:text-[15px]">{session.time}</p>
+          </div>
 
-          {session.full ? (
-            <FullBookedMessage session={session} />
-          ) : status === 'success' ? (
+          {status === 'success' ? (
             <StatusCard title="You're on the list.">
               <p>
                 Confirmed for{' '}
