@@ -36,36 +36,16 @@ function FullBookedMessage({ session }: { session: RsvpSession }) {
   const afterParty = RSVP_SESSIONS['after-party-lunch'];
 
   return (
-    <div className="mt-14 overflow-hidden rounded-sm border border-brand-border bg-brand-surface/50">
-      <div className="h-[3px] bg-brand-accent" aria-hidden />
-      <div className="px-8 py-12 text-center md:px-10 md:py-14">
-        <p className="text-[10px] font-semibold uppercase tracking-[0.16em] text-brand-accent">
-          Fully booked
-        </p>
-        <h2 className="mt-4 font-serif text-[1.85rem] font-semibold leading-[1.15] text-brand-text md:text-[2.15rem]">
-          {session.title} is at capacity
-        </h2>
-        <p className="mx-auto mt-5 max-w-md text-[15px] leading-[1.75] text-brand-muted">
-          Every place at the table has been reserved. We would still be honoured to welcome you for{' '}
-          <span className="font-medium text-brand-text">{afterParty.title}</span>
-          <span className="text-brand-muted/80"> · </span>
-          {afterParty.time} — an afternoon into evening of music, drinks, and community.
-        </p>
-        <a
-          href={afterParty.path}
-          className="mt-10 inline-block bg-brand-text px-10 py-4 text-[11px] font-semibold uppercase tracking-[0.14em] text-brand-bg transition-colors hover:bg-brand-text/90 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand-accent"
-        >
-          RSVP for {afterParty.title}
-        </a>
-        <p className="mt-8">
-          <a
-            href="/"
-            className="text-[10px] font-semibold uppercase tracking-[0.16em] text-brand-accent transition-colors hover:text-brand-text focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand-accent"
-          >
-            Back to site
-          </a>
-        </p>
-      </div>
+    <div className="mt-14 rounded-sm border border-brand-border bg-brand-surface/50 px-8 py-12 text-center md:px-10 md:py-14">
+      <p className="font-serif text-[1.85rem] font-semibold leading-tight text-brand-text md:text-[2rem]">
+        {session.title} is at capacity
+      </p>
+      <a
+        href={afterParty.path}
+        className="mt-8 inline-block bg-brand-text px-10 py-4 text-[11px] font-semibold uppercase tracking-[0.14em] text-brand-bg transition-colors hover:bg-brand-text/90 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand-accent"
+      >
+        RSVP for {afterParty.title}
+      </a>
     </div>
   );
 }
