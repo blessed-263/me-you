@@ -43,7 +43,7 @@ const type = {
 const FONTS_URL =
   'https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,500;0,600;1,300;1,400;1,500&family=Montserrat:wght@300;400;500;600&display=swap';
 
-const LOGO_URL = 'https://www.youandmeafrica.com/sponsors/youandme%20white.png';
+const LOGO_URL = 'https://www.youandmeafrica.com/favicon.png';
 export const EVENT_TITLE = 'YOU&ME with Martell';
 
 function escapeHtml(value: string): string {
@@ -177,7 +177,7 @@ export function renderRsvpConfirmationEmail(
     `
     <tr>
       <td style="padding:0 0 24px;text-align:center;">
-        <img src="${LOGO_URL}" alt="${eventTitleHtml()}" width="180" style="display:inline-block;max-width:200px;height:auto;background-color:${colors.text};padding:10px 16px;border-radius:4px;" />
+        <img src="${LOGO_URL}" alt="${eventTitleHtml()}" width="48" height="48" style="display:inline-block;border-radius:50%;border:1px solid ${colors.border};padding:2px;" />
         <p style="margin:16px 0 0;${type.label}color:${colors.muted};">
           ${eventTitleHtml()}
         </p>

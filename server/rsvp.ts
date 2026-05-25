@@ -9,6 +9,7 @@ import {
 import {
   RSVP_SESSION_IDS,
   RSVP_SESSION_META,
+  isRsvpSessionFull,
   normalizeRsvpSessionId,
   rsvpConfirmationSubject,
   rsvpNotifySubject,
@@ -239,6 +240,13 @@ export function createRsvpHandler(deps: RsvpDeps) {
     const sessionId = normalizeRsvpSessionId(sessionRaw);
     if (!sessionId) {
       res.status(400).json({ error: 'A valid session is required' });
+      return;
+    }
+    if (isRsvpSessionFull(sessionId)) {
+      res.status(403).json({
+        error: 'This experience is fully booked',
+        sessionFull: true,
+      });
       return;
     }
 

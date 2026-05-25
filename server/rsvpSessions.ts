@@ -1,5 +1,14 @@
 export const RSVP_SESSION_IDS = ['harvest-table', 'after-party-lunch'] as const;
 
+/** Sessions that no longer accept new RSVPs. */
+export const RSVP_SESSION_FULL: Partial<Record<RsvpSessionId, true>> = {
+  'harvest-table': true,
+};
+
+export function isRsvpSessionFull(sessionId: RsvpSessionId): boolean {
+  return RSVP_SESSION_FULL[sessionId] === true;
+}
+
 export type RsvpSessionId = (typeof RSVP_SESSION_IDS)[number];
 
 export type RsvpSessionMeta = {

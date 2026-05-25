@@ -6,6 +6,8 @@ export type RsvpSession = {
   title: string;
   time: string;
   description: string;
+  /** When true, the RSVP form is closed for this session. */
+  full?: boolean;
 };
 
 export const RSVP_SESSIONS: Record<RsvpSessionId, RsvpSession> = {
@@ -15,6 +17,7 @@ export const RSVP_SESSIONS: Record<RsvpSessionId, RsvpSession> = {
     title: 'Harvest Table',
     time: '11:00 – 14:30',
     description: 'A seated lunch experience with conversation, food, and culture.',
+    full: true,
   },
   'after-party-lunch': {
     id: 'after-party-lunch',
