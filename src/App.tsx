@@ -158,14 +158,6 @@ export default function App() {
               className="mx-auto w-[min(68vw,440px)] md:w-[min(46vw,560px)] object-contain"
               decoding="async"
             />
-            <a
-              href={TICKETS_URL}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="mt-[1cm] inline-block px-10 py-4 bg-brand-text text-brand-bg text-[10px] uppercase tracking-[0.16em] font-semibold hover:bg-brand-text/90 transition-colors duration-500"
-            >
-              Buy Tickets
-            </a>
           </motion.div>
         </motion.div>
 
@@ -392,7 +384,7 @@ export default function App() {
           <img 
             src="/sponsors/youandme white.png"
             alt="You & Me Africa"
-            className="h-14 w-auto object-contain invert"
+            className="h-36 w-auto sm:h-44 md:h-52 lg:h-60 object-contain invert"
           />
         </div>
 

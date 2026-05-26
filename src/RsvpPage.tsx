@@ -114,7 +114,7 @@ export default function RsvpPage({ session }: RsvpPageProps) {
           <img
             src="/sponsors/youandme white.png"
             alt="You & Me Africa"
-            className="h-10 w-auto object-contain invert md:h-11"
+            className="h-12 w-auto object-contain invert sm:h-14 md:h-[6.5rem]"
           />
         </a>
         <p className="text-[10px] font-semibold uppercase tracking-[0.16em] text-brand-muted">

@@ -1,6 +1,6 @@
 type SponsorsProps = {
   className?: string;
-  /** Slightly smaller row (RSVP pages); Martell stays visually dominant. */
+  /** Slightly smaller row (RSVP pages). */
   compact?: boolean;
 };
 
@@ -42,8 +42,8 @@ const SPONSORS: SponsorItem[] = [
 const imageHeights = (compact: boolean, size: 'side' | 'center') => {
   if (size === 'center') {
     return compact
-      ? 'h-[4.5rem] sm:h-[5.75rem] md:h-28'
-      : 'h-28 sm:h-36 md:h-44 lg:h-52';
+      ? 'h-[4.5rem] sm:h-[5.75rem] md:h-24'
+      : 'h-24 sm:h-28 md:h-32 lg:h-36';
   }
   return compact
     ? 'h-14 sm:h-[4.25rem] md:h-20'

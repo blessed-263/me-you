@@ -18,7 +18,8 @@
     "clean": "rm -rf dist",
     "lint": "tsc --noEmit",
     "test:email": "npx tsx scripts/test-resend-email.ts",
-    "db:migrate": "npx tsx scripts/migrate-db.ts"
+    "db:migrate": "npx tsx scripts/migrate-db.ts",
+    "export:rsvps": "npx tsx scripts/export-rsvps.ts"
   },
   "dependencies": {
     "@vercel/analytics": "^2.0.1",
