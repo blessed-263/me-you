@@ -19,7 +19,12 @@
     "lint": "tsc --noEmit",
     "test:email": "npx tsx scripts/test-resend-email.ts",
     "db:migrate": "npx tsx scripts/migrate-db.ts",
-    "export:rsvps": "npx tsx scripts/export-rsvps.ts"
+    "export:rsvps": "npx tsx scripts/export-rsvps.ts",
+    "email:optimize-hero": "npx tsx scripts/optimize-email-hero.ts",
+    "email:preview:harvest-table": "npx tsx scripts/preview-harvest-table-email.ts",
+    "email:send-test:harvest-table": "npx tsx scripts/send-harvest-table-email.ts",
+    "email:preview:after-party-lunch": "npx tsx scripts/preview-after-party-lunch-email.ts",
+    "email:send-test:after-party-lunch": "npx tsx scripts/send-after-party-lunch-email.ts"
   },
   "dependencies": {
     "@vercel/analytics": "^2.0.1",
@@ -41,6 +46,7 @@
     "@vitejs/plugin-react": "^5.0.4",
     "autoprefixer": "^10.4.21",
     "concurrently": "^9.1.2",
+    "sharp": "^0.34.5",
     "tailwindcss": "^4.1.14",
     "tsx": "^4.21.0",
     "typescript": "~5.8.2",

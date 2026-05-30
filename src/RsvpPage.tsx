@@ -2,7 +2,7 @@ import { motion } from 'motion/react';
 import { useState, type ChangeEvent, type FormEvent, type ReactNode } from 'react';
 import Sponsors from './components/Sponsors.tsx';
 import { apiUrl } from './lib/api.ts';
-import { RSVP_SESSIONS, type RsvpSession } from './lib/rsvpSessions.ts';
+import { type RsvpSession } from './lib/rsvpSessions.ts';
 import { VENUE_ADDRESS_ONE_LINE } from './lib/venue.ts';
 
 type FormState = {
@@ -24,27 +24,32 @@ function StatusCard({
 }) {
   return (
     <div className="mt-14 rounded-sm border border-brand-border bg-brand-surface/50 px-8 py-12 text-center md:px-10 md:py-14">
-      <p className="font-serif text-[1.75rem] md:text-[2rem] font-semibold leading-tight text-brand-text">
+      <p className="text-[1.75rem] font-semibold leading-tight text-brand-text md:text-[2rem]">
         {title}
       </p>
-      <div className="mt-4 text-[15px] leading-[1.7] text-brand-muted">{children}</div>
+      <div className="mt-4 text-[15px] font-normal leading-[1.7] text-brand-muted">{children}</div>
     </div>
   );
 }
 
 function FullBookedMessage({ session }: { session: RsvpSession }) {
-  const afterParty = RSVP_SESSIONS['after-party-lunch'];
+  const stayTuned = session.id === 'after-party-lunch';
 
   return (
     <div className="flex min-h-[50vh] flex-col items-center justify-center px-6 py-16 text-center">
-      <p className="font-serif text-[1.85rem] font-semibold leading-tight text-brand-text md:text-[2rem]">
+      <p className="text-[1.85rem] font-semibold leading-tight text-brand-text md:text-[2rem]">
         {session.title} is at capacity
       </p>
+      {stayTuned && (
+        <p className="mt-4 max-w-sm text-[15px] font-normal leading-[1.7] text-brand-muted">
+          Stay tuned for the next date.
+        </p>
+      )}
       <a
-        href={afterParty.path}
-        className="mt-8 inline-block bg-brand-text px-10 py-4 text-[11px] font-semibold uppercase tracking-[0.14em] text-brand-bg transition-colors hover:bg-brand-text/90 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand-accent"
+        href="/"
+        className="mt-8 inline-block text-[10px] font-semibold uppercase tracking-[0.16em] text-brand-accent transition-colors hover:text-brand-text focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand-accent"
       >
-        RSVP for {afterParty.title}
+        Back to site
       </a>
     </div>
   );
@@ -150,7 +155,7 @@ export default function RsvpPage({ session }: RsvpPageProps) {
             <p className="text-[10px] font-semibold uppercase tracking-[0.16em] text-brand-accent">
               {session.time}
             </p>
-            <h1 className="font-serif text-[2.5rem] font-semibold leading-[1.1] text-brand-text md:text-[3rem]">
+            <h1 className="text-[2.5rem] font-semibold leading-[1.1] text-brand-text md:text-[3rem]">
               {session.title}
             </h1>
             <div className="space-y-3 text-[15px] leading-[1.65] text-brand-muted">
@@ -168,7 +173,7 @@ export default function RsvpPage({ session }: RsvpPageProps) {
             <p className="text-[10px] font-semibold uppercase tracking-[0.16em] text-brand-muted">
               Your invitation
             </p>
-            <p className="mt-2 font-serif text-xl font-medium leading-snug text-brand-text md:text-[1.35rem]">
+            <p className="mt-2 text-xl font-semibold leading-snug text-brand-text md:text-[1.35rem]">
               {session.title}
             </p>
             <p className="mt-1 text-sm font-medium text-brand-accent md:text-[15px]">{session.time}</p>

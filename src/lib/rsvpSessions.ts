@@ -25,6 +25,7 @@ export const RSVP_SESSIONS: Record<RsvpSessionId, RsvpSession> = {
     title: 'The After Lunch Party',
     time: '15:00 – 20:00',
     description: 'An afternoon into evening gathering with music, drinks, and community.',
+    full: true,
   },
 };
 
