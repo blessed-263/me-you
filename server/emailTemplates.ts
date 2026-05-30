@@ -58,6 +58,7 @@ export const GUEST_EMAIL_HERO_IMAGES = {
   afterParty: `${SITE_ORIGIN}/images/email-hero-after-party.jpg`,
   /** Shared hero image for guest broadcast emails */
   guestShared: `${SITE_ORIGIN}/images/email-hero-youandme.png`,
+  mayGatheringPoster: `${SITE_ORIGIN}/images/email-may-gathering-poster.png`,
   siteHero: `${SITE_ORIGIN}/images/_DSC6449.jpg`,
   dj: `${SITE_ORIGIN}/images/event-dj.png`,
 } as const;
@@ -360,8 +361,8 @@ export function renderRsvpNotifyEmail(
   );
 }
 
-export const JUNE_RSVP_LABEL = 'June gathering';
-export const JUNE_RSVP_DATE_LABEL = 'June 2026';
+export const JUNE_RSVP_LABEL = 'September gathering';
+export const JUNE_RSVP_DATE_LABEL = 'September 2026';
 
 export function renderJuneRsvpConfirmationEmail(safeName: string): string {
   const pageTitle = `${JUNE_RSVP_LABEL} — RSVP confirmed`;
@@ -409,14 +410,14 @@ export function renderJuneRsvpNotifyEmail(
   email: string,
   detailRows: string,
 ): string {
-  const pageTitle = `New June RSVP — ${safeName}`;
+  const pageTitle = `New September RSVP — ${safeName}`;
 
   return emailShell(
     `
     <tr>
       <td style="padding:0 0 16px;">
         <p style="margin:0;${type.label}color:${colors.accent};">
-          New June RSVP · ${eventTitleHtml()}
+          New September RSVP · ${eventTitleHtml()}
         </p>
         <h1 style="margin:10px 0 0;${type.headingSection}font-size:32px;color:${colors.text};">
           ${safeName}
@@ -662,6 +663,196 @@ function ctaButton(
   </a>`;
 }
 
+/** Personal note from the founder (optional poster hero). */
+export type PersonalLetterContent = {
+  subject: string;
+  preheader?: string;
+  /** Full-width poster or hero image URL */
+  heroImageUrl?: string;
+  heroImageAlt?: string;
+  /** When true, poster renders after the body (before sign-off) instead of at the top */
+  heroAfterBody?: boolean;
+  /** Fixed greeting, e.g. "Dear Friend," — {{name}} optional */
+  greeting: string;
+  /** Paragraphs separated by blank lines */
+  body: string;
+  signoffName: string;
+  signoffTitle?: string;
+  signoffOrg?: string;
+  /** Center letter copy (default true) */
+  centered?: boolean;
+  /** Hide preheader, footer links, and heavy branding (better for Primary inbox) */
+  personalDelivery?: boolean;
+  /** Send plain text only (no HTML/poster) — best chance of Primary inbox */
+  plainTextOnly?: boolean;
+};
+
+function letterBodyHtml(
+  body: string,
+  guestName?: string,
+  centered = true,
+): string {
+  const align = centered ? 'text-align:center;' : '';
+  const merged = applyNameMerge(body, guestName);
+  return merged
+    .split(/\n\s*\n/)
+    .map((p) => p.trim())
+    .filter(Boolean)
+    .map(
+      (p) =>
+        `<p style="margin:0 0 20px;${type.bodyLight}font-size:17px;color:${colors.muted};${BODY_WRAP}${align}">${escapeHtml(p).replace(/\n/g, '<br />')}</p>`,
+    )
+    .join('');
+}
+
+const INSTAGRAM_URL = 'https://www.instagram.com/youandmeafrica/';
+
+function emailInstagramFooter(minimal = false): string {
+  const dateBlock = minimal
+    ? ''
+    : `<p style="margin:0 0 10px;${type.bodySm}color:${colors.muted};">
+          ${EVENT_DATE_LABEL}
+        </p>`;
+
+  return `<tr>
+      <td style="padding:24px 16px 8px;text-align:center;">
+        ${dateBlock}
+        <p style="margin:0;${type.labelSm}color:${colors.muted};">
+          <a href="${INSTAGRAM_URL}" style="color:${colors.accent};text-decoration:none;font-weight:600;">@youandmeafrica</a>
+        </p>
+      </td>
+    </tr>`;
+}
+
+/** Plain-text version for multipart sends (helps Gmail classify as personal). */
+export function renderPersonalLetterPlainText(
+  content: PersonalLetterContent,
+  guestName?: string,
+): string {
+  const greeting = applyNameMerge(content.greeting, guestName);
+  const body = applyNameMerge(content.body, guestName);
+  const lines = [
+    greeting,
+    '',
+    body,
+    '',
+    content.signoffName,
+    content.signoffTitle ?? '',
+    content.signoffOrg ?? '',
+    '',
+    INSTAGRAM_URL,
+  ].filter((line, i, arr) => line !== '' || (i > 0 && arr[i - 1] !== ''));
+
+  return lines.join('\n').replace(/\n{3,}/g, '\n\n').trim();
+}
+
+/** Branded HTML for founder letters / eve-of-event notes. */
+export function renderPersonalLetterEmail(
+  content: PersonalLetterContent,
+  guestName?: string,
+): string {
+  const personal = content.personalDelivery === true;
+  const centered = content.centered !== false;
+  const align = centered ? 'text-align:center;' : '';
+  const greeting = escapeHtml(applyNameMerge(content.greeting, guestName));
+  const signoffTitle = content.signoffTitle
+    ? `<p style="margin:4px 0 0;${type.bodySm}color:${colors.muted};">${escapeHtml(content.signoffTitle)}</p>`
+    : '';
+  const signoffOrg = content.signoffOrg
+    ? `<p style="margin:6px 0 0;${personal ? type.bodySm : type.label}color:${personal ? colors.muted : colors.accent};${personal ? '' : 'font-size:10px;letter-spacing:0.14em;'}">${escapeHtml(content.signoffOrg)}</p>`
+    : '';
+
+  const preheader =
+    !personal && content.preheader
+      ? `<div style="display:none;max-height:0;overflow:hidden;opacity:0;color:transparent;mso-hide:all;">
+        ${escapeHtml(content.preheader)}
+      </div>`
+      : '';
+
+  const heroAfterBody = content.heroAfterBody === true;
+  const heroImg = content.heroImageUrl
+    ? `<img
+              src="${escapeHtml(content.heroImageUrl)}"
+              alt="${escapeHtml(content.heroImageAlt ?? 'The Gathering — YOU & ME with Martell')}"
+              width="600"
+              border="0"
+              style="display:block;width:100%;max-width:600px;height:auto;margin:0 auto;border:0;outline:none;text-decoration:none;-ms-interpolation-mode:bicubic;"
+            />`
+    : '';
+
+  const heroTop = heroImg && !heroAfterBody
+    ? `<tr>
+          <td align="center" style="padding:0;line-height:0;font-size:0;">
+            ${heroImg}
+          </td>
+        </tr>`
+    : '';
+
+  const heroBottom = heroImg && heroAfterBody
+    ? `<div style="margin:28px 0 0;line-height:0;font-size:0;text-align:center;">
+            ${heroImg}
+          </div>`
+    : '';
+
+  const headerBlock = content.heroImageUrl && !heroAfterBody
+    ? ''
+    : `<tr>
+      <td style="padding:0 0 24px;text-align:center;">
+        <img
+          src="${LOGO_URL}"
+          alt="${eventTitleHtml()}"
+          width="56"
+          height="56"
+          style="display:inline-block;border-radius:50%;border:1px solid ${colors.border};padding:3px;background-color:#ffffff;"
+        />
+        <p style="margin:14px 0 0;${type.label}color:${colors.muted};letter-spacing:0.2em;">
+          ${eventTitleHtml()}
+        </p>
+      </td>
+    </tr>`;
+
+  return emailShell(
+    `
+    ${preheader}
+    ${headerBlock}
+    <tr>
+      <td style="background-color:#ffffff;border:1px solid ${colors.border};padding:0;">
+        <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0">
+          ${heroTop}
+          <tr>
+            <td style="padding:40px 36px 44px;${align}">
+              ${
+                personal
+                  ? ''
+                  : `<p style="margin:0 0 8px;${type.labelSm}color:${colors.muted};letter-spacing:0.2em;${align}">
+                ${EVENT_DATE_SHORT}
+              </p>`
+              }
+              <p style="margin:0 0 28px;${type.bodyLight}font-size:18px;color:${colors.text};${align}">
+                ${greeting}
+              </p>
+              ${letterBodyHtml(content.body, guestName, centered)}
+              ${heroBottom}
+              <p style="margin:32px 0 0;padding-top:28px;border-top:1px solid ${colors.border};${type.bodyLight}color:${colors.text};${align}">
+                <span style="${type.signoffName}font-size:18px;letter-spacing:0.08em;">${escapeHtml(content.signoffName)}</span>
+                ${signoffTitle}
+                ${signoffOrg}
+              </p>
+            </td>
+          </tr>
+        </table>
+      </td>
+    </tr>
+    ${
+      personal
+        ? emailInstagramFooter(true)
+        : emailInstagramFooter(false)
+    }
+  `,
+    content.subject,
+  );
+}
+
 /** Branded HTML for guest updates / reminders. */
 export function renderGuestBroadcastEmail(
   content: GuestBroadcastContent,
@@ -738,7 +929,7 @@ export function renderGuestBroadcastEmail(
           ${EVENT_DATE_LABEL}
         </p>
         <p style="margin:0;${type.labelSm}color:${colors.muted};">
-          <a href="https://www.instagram.com/youandmeafrica/" style="color:${colors.accent};text-decoration:none;font-weight:600;">@youandmeafrica</a>
+          <a href="${INSTAGRAM_URL}" style="color:${colors.accent};text-decoration:none;font-weight:600;">@youandmeafrica</a>
         </p>
       </td>
     </tr>

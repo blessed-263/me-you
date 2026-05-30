@@ -10,6 +10,8 @@ coverage/
 *-rsvps.csv
 rsvps.csv
 june-rsvps.csv
+all-may-rsvp-emails.csv
 *-recipients-preview.csv
-*-email-preview.html
-guest-broadcast-preview.html
+after-party-tickets.csv
+# Regenerate: npm run email:preview
+email-preview.html

@@ -1,7 +1,14 @@
 import { existsSync, readFileSync } from 'node:fs';
 import path from 'node:path';
-import type { GuestBroadcastContent } from './emailTemplates.js';
-import { renderGuestBroadcastEmail } from './emailTemplates.js';
+import type {
+  GuestBroadcastContent,
+  PersonalLetterContent,
+} from './emailTemplates.js';
+import {
+  renderGuestBroadcastEmail,
+  renderPersonalLetterEmail,
+  renderPersonalLetterPlainText,
+} from './emailTemplates.js';
 
 const ROOT = path.resolve(import.meta.dirname, '..');
 
@@ -28,18 +35,21 @@ const INLINE_HERO_FILES: Record<string, { file: string; cid: string }> = {
     file: 'public/images/email-hero-youandme.png',
     cid: 'hero-youandme',
   },
+  'email-may-gathering-poster.png': {
+    file: 'public/images/email-may-gathering-poster.png',
+    cid: 'hero-may-gathering',
+  },
 };
 
-/** Inline local hero images as CID attachments so mobile inboxes load them reliably. */
-export function prepareGuestEmailSend(
-  content: GuestBroadcastContent,
-  guestName?: string,
-): { html: string; attachments: GuestEmailAttachment[] } {
+function inlineHeroAttachments(heroImageUrl: string): {
+  heroImageUrl: string;
+  attachments: GuestEmailAttachment[];
+} {
   const attachments: GuestEmailAttachment[] = [];
-  let heroImageUrl = content.heroImageUrl;
+  let url = heroImageUrl;
 
   for (const [needle, { file, cid }] of Object.entries(INLINE_HERO_FILES)) {
-    if (!heroImageUrl.includes(needle)) continue;
+    if (!url.includes(needle)) continue;
     const filePath = path.join(ROOT, file);
     if (!existsSync(filePath)) break;
     attachments.push({
@@ -47,9 +57,21 @@ export function prepareGuestEmailSend(
       content: readFileSync(filePath),
       contentId: cid,
     });
-    heroImageUrl = `cid:${cid}`;
+    url = `cid:${cid}`;
     break;
   }
+
+  return { heroImageUrl: url, attachments };
+}
+
+/** Inline local hero images as CID attachments so mobile inboxes load them reliably. */
+export function prepareGuestEmailSend(
+  content: GuestBroadcastContent,
+  guestName?: string,
+): { html: string; attachments: GuestEmailAttachment[] } {
+  const { heroImageUrl, attachments } = inlineHeroAttachments(
+    content.heroImageUrl,
+  );
 
   const html = renderGuestBroadcastEmail(
     { ...content, heroImageUrl },
@@ -57,4 +79,25 @@ export function prepareGuestEmailSend(
   );
 
   return { html, attachments };
+}
+
+export function preparePersonalLetterEmailSend(
+  content: PersonalLetterContent,
+  guestName?: string,
+): { html: string | null; text: string; attachments: GuestEmailAttachment[] } {
+  const text = renderPersonalLetterPlainText(content, guestName);
+
+  if (content.plainTextOnly) {
+    return { html: null, text, attachments: [] };
+  }
+
+  const heroImageUrl = content.heroImageUrl ?? '';
+  const { heroImageUrl: resolvedHero, attachments } = heroImageUrl
+    ? inlineHeroAttachments(heroImageUrl)
+    : { heroImageUrl: '', attachments: [] as GuestEmailAttachment[] };
+
+  const resolved = { ...content, heroImageUrl: resolvedHero || undefined };
+  const html = renderPersonalLetterEmail(resolved, guestName);
+
+  return { html, text, attachments };
 }

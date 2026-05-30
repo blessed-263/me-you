@@ -98,7 +98,7 @@ async function sendJuneRsvpEmails(payload: {
   await resend.emails.send({
     from,
     to: payload.email,
-    subject: 'YOU&ME — June RSVP confirmed',
+    subject: 'YOU&ME — September RSVP confirmed',
     html: renderJuneRsvpConfirmationEmail(safeName),
   });
 
@@ -106,7 +106,7 @@ async function sendJuneRsvpEmails(payload: {
     await resend.emails.send({
       from,
       to: notifyTo,
-      subject: `New June RSVP — ${payload.fullName}`,
+      subject: `New September RSVP — ${payload.fullName}`,
       html: renderJuneRsvpNotifyEmail(safeName, payload.email, notifyRows),
     });
   }

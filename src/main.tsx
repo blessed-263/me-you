@@ -10,11 +10,11 @@ import './index.css';
 function Root() {
   const pathname = window.location.pathname.replace(/\/$/, '') || '/';
   const sessionId = sessionFromPath(pathname);
-  const isJuneRsvp = pathname === '/june';
+  const isFutureRsvp = pathname === '/september' || pathname === '/june';
 
   return (
     <>
-      {isJuneRsvp ? (
+      {isFutureRsvp ? (
         <JuneRsvpPage />
       ) : sessionId ? (
         <RsvpPage session={RSVP_SESSIONS[sessionId]} />

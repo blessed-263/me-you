@@ -87,7 +87,7 @@ export default function JuneRsvpPage() {
         <div className="space-y-8">
           <header className="space-y-3 text-center">
             <p className="text-[10px] font-semibold uppercase tracking-[0.16em] text-brand-accent">
-              June 2026
+              September 2026
             </p>
             <h1 className="text-[2rem] font-semibold leading-tight text-brand-text md:text-[2.25rem]">
               RSVP for the next one
@@ -114,7 +114,7 @@ export default function JuneRsvpPage() {
             <div className="rounded-sm border border-brand-border bg-brand-surface/50 px-6 py-10 text-center">
               <p className="text-xl font-semibold text-brand-text">Already registered.</p>
               <p className="mt-3 text-[15px] text-brand-muted">
-                This email already has a June RSVP.
+                This email already has a September RSVP.
               </p>
             </div>
           ) : (
