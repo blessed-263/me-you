@@ -20,6 +20,7 @@
     "test:email": "npx tsx scripts/test-resend-email.ts",
     "db:migrate": "npx tsx scripts/migrate-db.ts",
     "export:rsvps": "npx tsx scripts/export-rsvps.ts",
+    "export:june-rsvps": "npx tsx scripts/export-june-rsvps.ts",
     "email:optimize-hero": "npx tsx scripts/optimize-email-hero.ts",
     "email:preview:harvest-table": "npx tsx scripts/preview-harvest-table-email.ts",
     "email:send-test:harvest-table": "npx tsx scripts/send-harvest-table-email.ts",

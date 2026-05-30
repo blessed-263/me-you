@@ -360,6 +360,88 @@ export function renderRsvpNotifyEmail(
   );
 }
 
+export const JUNE_RSVP_LABEL = 'June gathering';
+export const JUNE_RSVP_DATE_LABEL = 'June 2026';
+
+export function renderJuneRsvpConfirmationEmail(safeName: string): string {
+  const pageTitle = `${JUNE_RSVP_LABEL} — RSVP confirmed`;
+
+  return emailShell(
+    `
+    <tr>
+      <td style="padding:0 0 24px;text-align:center;">
+        <img src="${LOGO_URL}" alt="${eventTitleHtml()}" width="48" height="48" style="display:inline-block;border-radius:50%;border:1px solid ${colors.border};padding:2px;" />
+        <p style="margin:16px 0 0;${type.label}color:${colors.muted};">
+          ${eventTitleHtml()}
+        </p>
+      </td>
+    </tr>
+    <tr>
+      <td style="background-color:#ffffff;border:1px solid ${colors.border};padding:36px 28px;text-align:center;">
+        <p style="margin:0 0 12px;${type.label}color:${colors.accent};">
+          RSVP confirmed
+        </p>
+        <h1 style="margin:0 0 16px;${type.headingHero}font-size:36px;color:${colors.text};">
+          Thank you, ${safeName}
+        </h1>
+        <p style="margin:0 0 8px;${type.bodyLight}color:${colors.muted};">
+          You're on the list for our <strong style="font-weight:600;color:${colors.text};">${escapeHtml(JUNE_RSVP_LABEL)}</strong>.
+        </p>
+        <p style="margin:0;${type.bodySm}color:${colors.muted};">
+          ${JUNE_RSVP_DATE_LABEL} — details to follow.
+        </p>
+      </td>
+    </tr>
+    <tr>
+      <td style="padding:24px 12px 0;text-align:center;">
+        <p style="margin:0;${type.bodySm}color:${colors.muted};">
+          ${eventTitleHtml()}
+        </p>
+      </td>
+    </tr>
+  `,
+    pageTitle,
+  );
+}
+
+export function renderJuneRsvpNotifyEmail(
+  safeName: string,
+  email: string,
+  detailRows: string,
+): string {
+  const pageTitle = `New June RSVP — ${safeName}`;
+
+  return emailShell(
+    `
+    <tr>
+      <td style="padding:0 0 16px;">
+        <p style="margin:0;${type.label}color:${colors.accent};">
+          New June RSVP · ${eventTitleHtml()}
+        </p>
+        <h1 style="margin:10px 0 0;${type.headingSection}font-size:32px;color:${colors.text};">
+          ${safeName}
+        </h1>
+      </td>
+    </tr>
+    <tr>
+      <td style="background-color:#ffffff;border:1px solid ${colors.border};padding:24px 22px;">
+        <p style="margin:0 0 16px;${type.labelSm}color:${colors.accent};">
+          Guest details
+        </p>
+        <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="${type.body}color:${colors.text};">
+          <tr>
+            <td style="padding:10px 0;border-bottom:1px solid ${colors.border};${type.labelSm}color:${colors.muted};width:32%;vertical-align:top;">Email</td>
+            <td style="padding:10px 0;border-bottom:1px solid ${colors.border};font-family:${sans};font-size:15px;font-weight:400;vertical-align:top;">${escapeHtml(email)}</td>
+          </tr>
+          ${detailRows}
+        </table>
+      </td>
+    </tr>
+  `,
+    pageTitle,
+  );
+}
+
 export function notifyDetailRow(
   label: string,
   value: string,

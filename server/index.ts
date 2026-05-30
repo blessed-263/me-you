@@ -3,6 +3,7 @@ import express from 'express';
 import path from 'path';
 import { fileURLToPath } from 'url';
 import { checkDatabase, getPool, logDatabaseConfig } from './db.js';
+import { createJuneRsvpHandler, ensureJuneRsvpTable } from './juneRsvp.js';
 import { createRsvpHandler, ensureRsvpTable } from './rsvp.js';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
@@ -82,6 +83,7 @@ app.get('/api/health', healthHandler);
 app.get('/health', healthHandler);
 
 app.post('/api/rsvp', createRsvpHandler({ getPool }));
+app.post('/api/rsvp/june', createJuneRsvpHandler({ getPool }));
 
 app.post('/api/newsletter', async (req, res) => {
   const p = getPool();
@@ -143,6 +145,7 @@ async function main() {
         service: 'You & Me API',
         health: '/api/health',
         rsvp: 'POST /api/rsvp',
+        juneRsvp: 'POST /api/rsvp/june',
       });
     });
     if (isProd && allowedOrigins.length === 0) {
@@ -181,6 +184,7 @@ async function main() {
   try {
     await ensureNewsletterTable();
     await ensureRsvpTable(getPool);
+    await ensureJuneRsvpTable(getPool);
   } catch (err) {
     console.error('[server] Database setup failed (API stays up):', err);
   }

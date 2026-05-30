@@ -9,6 +9,7 @@ coverage/
 !.env.example
 *-rsvps.csv
 rsvps.csv
+june-rsvps.csv
 *-recipients-preview.csv
 *-email-preview.html
 guest-broadcast-preview.html

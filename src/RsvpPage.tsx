@@ -33,21 +33,27 @@ function StatusCard({
 }
 
 function FullBookedMessage({ session }: { session: RsvpSession }) {
-  const stayTuned = session.id === 'after-party-lunch';
+  const showStayTuned = session.id === 'after-party-lunch';
 
   return (
     <div className="flex min-h-[50vh] flex-col items-center justify-center px-6 py-16 text-center">
       <p className="text-[1.85rem] font-semibold leading-tight text-brand-text md:text-[2rem]">
         {session.title} is at capacity
       </p>
-      {stayTuned && (
+      {showStayTuned && (
         <p className="mt-4 max-w-sm text-[15px] font-normal leading-[1.7] text-brand-muted">
           Stay tuned for the next date.
         </p>
       )}
       <a
+        href="/june"
+        className="mt-8 inline-block bg-brand-text px-10 py-4 text-[11px] font-semibold uppercase tracking-[0.14em] text-brand-bg transition-colors hover:bg-brand-text/90 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand-accent"
+      >
+        RSVP for June
+      </a>
+      <a
         href="/"
-        className="mt-8 inline-block text-[10px] font-semibold uppercase tracking-[0.16em] text-brand-accent transition-colors hover:text-brand-text focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand-accent"
+        className="mt-4 inline-block text-[10px] font-semibold uppercase tracking-[0.16em] text-brand-accent transition-colors hover:text-brand-text focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand-accent"
       >
         Back to site
       </a>
