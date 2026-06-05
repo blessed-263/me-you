@@ -6,6 +6,7 @@ import type {
   MockOrganizerTicket,
   MockRevenue,
 } from './mockOrganizer.ts';
+import { formatOrganizerDateTime } from './organizerDates.ts';
 import { formatPrice } from './mockTickets.ts';
 
 function stamp(): string {
@@ -23,7 +24,7 @@ export function exportOrdersCsv(orders: MockOrganizerOrder[]): void {
         o.buyerPhone,
         o.total,
         o.status,
-        o.paidAt,
+        formatOrganizerDateTime(o.paidAt),
         o.items.map((i) => `${i.ticketName} x${i.quantity}`).join('; '),
         o.holderNames.join('; '),
       ]),

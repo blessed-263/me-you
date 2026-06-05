@@ -1,4 +1,5 @@
 import { AMPEX, fetchStoreJson, getOrganizerToken, setOrganizerToken } from './ampexConfig.ts';
+import { prepareTicketMixRows, sortMonthlySales, type DashboardPeriod } from './organizerListUtils.ts';
 import { mapBackendEventToEdition, zarFromCents } from './eventMappers.ts';
 import type { EventEdition } from './eventEditions.ts';
 import type {
@@ -40,7 +41,7 @@ export async function listOrganizerEvents(): Promise<EventEdition[]> {
 
 export async function getOrganizerDashboard(
   eventId?: string,
-  period = '6months',
+  period: DashboardPeriod = '6months',
 ): Promise<MockDashboardStats> {
   const params = new URLSearchParams({ period });
   if (eventId) params.set('event_id', eventId);
@@ -62,14 +63,18 @@ export async function getOrganizerDashboard(
     ticketsActive: active,
     ticketsUsed: used,
     checkInRate,
-    monthlySales: (data.revenue_by_month ?? []).map((m) => ({
-      month: m.month,
-      amount: m.revenue,
-    })),
-    ticketTypeDistribution: (data.ticket_type_distribution ?? []).map((t) => ({
-      name: t.name,
-      count: t.count,
-    })),
+    monthlySales: sortMonthlySales(
+      (data.revenue_by_month ?? []).map((m) => ({
+        month: m.month,
+        amount: m.revenue,
+      })),
+    ),
+    ticketTypeDistribution: prepareTicketMixRows(
+      (data.ticket_type_distribution ?? []).map((t) => ({
+        name: t.name,
+        count: t.count,
+      })),
+    ).map((row) => ({ name: row.label, count: row.value })),
   };
 }
 
@@ -77,6 +82,14 @@ function mapOrderStatus(display: string): OrganizerOrderStatus {
   if (display === 'completed') return 'completed';
   if (display === 'refunded') return 'refunded';
   return 'pending';
+}
+
+export async function markOrganizerOrderComplete(orderId: string): Promise<OrganizerOrderStatus> {
+  const data = await fetchStoreJson<{ display_status?: string }>(
+    `/store/organizers/orders/${encodeURIComponent(orderId)}/complete`,
+    { method: 'POST' },
+  );
+  return mapOrderStatus(String(data.display_status ?? 'completed'));
 }
 
 export async function getOrganizerOrders(eventId?: string): Promise<MockOrganizerOrder[]> {
@@ -96,7 +109,7 @@ export async function getOrganizerOrders(eventId?: string): Promise<MockOrganize
         eventId ??
         String((items[0]?.metadata as Record<string, unknown> | undefined)?.event_id ?? ''),
       reference: String(o.display_id ?? o.id ?? ''),
-      paidAt: String(o.created_at ?? new Date().toISOString()),
+      paidAt: String(o.paid_at ?? o.created_at ?? ''),
       buyerName: holderNames[0] ?? String(o.email ?? 'Guest'),
       buyerEmail: String(o.email ?? ''),
       buyerPhone: String((o.shipping_address as Record<string, unknown> | undefined)?.phone ?? ''),

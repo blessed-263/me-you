@@ -46,7 +46,7 @@ export default function OrganizerDonutChart({ segments, centerLabel, centerValue
           const pct = Math.round((seg.value / total) * 100);
           const color = seg.color ?? PALETTE[i % PALETTE.length];
           return (
-            <li key={seg.label} className="flex items-center gap-3 text-sm">
+            <li key={`${seg.label}-${i}`} className="flex items-center gap-3 text-sm">
               <span className="w-2.5 h-2.5 shrink-0 rounded-full" style={{ background: color }} aria-hidden />
               <span className="flex-1 text-brand-text font-medium truncate">{seg.label}</span>
               <span className="tabular-nums text-brand-muted shrink-0">

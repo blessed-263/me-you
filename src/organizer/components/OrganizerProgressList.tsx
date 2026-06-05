@@ -10,10 +10,10 @@ export default function OrganizerProgressList({ rows, total }: OrganizerProgress
 
   return (
     <ul className="space-y-5">
-      {rows.map((row) => {
+      {rows.map((row, index) => {
         const pct = sum > 0 ? Math.round((row.value / sum) * 100) : 0;
         return (
-          <li key={row.label}>
+          <li key={`${row.label}-${index}`}>
             <div className="flex justify-between text-sm mb-2 gap-3">
               <div className="min-w-0">
                 <span className="text-brand-text font-medium">{row.label}</span>

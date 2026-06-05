@@ -1,6 +1,7 @@
 import { useState, type FormEvent } from 'react';
 import { loginOrganizerAsync } from '../lib/organizerAuth.ts';
 import { useMockData } from '../lib/dataSource.ts';
+import PasswordInput from '../components/PasswordInput.tsx';
 import { ORGANIZER_ROUTES } from '../lib/mockOrganizer.ts';
 
 export default function OrganizerLoginPage() {
@@ -93,10 +94,8 @@ export default function OrganizerLoginPage() {
               </div>
               <div>
                 <label htmlFor="org-password" className="rsvp-label">Password</label>
-                <input
+                <PasswordInput
                   id="org-password"
-                  type="password"
-                  className="rsvp-field"
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
                   autoComplete="current-password"

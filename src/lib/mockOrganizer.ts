@@ -70,6 +70,34 @@ export type MockRevenue = {
 };
 
 const EXTRA_ORDERS_KEY = 'yme_organizer_extra_orders';
+const ORDER_STATUS_OVERRIDES_KEY = 'yme_organizer_order_status_overrides';
+
+function loadOrderStatusOverrides(): Record<string, OrganizerOrderStatus> {
+  try {
+    const raw = localStorage.getItem(ORDER_STATUS_OVERRIDES_KEY);
+    if (!raw) return {};
+    return JSON.parse(raw) as Record<string, OrganizerOrderStatus>;
+  } catch {
+    return {};
+  }
+}
+
+function saveOrderStatusOverrides(overrides: Record<string, OrganizerOrderStatus>): void {
+  localStorage.setItem(ORDER_STATUS_OVERRIDES_KEY, JSON.stringify(overrides));
+}
+
+export function markMockOrganizerOrderComplete(orderId: string): OrganizerOrderStatus {
+  const overrides = loadOrderStatusOverrides();
+  overrides[orderId] = 'completed';
+  saveOrderStatusOverrides(overrides);
+  return 'completed';
+}
+
+function applyOrderStatusOverride(order: MockOrganizerOrder): MockOrganizerOrder {
+  const override = loadOrderStatusOverrides()[order.id];
+  return override ? { ...order, status: override } : order;
+}
+
 const GATHERING_LIVE = MOCK_EVENT.id;
 const POPUP_LIVE = '01KQVZ98LIVEPOPUP2026';
 const EDITION_2025_ENDED = '01KQVZ98ENDED2025';
@@ -279,7 +307,7 @@ export function getOrganizerOrders(eventId?: string): MockOrganizerOrder[] {
   for (const o of [...extra, ...STATIC_ORDERS.map(normalizeOrder)]) {
     if (seen.has(o.id)) continue;
     seen.add(o.id);
-    merged.push(o);
+    merged.push(applyOrderStatusOverride(o));
   }
   const sorted = merged.sort((a, b) => new Date(b.paidAt).getTime() - new Date(a.paidAt).getTime());
   if (!eventId) return sorted;
@@ -411,10 +439,12 @@ function computeStats(eventId: string): MockDashboardStats {
   const byMonth: Record<string, number> = {};
   for (const o of completed) {
     const d = new Date(o.paidAt);
-    const key = d.toLocaleDateString('en-GB', { month: 'short' });
+    const key = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`;
     byMonth[key] = (byMonth[key] ?? 0) + o.total;
   }
-  const monthlySales = Object.entries(byMonth).map(([month, amount]) => ({ month, amount }));
+  const monthlySales = Object.entries(byMonth)
+    .sort(([a], [b]) => a.localeCompare(b))
+    .map(([month, amount]) => ({ month, amount }));
 
   return {
     revenueTotal,
@@ -423,7 +453,9 @@ function computeStats(eventId: string): MockDashboardStats {
     ticketsUsed: used,
     checkInRate,
     monthlySales: monthlySales.length > 0 ? monthlySales : [{ month: '—', amount: 0 }],
-    ticketTypeDistribution: Object.entries(typeCounts).map(([name, count]) => ({ name, count })),
+    ticketTypeDistribution: Object.entries(typeCounts)
+      .map(([name, count]) => ({ name, count }))
+      .sort((a, b) => b.count - a.count || a.name.localeCompare(b.name)),
   };
 }
 

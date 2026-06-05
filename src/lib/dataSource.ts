@@ -10,6 +10,7 @@ import {
   getMockRevenue as mockRevenue,
   getOrganizerAttendees as mockAttendees,
   getOrganizerOrders as mockOrders,
+  markMockOrganizerOrderComplete,
   getOrganizerTickets as mockTickets,
 } from './mockOrganizer.ts';
 import type {
@@ -18,9 +19,11 @@ import type {
   MockOrganizerOrder,
   MockOrganizerTicket,
   MockRevenue,
+  OrganizerOrderStatus,
 } from './mockOrganizer.ts';
 import * as storeApi from './storeApi.ts';
 import * as organizerApi from './organizerApi.ts';
+import type { DashboardPeriod } from './organizerListUtils.ts';
 import type { ApiTicketType } from './eventMappers.ts';
 import type { UserTicketView } from './storeApi.ts';
 import { getAttendeeOrders } from './attendeeTickets.ts';
@@ -65,22 +68,30 @@ export async function fetchOrganizerEditions(): Promise<EventEdition[]> {
   return organizerApi.listOrganizerEvents();
 }
 
-export async function fetchDashboardStats(eventId: string): Promise<MockDashboardStats> {
+export async function fetchDashboardStats(
+  eventId: string,
+  period: DashboardPeriod = '6months',
+): Promise<MockDashboardStats> {
   if (useMockData) return mockDashboardStats(eventId);
-  return organizerApi.getOrganizerDashboard(eventId);
+  return organizerApi.getOrganizerDashboard(eventId, period);
 }
 
-export async function fetchOrganizerOrders(eventId: string): Promise<MockOrganizerOrder[]> {
+export async function fetchOrganizerOrders(eventId?: string): Promise<MockOrganizerOrder[]> {
   if (useMockData) return mockOrders(eventId);
   return organizerApi.getOrganizerOrders(eventId);
 }
 
-export async function fetchOrganizerTickets(eventId: string): Promise<MockOrganizerTicket[]> {
+export async function markOrganizerOrderComplete(orderId: string): Promise<OrganizerOrderStatus> {
+  if (useMockData) return markMockOrganizerOrderComplete(orderId);
+  return organizerApi.markOrganizerOrderComplete(orderId);
+}
+
+export async function fetchOrganizerTickets(eventId?: string): Promise<MockOrganizerTicket[]> {
   if (useMockData) return mockTickets(eventId);
   return organizerApi.getOrganizerTicketsList(eventId);
 }
 
-export async function fetchOrganizerAttendees(eventId: string): Promise<MockAttendee[]> {
+export async function fetchOrganizerAttendees(eventId?: string): Promise<MockAttendee[]> {
   if (useMockData) return mockAttendees(eventId);
   return organizerApi.getOrganizerAttendeesList(eventId);
 }

@@ -1,4 +1,4 @@
-type Bar = { label: string; value: number; sublabel?: string };
+type Bar = { id?: string; label: string; value: number; sublabel?: string };
 
 type OrganizerBarChartProps = {
   bars: Bar[];
@@ -15,8 +15,8 @@ export default function OrganizerBarChart({
 
   return (
     <div className={`flex items-end gap-4 md:gap-6 h-44 px-1 ${className}`}>
-      {bars.map((bar) => (
-        <div key={bar.label} className="flex-1 flex flex-col items-center gap-3 h-full justify-end min-w-0">
+      {bars.map((bar, index) => (
+        <div key={bar.id ?? `${bar.label}-${index}`} className="flex-1 flex flex-col items-center gap-3 h-full justify-end min-w-0">
           <div
             className="w-full max-w-[72px] bg-brand-accent rounded-t-[2px] min-h-[6px] transition-all shadow-sm"
             style={{ height: `${Math.max(8, Math.round((bar.value / max) * 100))}%` }}

@@ -9,6 +9,7 @@ import {
 import { useMockData } from '../lib/dataSource.ts';
 import { resendVerification } from '../lib/storeApi.ts';
 import { TICKETS_BASE } from '../lib/mockCheckout.ts';
+import PasswordInput from '../components/PasswordInput.tsx';
 import TicketsLayout from './TicketsLayout.tsx';
 
 type Mode = 'signin' | 'register';
@@ -199,10 +200,8 @@ export default function AttendeeLoginPage() {
           ) : null}
           <div>
             <label htmlFor="att-password" className="rsvp-label">Password</label>
-            <input
+            <PasswordInput
               id="att-password"
-              type="password"
-              className="rsvp-field"
               value={password}
               onChange={(e) => setPassword(e.target.value)}
               autoComplete={mode === 'signin' ? 'current-password' : 'new-password'}
