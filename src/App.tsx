@@ -23,48 +23,19 @@ const marqueeImages: { src: string; alt: string }[] = [
   { src: '/images/martell-bottles.png', alt: 'Martell selection' },
 ];
 
-function Countdown() {
-  const targetDate = new Date('2026-05-31T11:00:00+02:00').getTime();
-  const [timeLeft, setTimeLeft] = useState({ days: 0, hours: 0, minutes: 0, seconds: 0 });
-
-  useEffect(() => {
-    const interval = setInterval(() => {
-      const now = new Date().getTime();
-      const distance = targetDate - now;
-
-      if (distance < 0) {
-        clearInterval(interval);
-        return;
-      }
-
-      setTimeLeft({
-        days: Math.floor(distance / (1000 * 60 * 60 * 24)),
-        hours: Math.floor((distance % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60)),
-        minutes: Math.floor((distance % (1000 * 60 * 60)) / (1000 * 60)),
-        seconds: Math.floor((distance % (1000 * 60)) / 1000)
-      });
-    }, 1000);
-    return () => clearInterval(interval);
-  }, [targetDate]);
+function EditionInfinity() {
+  const slots = ['Days', 'Hours', 'Minutes', 'Seconds'] as const;
 
   return (
     <div className="flex gap-4 md:gap-8 justify-center items-center text-center mt-12">
-      <div className="flex flex-col items-center min-w-[80px]">
-        <span className="font-serif text-4xl md:text-6xl text-brand-text">{timeLeft.days}</span>
-        <span className="text-[9px] uppercase tracking-[0.2em] text-brand-muted mt-4">Days</span>
-      </div>
-      <div className="flex flex-col items-center min-w-[80px]">
-        <span className="font-serif text-4xl md:text-6xl text-brand-text">{timeLeft.hours}</span>
-        <span className="text-[9px] uppercase tracking-[0.2em] text-brand-muted mt-4">Hours</span>
-      </div>
-      <div className="flex flex-col items-center min-w-[80px]">
-        <span className="font-serif text-4xl md:text-6xl text-brand-text">{timeLeft.minutes}</span>
-        <span className="text-[9px] uppercase tracking-[0.2em] text-brand-muted mt-4">Minutes</span>
-      </div>
-      <div className="flex flex-col items-center min-w-[80px]">
-        <span className="font-serif text-4xl md:text-6xl text-brand-text">{timeLeft.seconds}</span>
-        <span className="text-[9px] uppercase tracking-[0.2em] text-brand-muted mt-4">Seconds</span>
-      </div>
+      {slots.map((label) => (
+        <div key={label} className="flex flex-col items-center min-w-[80px]">
+          <span className="font-serif text-4xl md:text-6xl text-brand-text leading-none" aria-hidden>
+            ∞
+          </span>
+          <span className="text-[9px] uppercase tracking-[0.2em] text-brand-muted mt-4">{label}</span>
+        </div>
+      ))}
     </div>
   );
 }
@@ -357,7 +328,7 @@ export default function App() {
         </div>
       </section>
 
-      {/* Countdown Section */}
+      {/* Second edition — next gathering */}
       <section id="countdown" className="py-20 md:py-32 px-6 relative bg-brand-surface border-y border-brand-border">
         <div className="max-w-3xl mx-auto relative z-10">
           <div className="text-center mb-16">
@@ -365,15 +336,18 @@ export default function App() {
               initial={{ opacity: 0, y: 20 }}
               whileInView={{ opacity: 1, y: 0 }}
               viewport={{ once: true }}
-              className="font-serif text-3xl md:text-5xl font-semibold tracking-tight mb-6 text-brand-text"
+              className="font-serif text-3xl md:text-5xl font-semibold tracking-tight mb-6 text-brand-text text-balance"
             >
-              The Second edition is ready for the <span className="text-brand-text">31st of May.</span>
+              The Second edition has come and gone.
             </motion.h2>
-            <p className="text-[10px] uppercase tracking-[0.16em] font-semibold text-brand-accent">
-              Countdown to doors opening at 11:00 AM:
+            <p className="text-sm md:text-base font-light text-brand-muted leading-relaxed max-w-xl mx-auto">
+              Thank you for showing up. The next gathering is already on its way — details coming soon.
+            </p>
+            <p className="mt-6 text-[10px] uppercase tracking-[0.16em] font-semibold text-brand-accent">
+              Until then
             </p>
           </div>
-          <Countdown />
+          <EditionInfinity />
         </div>
       </section>
 
