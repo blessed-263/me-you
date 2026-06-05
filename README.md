@@ -82,6 +82,7 @@ Use **Vercel** for the React site and **Railway** for the API, Postgres, and Res
 | -------- | ------- |
 | `DATABASE_URL` | Reference from Postgres plugin |
 | `ALLOWED_ORIGINS` | `https://your-site.vercel.app,https://www.youandmeafrica.com` |
+| `FRONTEND_URL` | `https://www.youandmeafrica.com` (email image URLs) |
 | `RESEND_API_KEY` | From Resend |
 | `RESEND_FROM_EMAIL` | `You & Me <rsvp@events.youandmeafrica.com>` |
 | `RSVP_NOTIFY_EMAIL` | Your inbox |
@@ -164,7 +165,7 @@ Set `VITE_USE_MOCK_DATA` in `.env`:
 | `VITE_MEDUSA_PUBLISHABLE_KEY` | Yes | Publishable API key on all `/store/*` calls |
 | `VITE_MEDUSA_REGION_ID` | Recommended | Skips region lookup at checkout |
 | `VITE_YME_ORGANIZER_ID` | Yes | Filters public events to You & Me organizer |
-| `VITE_AMPEX_FRONTEND_URL` | No | Link for “Manage events on AmpEx” (default `https://www.ampex.store`) |
+| `VITE_AMPEX_FRONTEND_URL` | Yes (live) | AmpEx organizer portal link for “Manage events on AmpEx” |
 
 `VITE_API_URL` remains for RSVP/assistant Express API only (separate from Medusa).
 
@@ -204,8 +205,9 @@ Before setting `VITE_USE_MOCK_DATA=false`:
 2. At least one **published** event with ticket variants (created via ampex-frontend)
 3. Publishable API key + region id configured
 4. Paystack callback URL includes your me-you domain + `/tickets/payment/callback`
-5. me-you origin in backend `ALLOWED_ORIGINS` (`youandmeafrica.com`, `localhost:3000`)
-6. Medusa backend running (e.g. port 9000)
+5. me-you origin in AmpEx backend env: `STORE_CORS` and/or `ALLOWED_ORIGINS` (include `https://www.youandmeafrica.com` and dev localhost origins)
+6. `FRONTEND_URL` on AmpEx backend set to your me-you site (email links, Paystack callback)
+7. Medusa backend running (e.g. port 9000)
 
 **Local smoke test:**
 

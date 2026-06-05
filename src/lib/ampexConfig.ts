@@ -7,7 +7,7 @@ export const AMPEX = {
   ORGANIZER_ID: (import.meta.env.VITE_YME_ORGANIZER_ID as string | undefined) ?? '',
   CURRENCY_CODE: (import.meta.env.VITE_MEDUSA_CURRENCY_CODE as string | undefined) ?? 'ZAR',
   AMPEX_FRONTEND_URL:
-    (import.meta.env.VITE_AMPEX_FRONTEND_URL as string | undefined) ?? 'https://www.ampex.store',
+    (import.meta.env.VITE_AMPEX_FRONTEND_URL as string | undefined)?.replace(/\/$/, '') ?? '',
   USE_MOCK_DATA: ((import.meta.env.VITE_USE_MOCK_DATA as string | undefined) ?? 'true') === 'true',
 } as const;
 

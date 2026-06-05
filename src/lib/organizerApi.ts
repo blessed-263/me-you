@@ -260,6 +260,7 @@ export async function getOrganizerRevenue(
 }
 
 export function organizerManageEventsUrl(): string {
+  if (!AMPEX.AMPEX_FRONTEND_URL) return '';
   return `${AMPEX.AMPEX_FRONTEND_URL}/organizer/events`;
 }
 

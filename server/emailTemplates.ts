@@ -45,7 +45,9 @@ const type = {
 const FONTS_URL =
   'https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,500;0,600;1,300;1,400;1,500&family=Montserrat:wght@300;400;500;600&display=swap';
 
-const SITE_ORIGIN = 'https://www.youandmeafrica.com';
+const SITE_ORIGIN = (process.env.FRONTEND_URL ?? process.env.SITE_URL ?? '')
+  .trim()
+  .replace(/\/$/, '');
 const LOGO_URL = `${SITE_ORIGIN}/favicon.png`;
 export const EVENT_TITLE = 'YOU&ME with Martell';
 
