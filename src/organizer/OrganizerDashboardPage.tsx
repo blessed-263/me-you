@@ -39,7 +39,7 @@ function EventCharts({
   stats: MockDashboardStats;
   editionLabel: string;
 }) {
-  const monthlySorted = sortMonthlySales(stats.monthlySales);
+  const monthlySorted = sortMonthlySales(stats.monthlySales).filter((m) => m.amount > 0);
   const ticketMix = prepareTicketMixRows(stats.ticketTypeDistribution);
   const ticketMixTotal = ticketMix.reduce((sum, row) => sum + row.value, 0);
   const hasTicketMix = ticketMix.length > 0;
@@ -57,7 +57,6 @@ function EventCharts({
                 id: m.month,
                 label: formatDashboardMonthLabel(m.month),
                 value: m.amount,
-                sublabel: formatZar(m.amount),
               }))}
               formatValue={(n) => formatZar(n)}
             />

@@ -28,6 +28,7 @@ export default function OrganizerAttendeesPage() {
   const [loading, setLoading] = useState(true);
   const [query, setQuery] = useState('');
   const [checkInFilter, setCheckInFilter] = useState<CheckInFilter>('all');
+  const [eventFilter, setEventFilter] = useState('all');
   const [typeFilter, setTypeFilter] = useState('all');
   const [eventsPage, setEventsPage] = useState(1);
   const [itemPages, setItemPages] = useState<Record<string, number>>({});
@@ -40,14 +41,22 @@ export default function OrganizerAttendeesPage() {
       .finally(() => setLoading(false));
   }, []);
 
-  const ticketTypes = useMemo(
-    () => ['all', ...Array.from(new Set(all.map((a) => a.ticketType))).sort()],
-    [all],
-  );
+  const attendeesForEvent = useMemo((): MockAttendee[] => {
+    if (eventFilter === 'all') return all;
+    return all.filter((a) => a.eventId === eventFilter);
+  }, [all, eventFilter]);
+
+  const ticketTypes = useMemo(() => {
+    if (eventFilter === 'all') return ['all'];
+    return [
+      'all',
+      ...Array.from(new Set(attendeesForEvent.map((a) => a.ticketType))).sort(),
+    ];
+  }, [attendeesForEvent, eventFilter]);
 
   const filtered = useMemo((): MockAttendee[] => {
     const q = query.trim().toLowerCase();
-    return all.filter((a) => {
+    return attendeesForEvent.filter((a) => {
       if (checkInFilter === 'checked-in' && !a.checkedIn) return false;
       if (checkInFilter === 'not-checked-in' && a.checkedIn) return false;
       if (typeFilter !== 'all' && a.ticketType !== typeFilter) return false;
@@ -59,7 +68,7 @@ export default function OrganizerAttendeesPage() {
         a.orderReference.toLowerCase().includes(q)
       );
     });
-  }, [all, query, checkInFilter, typeFilter]);
+  }, [attendeesForEvent, query, checkInFilter, typeFilter]);
 
   const groups = useMemo(
     (): EventGrouped<MockAttendee>[] => groupRecordsByEvent<MockAttendee>(filtered, liveEditions),
@@ -75,7 +84,11 @@ export default function OrganizerAttendeesPage() {
     setEventsPage(1);
     setItemPages({});
     setExpandedId(null);
-  }, [query, checkInFilter, typeFilter]);
+  }, [query, checkInFilter, eventFilter, typeFilter]);
+
+  useEffect(() => {
+    setTypeFilter('all');
+  }, [eventFilter]);
 
   const getItemPage = (eventId: string) => itemPages[eventId] ?? 1;
   const setItemPage = (eventId: string, page: number) => {
@@ -93,6 +106,18 @@ export default function OrganizerAttendeesPage() {
         filters={
           <>
             <OrganizerSelect
+              label="Event"
+              value={eventFilter}
+              onChange={(e) => setEventFilter(e.target.value)}
+              options={[
+                { value: 'all', label: 'All editions' },
+                ...liveEditions.map((edition) => ({
+                  value: edition.id,
+                  label: `${edition.title} · ${edition.editionLabel}`,
+                })),
+              ]}
+            />
+            <OrganizerSelect
               label="Check-in"
               value={checkInFilter}
               onChange={(e) => setCheckInFilter(e.target.value as CheckInFilter)}
@@ -106,10 +131,15 @@ export default function OrganizerAttendeesPage() {
               label="Ticket type"
               value={typeFilter}
               onChange={(e) => setTypeFilter(e.target.value)}
-              options={ticketTypes.map((t) => ({
-                value: t,
-                label: t === 'all' ? 'All types' : t,
-              }))}
+              disabled={eventFilter === 'all'}
+              options={
+                eventFilter === 'all'
+                  ? [{ value: 'all', label: 'Select an event first' }]
+                  : ticketTypes.map((t) => ({
+                      value: t,
+                      label: t === 'all' ? 'All types' : t,
+                    }))
+              }
             />
           </>
         }

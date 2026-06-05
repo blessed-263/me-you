@@ -39,13 +39,26 @@ export function prepareTicketMixRows(
     .sort((a, b) => b.value - a.value || a.label.localeCompare(b.label));
 }
 
-export function formatDashboardMonthLabel(month: string): string {
-  const match = month.match(/^(\d{4})-(\d{2})$/);
-  if (match) {
-    const d = new Date(Number(match[1]), Number(match[2]) - 1, 1);
-    return d.toLocaleDateString('en-GB', { month: 'short', year: 'numeric' });
+export function formatDashboardMonthLabel(month: unknown): string {
+  if (month == null || month === '') return 'Unknown month';
+
+  const raw = String(month).trim();
+  if (!raw || raw === '—') return 'Unknown month';
+
+  const isoMonth = raw.match(/^(\d{4})-(\d{2})/);
+  if (isoMonth) {
+    const d = new Date(Number(isoMonth[1]), Number(isoMonth[2]) - 1, 1);
+    if (!Number.isNaN(d.getTime())) {
+      return d.toLocaleDateString('en-GB', { month: 'short', year: 'numeric' });
+    }
   }
-  return month;
+
+  const parsed = new Date(raw);
+  if (!Number.isNaN(parsed.getTime())) {
+    return parsed.toLocaleDateString('en-GB', { month: 'short', year: 'numeric' });
+  }
+
+  return raw;
 }
 
 export function paginate<T>(items: T[], page: number, pageSize: number) {

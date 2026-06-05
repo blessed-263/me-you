@@ -452,7 +452,7 @@ function computeStats(eventId: string): MockDashboardStats {
     ticketsActive: active,
     ticketsUsed: used,
     checkInRate,
-    monthlySales: monthlySales.length > 0 ? monthlySales : [{ month: '—', amount: 0 }],
+    monthlySales: monthlySales.length > 0 ? monthlySales : [],
     ticketTypeDistribution: Object.entries(typeCounts)
       .map(([name, count]) => ({ name, count }))
       .sort((a, b) => b.count - a.count || a.name.localeCompare(b.name)),

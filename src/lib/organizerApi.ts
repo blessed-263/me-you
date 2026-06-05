@@ -64,10 +64,12 @@ export async function getOrganizerDashboard(
     ticketsUsed: used,
     checkInRate,
     monthlySales: sortMonthlySales(
-      (data.revenue_by_month ?? []).map((m) => ({
-        month: m.month,
-        amount: m.revenue,
-      })),
+      (data.revenue_by_month ?? [])
+        .map((m) => ({
+          month: String(m.month ?? '').trim(),
+          amount: typeof m.revenue === 'number' ? m.revenue : 0,
+        }))
+        .filter((m) => m.month.length > 0),
     ),
     ticketTypeDistribution: prepareTicketMixRows(
       (data.ticket_type_distribution ?? []).map((t) => ({
@@ -152,16 +154,28 @@ export async function getOrganizerAttendeesList(eventId?: string): Promise<MockA
   const data = await fetchStoreJson<{ attendees?: Record<string, unknown>[] }>(
     `/store/organizers/attendees${qs ? `?${qs}` : ''}`,
   );
-  return (data.attendees ?? []).map((a, i) => ({
-    id: String(a.id ?? `att_${i}`),
-    eventId: String(a.event_id ?? eventId ?? ''),
-    name: String(a.name ?? a.holder_name ?? 'Guest'),
-    email: String(a.email ?? ''),
-    phone: String(a.phone ?? ''),
-    ticketType: String(a.ticket_type ?? 'Ticket'),
-    orderReference: String(a.order_id ?? a.order_reference ?? ''),
-    checkedIn: Boolean(a.checked_in ?? a.status === 'used'),
-  }));
+  return (data.attendees ?? []).map((raw, i) => {
+    const customer = raw.customer as Record<string, unknown> | null | undefined;
+    const event = raw.event as Record<string, unknown> | null | undefined;
+    const customerName = [customer?.first_name, customer?.last_name]
+      .filter(Boolean)
+      .join(' ')
+      .trim();
+    const status = String(raw.status ?? '');
+
+    return {
+      id: String(raw.ticket_id ?? raw.id ?? `att_${i}`),
+      eventId: String(event?.id ?? raw.event_id ?? eventId ?? ''),
+      name: String(raw.holder_name ?? (customerName || raw.name) ?? 'Guest'),
+      email: String(customer?.email ?? raw.email ?? ''),
+      phone: String(customer?.phone ?? raw.phone ?? ''),
+      ticketType: String(raw.ticket_type ?? 'Ticket'),
+      orderReference: String(
+        raw.ticket_code ?? raw.qr_code ?? raw.order_id ?? raw.order_reference ?? '',
+      ),
+      checkedIn: status === 'used' || Boolean(raw.checked_in ?? raw.validated_at),
+    };
+  });
 }
 
 export async function getOrganizerRevenue(eventId?: string, period = '6months'): Promise<MockRevenue> {

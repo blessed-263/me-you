@@ -126,7 +126,6 @@ export default function OrganizerRevenuePage() {
               bars={revenue.byMonth.map((row) => ({
                 label: row.month.replace(/\s+\d{4}$/, ''),
                 value: row.revenue,
-                sublabel: formatZar(row.revenue),
               }))}
               formatValue={(n) => formatZar(n)}
             />
