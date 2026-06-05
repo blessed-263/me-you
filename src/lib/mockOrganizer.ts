@@ -4,7 +4,7 @@ import { MOCK_EVENT } from './mockTickets.ts';
 import { DEFAULT_LIVE_EVENT_ID } from './organizerEventScope.ts';
 
 export const ORGANIZER_ROUTES = {
-  LOGIN: '/organizer/login',
+  LOGIN: '/login?return=/organizer/dashboard',
   DASHBOARD: '/organizer/dashboard',
   ORDERS: '/organizer/orders',
   TICKETS: '/organizer/tickets',

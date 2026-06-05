@@ -6,7 +6,8 @@ import {
   logoutAttendee,
   ticketsLoginUrl,
 } from '../lib/attendeeAuth.ts';
-import { TICKETS_BASE, TICKETS_LOGIN, TICKETS_MY } from '../lib/mockCheckout.ts';
+import { TICKETS_BASE, TICKETS_MY } from '../lib/mockCheckout.ts';
+import { SIGN_IN_PATH } from '../lib/signInAuth.ts';
 import EventAssistant from '../components/EventAssistant.tsx';
 import StepIndicator, { type TicketStepId } from './StepIndicator.tsx';
 
@@ -30,7 +31,9 @@ export default function TicketsLayout({
 }: TicketsLayoutProps) {
   const session = loadAttendeeSession();
   const path = window.location.pathname.replace(/\/$/, '') || '/';
-  const loginHref = ticketsLoginUrl(path === TICKETS_LOGIN ? '/tickets/pick' : path);
+  const loginHref = ticketsLoginUrl(
+    path === SIGN_IN_PATH || path === '/tickets/login' ? '/tickets/pick' : path,
+  );
   const onEventsPage = path === TICKETS_BASE;
 
   const handleSignOut = () => {

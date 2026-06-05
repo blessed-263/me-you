@@ -5,7 +5,7 @@
 
 import { loadOrganizerSession } from './lib/organizerAuth.ts';
 import { ORGANIZER_ROUTES } from './lib/mockOrganizer.ts';
-import OrganizerLoginPage from './organizer/OrganizerLoginPage.tsx';
+import { signInUrl } from './lib/signInAuth.ts';
 import OrganizerAuthenticated from './organizer/OrganizerAuthenticated.tsx';
 import OrganizerDashboardPage from './organizer/OrganizerDashboardPage.tsx';
 import OrganizerOrdersPage from './organizer/OrganizerOrdersPage.tsx';
@@ -15,14 +15,6 @@ import OrganizerRevenuePage from './organizer/OrganizerRevenuePage.tsx';
 
 export default function OrganizerPage() {
   const path = window.location.pathname.replace(/\/$/, '') || '/';
-
-  if (path === ORGANIZER_ROUTES.LOGIN) {
-    if (loadOrganizerSession()) {
-      window.location.replace(ORGANIZER_ROUTES.DASHBOARD);
-      return null;
-    }
-    return <OrganizerLoginPage />;
-  }
 
   if (path === '/organizer') {
     window.location.replace(ORGANIZER_ROUTES.DASHBOARD);
@@ -52,7 +44,7 @@ export default function OrganizerPage() {
   if (loadOrganizerSession()) {
     window.location.replace(ORGANIZER_ROUTES.DASHBOARD);
   } else {
-    window.location.replace(ORGANIZER_ROUTES.LOGIN);
+    window.location.replace(signInUrl(ORGANIZER_ROUTES.DASHBOARD));
   }
   return null;
 }

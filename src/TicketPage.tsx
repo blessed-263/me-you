@@ -7,7 +7,6 @@ import { loadAttendeeSession, ticketsLoginUrl } from './lib/attendeeAuth.ts';
 import {
   TICKETS_BASE,
   TICKETS_CHECKOUT,
-  TICKETS_LOGIN,
   TICKETS_MY,
   TICKETS_PAYMENT,
   TICKETS_PAYMENT_CALLBACK,
@@ -15,7 +14,6 @@ import {
   TICKETS_PROTECTED_PATHS,
   TICKETS_SUCCESS,
 } from './lib/mockCheckout.ts';
-import AttendeeLoginPage from './tickets/AttendeeLoginPage.tsx';
 import MyTicketsPage from './tickets/MyTicketsPage.tsx';
 import TicketIntroStep from './tickets/TicketIntroStep.tsx';
 import TicketPickStep from './tickets/TicketPickStep.tsx';
@@ -29,7 +27,6 @@ const PROTECTED = new Set<string>(TICKETS_PROTECTED_PATHS);
 export default function TicketPage() {
   const path = window.location.pathname.replace(/\/$/, '') || '/';
 
-  if (path === TICKETS_LOGIN) return <AttendeeLoginPage />;
   if (path === TICKETS_MY) {
     if (!loadAttendeeSession()) {
       window.location.replace(ticketsLoginUrl(TICKETS_MY));

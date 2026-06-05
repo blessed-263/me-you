@@ -92,10 +92,11 @@ export function logoutAttendee(): void {
   setAttendeeToken(null);
 }
 
+import { signInUrl } from './signInAuth.ts';
+
 export function ticketsLoginUrl(returnTo?: string): string {
-  const base = '/tickets/login';
-  if (!returnTo || returnTo === base) return base;
-  return `${base}?return=${encodeURIComponent(returnTo)}`;
+  if (!returnTo || returnTo === '/tickets/login') return signInUrl('/tickets/pick');
+  return signInUrl(returnTo);
 }
 
 export function parseTicketsReturnTo(): string {

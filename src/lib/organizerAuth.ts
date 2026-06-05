@@ -1,4 +1,6 @@
 import { AMPEX, setOrganizerToken } from './ampexConfig.ts';
+import { ORGANIZER_ROUTES } from './mockOrganizer.ts';
+import { signInUrl } from './signInAuth.ts';
 import * as organizerApi from './organizerApi.ts';
 
 const SESSION_KEY = 'yme_organizer_session';
@@ -59,12 +61,12 @@ export function logoutOrganizer(): void {
 export function requireOrganizerSession(): OrganizerSession | null {
   const session = loadOrganizerSession();
   if (!session) {
-    window.location.replace('/organizer/login');
+    window.location.replace(signInUrl(ORGANIZER_ROUTES.DASHBOARD));
     return null;
   }
   if (!AMPEX.USE_MOCK_DATA && !session.token) {
     logoutOrganizer();
-    window.location.replace('/organizer/login');
+    window.location.replace(signInUrl(ORGANIZER_ROUTES.DASHBOARD));
     return null;
   }
   return session;

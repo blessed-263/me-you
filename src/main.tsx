@@ -3,6 +3,7 @@ import { createRoot } from 'react-dom/client';
 import App from './App.tsx';
 import JuneRsvpPage from './JuneRsvpPage.tsx';
 import RsvpPage from './RsvpPage.tsx';
+import SignInPage from './SignInPage.tsx';
 import TicketPage from './TicketPage.tsx';
 import OrganizerPage from './OrganizerPage.tsx';
 import ProjectAnalytics from './components/ProjectAnalytics.tsx';
@@ -12,6 +13,10 @@ import './index.css';
 function Root() {
   const pathname = window.location.pathname.replace(/\/$/, '') || '/';
   const sessionId = sessionFromPath(pathname);
+  const isSignIn =
+    pathname === '/login' ||
+    pathname === '/tickets/login' ||
+    pathname === '/organizer/login';
   const isFutureRsvp = pathname === '/september' || pathname === '/june';
   const isTickets =
     pathname === '/tickets' ||
@@ -21,7 +26,9 @@ function Root() {
 
   return (
     <>
-      {isOrganizer ? (
+      {isSignIn ? (
+        <SignInPage />
+      ) : isOrganizer ? (
         <OrganizerPage />
       ) : isTickets ? (
         <TicketPage />
