@@ -29,7 +29,7 @@ function pickActiveEvent(events: MockEvent[]): MockEvent | null {
     const found = events.find((e) => e.id === saved);
     if (found) return found;
   }
-  return pickDefaultPublicEvent(events);
+  return pickDefaultPublicEvent(events) ?? events[0] ?? null;
 }
 
 function EventEditionCard({ event }: { event: MockEvent }) {
@@ -101,8 +101,11 @@ export default function TicketIntroStep() {
   }, []);
 
   const { active, past } = useMemo(() => partitionPublicEvents(events), [events]);
+  const urlEventId = resolveEventIdFromUrl();
   const activeEvent = pickActiveEvent(events);
-  const showPicker = events.length > 1 && !resolveEventIdFromUrl();
+  const urlEventValid = urlEventId ? events.some((e) => e.id === urlEventId) : false;
+  const showPicker =
+    events.length > 1 && (!urlEventId || !urlEventValid || !activeEvent);
   const layoutProps = { step: 'select' as const, showSteps: false };
 
   if (loading) {
@@ -159,7 +162,26 @@ export default function TicketIntroStep() {
     );
   }
 
-  const event = activeEvent!;
+  if (!activeEvent) {
+    return (
+      <TicketsLayout {...layoutProps}>
+        <section className="px-5 md:px-12 py-20 max-w-[720px] mx-auto text-center">
+          <p className="font-serif text-2xl text-brand-text">Edition not found</p>
+          <p className="mt-3 text-sm text-brand-muted">
+            This edition is unavailable or no longer listed.
+          </p>
+          <a
+            href="/tickets"
+            className="mt-8 inline-block text-[10px] uppercase tracking-[0.14em] font-semibold text-brand-accent hover:text-brand-text"
+          >
+            View all editions
+          </a>
+        </section>
+      </TicketsLayout>
+    );
+  }
+
+  const event = activeEvent;
 
   return (
     <TicketsLayout {...layoutProps}>
@@ -177,7 +199,7 @@ export default function TicketIntroStep() {
       <section className="px-5 md:px-12 pt-4 md:pt-6 pb-2 max-w-[1400px] mx-auto">
         <TicketEventHero
           event={event}
-          inclusions={event.inclusions}
+          inclusions={event.inclusions ?? []}
           pickHref={ticketsPickHref(event.id)}
         />
       </section>

@@ -12,6 +12,7 @@ type TicketEventHeroProps = {
 /** Landscape image with inclusions sidebar. */
 export default function TicketEventHero({ event, inclusions, pickHref }: TicketEventHeroProps) {
   const ended = isEventEnded(event);
+  const items = inclusions ?? [];
 
   return (
     <motion.div
@@ -38,7 +39,7 @@ export default function TicketEventHero({ event, inclusions, pickHref }: TicketE
 
         <aside className="flex flex-col justify-between gap-8 p-8 md:p-9 lg:col-span-4 lg:p-10 border-t lg:border-t-0 lg:border-l border-brand-border bg-brand-bg/80">
           <ul className="space-y-7">
-            {inclusions.map((item) => (
+            {items.map((item) => (
               <li key={item.id} className="space-y-1.5">
                 <p className="text-[9px] uppercase tracking-[0.2em] font-semibold text-brand-accent">{item.part}</p>
                 <p className="font-serif text-xl font-semibold text-brand-text leading-snug">{item.title}</p>

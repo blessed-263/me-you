@@ -30,7 +30,7 @@ export function mapBackendEventToMockEvent(raw: Record<string, unknown>): MockEv
     imageUrl,
     description: String(raw.description ?? raw.longDescription ?? ''),
     highlights: Array.isArray(raw.highlights) ? (raw.highlights as string[]) : [],
-    inclusions,
+    inclusions: inclusions.length > 0 ? inclusions : [],
     ticketTypes: mapTicketTypes(raw.ticketTypes ?? raw.ticket_types),
   };
 }
