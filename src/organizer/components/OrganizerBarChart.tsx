@@ -8,9 +8,9 @@ type OrganizerBarChartProps = {
   className?: string;
 };
 
-const BAR_AREA_PX = 120;
-const BAR_WIDTH_PX = 36;
-const COLUMN_WIDTH_PX = 72;
+const BAR_AREA_PX = 168;
+const BAR_WIDTH_PX = 44;
+const COLUMN_WIDTH_PX = 84;
 
 export default function OrganizerBarChart({
   bars,

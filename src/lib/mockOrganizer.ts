@@ -439,7 +439,9 @@ function computeStats(eventId: string): MockDashboardStats {
   const byMonth: Record<string, number> = {};
   for (const o of completed) {
     const d = new Date(o.paidAt);
+    if (Number.isNaN(d.getTime())) continue;
     const key = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`;
+    if (!/^\d{4}-\d{2}$/.test(key)) continue;
     byMonth[key] = (byMonth[key] ?? 0) + o.total;
   }
   const monthlySales = Object.entries(byMonth)

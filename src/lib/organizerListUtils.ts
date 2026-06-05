@@ -16,6 +16,45 @@ export function sortMonthlySales<T extends { month: string }>(rows: T[]): T[] {
   });
 }
 
+export function isValidMonthKey(key: string): boolean {
+  return /^\d{4}-\d{2}$/.test(key);
+}
+
+export function normalizeMonthKey(value: unknown): string | null {
+  if (value == null || value === '') return null;
+
+  const raw = String(value).trim();
+  if (!raw || raw.includes('NaN')) return null;
+
+  const iso = raw.match(/^(\d{4})-(\d{2})/);
+  if (iso) {
+    const key = `${iso[1]}-${iso[2]}`;
+    if (isValidMonthKey(key)) return key;
+  }
+
+  const parsed = new Date(raw);
+  if (!Number.isNaN(parsed.getTime())) {
+    const key = `${parsed.getFullYear()}-${String(parsed.getMonth() + 1).padStart(2, '0')}`;
+    if (isValidMonthKey(key)) return key;
+  }
+
+  return isValidMonthKey(raw) ? raw : null;
+}
+
+export function normalizeMonthlySales<T extends { month: string; amount: number }>(
+  rows: T[],
+): T[] {
+  const normalized: T[] = [];
+
+  for (const row of rows) {
+    const month = normalizeMonthKey(row.month);
+    if (!month || row.amount <= 0) continue;
+    normalized.push({ ...row, month });
+  }
+
+  return sortMonthlySales(normalized);
+}
+
 export type TicketMixRow = { label: string; value: number };
 
 export function prepareTicketMixRows(
@@ -43,7 +82,7 @@ export function formatDashboardMonthLabel(month: unknown): string {
   if (month == null || month === '') return 'Unknown month';
 
   const raw = String(month).trim();
-  if (!raw || raw === '—') return 'Unknown month';
+  if (!raw || raw === '—' || raw.includes('NaN')) return 'Unknown month';
 
   const isoMonth = raw.match(/^(\d{4})-(\d{2})/);
   if (isoMonth) {

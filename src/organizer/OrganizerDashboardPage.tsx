@@ -2,7 +2,6 @@ import { useEffect, useMemo, useState } from 'react';
 import OrganizerLayout from './OrganizerLayout.tsx';
 import OrganizerBarChart from './components/OrganizerBarChart.tsx';
 import OrganizerDonutChart from './components/OrganizerDonutChart.tsx';
-import OrganizerProgressList from './components/OrganizerProgressList.tsx';
 import OrganizerExportMenu from './components/OrganizerExportMenu.tsx';
 import OrganizerEventGroupHeader from './components/OrganizerEventGroupHeader.tsx';
 import OrganizerPagination from './components/OrganizerPagination.tsx';
@@ -17,8 +16,8 @@ import {
   formatDashboardMonthLabel,
   ORGANIZER_EVENTS_PER_PAGE,
   paginate,
+  normalizeMonthlySales,
   prepareTicketMixRows,
-  sortMonthlySales,
 } from '../lib/organizerListUtils.ts';
 import { useOrganizerEvent } from './OrganizerEventContext.tsx';
 
@@ -39,7 +38,7 @@ function EventCharts({
   stats: MockDashboardStats;
   editionLabel: string;
 }) {
-  const monthlySorted = sortMonthlySales(stats.monthlySales).filter((m) => m.amount > 0);
+  const monthlySorted = normalizeMonthlySales(stats.monthlySales);
   const ticketMix = prepareTicketMixRows(stats.ticketTypeDistribution);
   const ticketMixTotal = ticketMix.reduce((sum, row) => sum + row.value, 0);
   const hasTicketMix = ticketMix.length > 0;
@@ -82,23 +81,6 @@ function EventCharts({
             <p className="text-sm text-brand-muted">No tickets sold yet.</p>
           )}
         </div>
-      </div>
-
-      <div className="rounded-sm border border-brand-border/70 bg-white/40 p-6 md:p-7">
-        <h3 className="text-[10px] uppercase tracking-[0.18em] font-semibold text-brand-accent mb-6">
-          Ticket mix · {editionLabel}
-        </h3>
-        {hasTicketMix ? (
-          <OrganizerProgressList
-            rows={ticketMix.map((row) => ({
-              label: row.label,
-              value: row.value,
-            }))}
-            total={ticketMixTotal || stats.ticketsSold}
-          />
-        ) : (
-          <p className="text-sm text-brand-muted">No ticket types to show.</p>
-        )}
       </div>
     </div>
   );

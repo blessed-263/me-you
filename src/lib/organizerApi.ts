@@ -1,5 +1,5 @@
 import { AMPEX, fetchStoreJson, getOrganizerToken, setOrganizerToken } from './ampexConfig.ts';
-import { prepareTicketMixRows, sortMonthlySales, type DashboardPeriod } from './organizerListUtils.ts';
+import { normalizeMonthlySales, prepareTicketMixRows, type DashboardPeriod } from './organizerListUtils.ts';
 import { mapBackendEventToEdition, zarFromCents } from './eventMappers.ts';
 import type { EventEdition } from './eventEditions.ts';
 import type {
@@ -63,13 +63,11 @@ export async function getOrganizerDashboard(
     ticketsActive: active,
     ticketsUsed: used,
     checkInRate,
-    monthlySales: sortMonthlySales(
-      (data.revenue_by_month ?? [])
-        .map((m) => ({
-          month: String(m.month ?? '').trim(),
-          amount: typeof m.revenue === 'number' ? m.revenue : 0,
-        }))
-        .filter((m) => m.month.length > 0),
+    monthlySales: normalizeMonthlySales(
+      (data.revenue_by_month ?? []).map((m) => ({
+        month: String(m.month ?? '').trim(),
+        amount: typeof m.revenue === 'number' ? m.revenue : 0,
+      })),
     ),
     ticketTypeDistribution: prepareTicketMixRows(
       (data.ticket_type_distribution ?? []).map((t) => ({
