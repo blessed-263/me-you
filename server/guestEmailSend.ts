@@ -6,6 +6,7 @@ import type {
 } from './emailTemplates.js';
 import {
   renderGuestBroadcastEmail,
+  renderGuestBroadcastPlainText,
   renderPersonalLetterEmail,
   renderPersonalLetterPlainText,
 } from './emailTemplates.js';
@@ -39,6 +40,14 @@ const INLINE_HERO_FILES: Record<string, { file: string; cid: string }> = {
     file: 'public/images/email-may-gathering-poster.png',
     cid: 'hero-may-gathering',
   },
+  'youandme%20brown%20.png': {
+    file: 'public/sponsors/youandme brown .png',
+    cid: 'logo-youandme-brown',
+  },
+  'youandme brown .png': {
+    file: 'public/sponsors/youandme brown .png',
+    cid: 'logo-youandme-brown',
+  },
 };
 
 function inlineHeroAttachments(heroImageUrl: string): {
@@ -64,21 +73,44 @@ function inlineHeroAttachments(heroImageUrl: string): {
   return { heroImageUrl: url, attachments };
 }
 
+export function guestEmailReplyTo(): string {
+  return (
+    process.env.GUEST_EMAIL_REPLY_TO?.trim() ||
+    process.env.MAY_GATHERING_REPLY_TO?.trim() ||
+    'tshepo@tshepojeans.co'
+  );
+}
+
 /** Inline local hero images as CID attachments so mobile inboxes load them reliably. */
 export function prepareGuestEmailSend(
   content: GuestBroadcastContent,
   guestName?: string,
-): { html: string; attachments: GuestEmailAttachment[] } {
+): { html: string; text: string; attachments: GuestEmailAttachment[] } {
   const { heroImageUrl, attachments } = inlineHeroAttachments(
     content.heroImageUrl,
   );
 
-  const html = renderGuestBroadcastEmail(
-    { ...content, heroImageUrl },
-    guestName,
-  );
+  const resolved = { ...content, heroImageUrl };
+  const html = renderGuestBroadcastEmail(resolved, guestName);
+  const text = renderGuestBroadcastPlainText(resolved, guestName);
 
-  return { html, attachments };
+  return { html, text, attachments };
+}
+
+export function buildGuestEmailSend(
+  content: GuestBroadcastContent,
+  guestName?: string,
+): {
+  html: string;
+  text: string;
+  attachments: GuestEmailAttachment[];
+  replyTo?: string;
+} {
+  const payload = prepareGuestEmailSend(content, guestName);
+  return {
+    ...payload,
+    replyTo: content.personalDelivery ? guestEmailReplyTo() : undefined,
+  };
 }
 
 export function preparePersonalLetterEmailSend(

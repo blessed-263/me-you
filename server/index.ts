@@ -5,6 +5,7 @@ import { fileURLToPath } from 'url';
 import { checkDatabase, getPool, logDatabaseConfig } from './db.js';
 import { createJuneRsvpHandler, ensureJuneRsvpTable } from './juneRsvp.js';
 import { createRsvpHandler, ensureRsvpTable } from './rsvp.js';
+import { createAssistantChatHandler, createAssistantMetaHandler } from './rag/chatHandler.js';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const isProd =
@@ -85,6 +86,9 @@ app.get('/health', healthHandler);
 app.post('/api/rsvp', createRsvpHandler({ getPool }));
 app.post('/api/rsvp/june', createJuneRsvpHandler({ getPool }));
 
+app.get('/api/assistant/meta', createAssistantMetaHandler());
+app.post('/api/assistant/chat', createAssistantChatHandler());
+
 app.post('/api/newsletter', async (req, res) => {
   const p = getPool();
   if (!p) {
@@ -146,6 +150,7 @@ async function main() {
         health: '/api/health',
         rsvp: 'POST /api/rsvp',
         juneRsvp: 'POST /api/rsvp/june',
+        assistant: 'POST /api/assistant/chat',
       });
     });
     if (isProd && allowedOrigins.length === 0) {

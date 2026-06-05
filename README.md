@@ -146,10 +146,88 @@ Rules: **one guest per RSVP** (no plus-ones), **no notes field**, **one RSVP per
 1. Set `RESEND_API_KEY` and `RESEND_FROM_EMAIL` in `.env` (and Railway variables in production).
 2. Submissions are stored in Postgres (`rsvp_submissions`). Guests receive a session-specific confirmation email; `RSVP_NOTIFY_EMAIL` gets an admin copy if set.
 
+## Ticket storefront & organizer (mock or AmpEx)
+
+Set `VITE_USE_MOCK_DATA` in `.env`:
+
+| Value | Behaviour |
+| ----- | --------- |
+| `true` (default) | Client-side mock events, checkout, and organizer demo data |
+| `false` | Live AmpEx/Medusa APIs for tickets, Paystack checkout, and organizer dashboards |
+
+### AmpEx environment variables
+
+| Variable | Required (live) | Description |
+| -------- | --------------- | ----------- |
+| `VITE_USE_MOCK_DATA` | No | `true` = mocks; `false` = AmpEx |
+| `VITE_MEDUSA_API_URL` | Yes | Medusa backend, e.g. `http://localhost:9000` |
+| `VITE_MEDUSA_PUBLISHABLE_KEY` | Yes | Publishable API key on all `/store/*` calls |
+| `VITE_MEDUSA_REGION_ID` | Recommended | Skips region lookup at checkout |
+| `VITE_YME_ORGANIZER_ID` | Yes | Filters public events to You & Me organizer |
+| `VITE_AMPEX_FRONTEND_URL` | No | Link for “Manage events on AmpEx” (default `https://www.ampex.store`) |
+
+`VITE_API_URL` remains for RSVP/assistant Express API only (separate from Medusa).
+
+In dev, Vite proxies `/store` → `VITE_MEDUSA_API_URL`. Event **create/publish** stays in [ampex-frontend](../ampex-frontend); me-you only lists, sells, and reports on published organizer events.
+
+### Ticket URLs
+
+| URL | Step |
+| ----- | ------ |
+| `/tickets` | Event landing (or edition picker when multiple events) |
+| `/tickets/login` | Attendee sign-in / register |
+| `/tickets/pick` | Choose ticket types and quantities |
+| `/tickets/checkout` | Buyer details + holder names |
+| `/tickets/payment` | Mock card UI or Paystack redirect |
+| `/tickets/payment/callback` | Paystack return → finalize order |
+| `/tickets/success` | Order confirmation |
+| `/tickets/my-tickets` | Purchased tickets (requires sign-in) |
+
+### Organizer URLs
+
+| URL | Screen |
+| ----- | ------ |
+| `/organizer/login` | Organizer sign-in |
+| `/organizer/dashboard` | Stats overview |
+| `/organizer/orders` | Order list + detail |
+| `/organizer/tickets` | Issued tickets |
+| `/organizer/attendees` | Guest list + CSV export |
+| `/organizer/revenue` | Revenue breakdown |
+
+Sidebar includes **Manage events on AmpEx** → ampex-frontend (no event upload in me-you).
+
+### Smoke test checklist (live mode)
+
+Before setting `VITE_USE_MOCK_DATA=false`:
+
+1. **You & Me organizer** exists in AmpEx with known `organizer_id` → set `VITE_YME_ORGANIZER_ID`
+2. At least one **published** event with ticket variants (created via ampex-frontend)
+3. Publishable API key + region id configured
+4. Paystack callback URL includes your me-you domain + `/tickets/payment/callback`
+5. me-you origin in backend `ALLOWED_ORIGINS` (`youandmeafrica.com`, `localhost:3000`)
+6. Medusa backend running (e.g. port 9000)
+
+**Local smoke test:**
+
+```bash
+# Terminal 1 — AmpEx backend (:9000)
+# Terminal 2 — me-you
+cd me-you
+# .env: VITE_USE_MOCK_DATA=false, VITE_MEDUSA_* , VITE_YME_ORGANIZER_ID
+npm run dev
+```
+
+- [ ] `/tickets` loads published events from API
+- [ ] Register / login attendee; verify email flow if required
+- [ ] Add tickets → checkout → Paystack test payment → callback → success
+- [ ] `/tickets/my-tickets` shows issued tickets
+- [ ] Organizer login → dashboard/orders scoped to selected event
+- [ ] “Manage events on AmpEx” opens ampex-frontend
+
+Mock data modules: [`src/lib/mockOrganizer.ts`](src/lib/mockOrganizer.ts), [`src/lib/dataSource.ts`](src/lib/dataSource.ts).
+
 ## API
 
 - `POST /api/rsvp` — JSON `{ "fullName", "email", "session", "phone?" }` where `session` is `harvest-table` or `after-party-lunch` → `201` saved, `200` if that email already RSVP'd, `503` if DB not configured.
 - `POST /api/newsletter` — JSON `{ "email": "you@example.com" }` → `201` new subscriber, `200` already subscribed, `400` / `503` / `500` with `{ "error": "..." }`.
 - `GET /api/health` — `{ "ok": true }`.
-
-# me-you

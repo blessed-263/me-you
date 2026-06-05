@@ -13,5 +13,7 @@ june-rsvps.csv
 all-may-rsvp-emails.csv
 *-recipients-preview.csv
 after-party-tickets.csv
-# Regenerate: npm run email:preview
+harvest-table-tickets.csv
+# Regenerate: npm run email:preview:all
 email-preview.html
+email-previews/

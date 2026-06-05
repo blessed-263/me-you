@@ -3,6 +3,8 @@ import { createRoot } from 'react-dom/client';
 import App from './App.tsx';
 import JuneRsvpPage from './JuneRsvpPage.tsx';
 import RsvpPage from './RsvpPage.tsx';
+import TicketPage from './TicketPage.tsx';
+import OrganizerPage from './OrganizerPage.tsx';
 import ProjectAnalytics from './components/ProjectAnalytics.tsx';
 import { RSVP_SESSIONS, sessionFromPath } from './lib/rsvpSessions.ts';
 import './index.css';
@@ -11,10 +13,19 @@ function Root() {
   const pathname = window.location.pathname.replace(/\/$/, '') || '/';
   const sessionId = sessionFromPath(pathname);
   const isFutureRsvp = pathname === '/september' || pathname === '/june';
+  const isTickets =
+    pathname === '/tickets' ||
+    pathname.startsWith('/tickets/') ||
+    pathname.startsWith('/event/');
+  const isOrganizer = pathname === '/organizer' || pathname.startsWith('/organizer/');
 
   return (
     <>
-      {isFutureRsvp ? (
+      {isOrganizer ? (
+        <OrganizerPage />
+      ) : isTickets ? (
+        <TicketPage />
+      ) : isFutureRsvp ? (
         <JuneRsvpPage />
       ) : sessionId ? (
         <RsvpPage session={RSVP_SESSIONS[sessionId]} />

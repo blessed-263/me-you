@@ -1,0 +1,301 @@
+import {
+  AMPEX,
+  fetchStore,
+  fetchStoreJson,
+  getAttendeeToken,
+  setAttendeeToken,
+} from './ampexConfig.ts';
+import {
+  mapBackendEventToMockEvent,
+  mapTicketsEndpoint,
+  type ApiTicketType,
+} from './eventMappers.ts';
+import { sortPublicEvents } from './eventLifecycle.ts';
+import type { MockEvent } from './mockTickets.ts';
+import type { BuyerDetails } from './mockCheckout.ts';
+
+const MEDUSA_CART_KEY = 'medusa_cart_id';
+const PAYMENT_CART_KEY = 'payment_cart_id';
+const PAYMENT_SESSION_KEY = 'payment_session_id';
+const PAYMENT_COLLECTION_KEY = 'payment_collection_id';
+
+export function getMedusaCartId(): string | null {
+  return sessionStorage.getItem(MEDUSA_CART_KEY) ?? sessionStorage.getItem(PAYMENT_CART_KEY);
+}
+
+export function setMedusaCartId(id: string | null): void {
+  if (id) {
+    sessionStorage.setItem(MEDUSA_CART_KEY, id);
+    sessionStorage.setItem(PAYMENT_CART_KEY, id);
+  } else {
+    sessionStorage.removeItem(MEDUSA_CART_KEY);
+    sessionStorage.removeItem(PAYMENT_CART_KEY);
+  }
+}
+
+export function clearPaymentState(): void {
+  sessionStorage.removeItem(PAYMENT_SESSION_KEY);
+  sessionStorage.removeItem(PAYMENT_COLLECTION_KEY);
+  sessionStorage.removeItem('payment_reference');
+  setMedusaCartId(null);
+}
+
+export async function listOrganizerPublicEvents(): Promise<MockEvent[]> {
+  const params = new URLSearchParams({ limit: '50' });
+  if (AMPEX.ORGANIZER_ID) params.set('organizer_id', AMPEX.ORGANIZER_ID);
+  const data = await fetchStoreJson<{ events?: Record<string, unknown>[] }>(
+    `/store/events?${params}`,
+  );
+  const events = (data.events ?? []).map((e) => mapBackendEventToMockEvent(e));
+  return sortPublicEvents(events);
+}
+
+export async function getEvent(eventId: string): Promise<MockEvent | null> {
+  try {
+    const data = await fetchStoreJson<{ event?: Record<string, unknown> }>(
+      `/store/events/${eventId}`,
+    );
+    const raw = data.event ?? (data as Record<string, unknown>);
+    if (!raw || typeof raw !== 'object') return null;
+    return mapBackendEventToMockEvent(raw as Record<string, unknown>);
+  } catch {
+    return null;
+  }
+}
+
+export async function getEventTickets(eventId: string): Promise<ApiTicketType[]> {
+  const data = await fetchStoreJson<{
+    ticket_types?: Record<string, unknown>[];
+    ticketTypes?: Record<string, unknown>[];
+  }>(`/store/events/${eventId}/tickets`);
+  return mapTicketsEndpoint(data);
+}
+
+export async function customerRegister(input: {
+  email: string;
+  password: string;
+  firstName: string;
+  lastName: string;
+  phone?: string;
+}): Promise<{ email: string; verificationRequired: boolean }> {
+  await fetchStoreJson('/store/customers/register', {
+    method: 'POST',
+    body: JSON.stringify({
+      email: input.email.trim().toLowerCase(),
+      password: input.password,
+      first_name: input.firstName.trim(),
+      last_name: input.lastName.trim(),
+      phone: input.phone?.trim() || undefined,
+    }),
+  });
+  return { email: input.email.trim().toLowerCase(), verificationRequired: true };
+}
+
+export async function customerLogin(
+  email: string,
+  password: string,
+): Promise<{ token: string; email: string; firstName: string; lastName: string }> {
+  const data = await fetchStoreJson<{
+    access_token?: string;
+    token?: string;
+    user?: { email?: string; first_name?: string; last_name?: string };
+  }>('/store/auth/login', {
+    method: 'POST',
+    body: JSON.stringify({ email: email.trim().toLowerCase(), password }),
+  });
+  const token = data.access_token ?? data.token ?? '';
+  if (!token) throw new Error('No access token returned');
+  setAttendeeToken(token);
+  return {
+    token,
+    email: data.user?.email ?? email,
+    firstName: data.user?.first_name ?? '',
+    lastName: data.user?.last_name ?? '',
+  };
+}
+
+export async function resendVerification(email: string): Promise<void> {
+  await fetchStoreJson('/store/auth/resend-verification', {
+    method: 'POST',
+    body: JSON.stringify({ email: email.trim().toLowerCase() }),
+  });
+}
+
+export async function getCustomerProfile(): Promise<BuyerDetails | null> {
+  if (!getAttendeeToken()) return null;
+  try {
+    const data = await fetchStoreJson<{
+      customer?: {
+        email?: string;
+        first_name?: string;
+        last_name?: string;
+        phone?: string;
+      };
+    }>('/store/customers/profile');
+    const c = data.customer;
+    if (!c) return null;
+    return {
+      firstName: c.first_name ?? '',
+      lastName: c.last_name ?? '',
+      email: c.email ?? '',
+      phone: c.phone ?? '',
+      holderNames: [],
+    };
+  } catch {
+    return null;
+  }
+}
+
+async function resolveRegionId(): Promise<string> {
+  if (AMPEX.REGION_ID) return AMPEX.REGION_ID;
+  const data = await fetchStoreJson<{ regions?: { id: string }[] }>('/store/regions');
+  const id = data.regions?.[0]?.id;
+  if (!id) throw new Error('No Medusa region configured');
+  return id;
+}
+
+export async function createCart(): Promise<string> {
+  const regionId = await resolveRegionId();
+  const data = await fetchStoreJson<{ cart?: { id: string }; id?: string }>('/store/carts', {
+    method: 'POST',
+    body: JSON.stringify({ region_id: regionId, currency_code: AMPEX.CURRENCY_CODE.toLowerCase() }),
+  });
+  const cartId = data.cart?.id ?? data.id;
+  if (!cartId) throw new Error('Failed to create cart');
+  setMedusaCartId(cartId);
+  return cartId;
+}
+
+export type CheckoutLineInput = {
+  variantId: string;
+  quantity: number;
+  unitPriceZar: number;
+  eventId: string;
+  holderNames: string[];
+};
+
+export async function addItemsToCart(cartId: string, items: CheckoutLineInput[]): Promise<void> {
+  const payload = {
+    items: items.map((i) => ({
+      variant_id: i.variantId,
+      quantity: i.quantity,
+      unit_price: Math.round(i.unitPriceZar * 100),
+      metadata: {
+        type: 'EVENT',
+        event_id: i.eventId,
+        holder_names: i.holderNames,
+      },
+    })),
+  };
+  const res = await fetchStore(`/store/carts/${cartId}/add-items`, {
+    method: 'POST',
+    body: JSON.stringify(payload),
+  });
+  const data = await res.json().catch(() => ({}));
+  if (!res.ok) {
+    const err = new Error((data as { message?: string }).message || 'Failed to add items') as Error & {
+      code?: string;
+      outOfStock?: unknown;
+    };
+    err.code = (data as { code?: string }).code;
+    err.outOfStock = (data as { out_of_stock_items?: unknown }).out_of_stock_items;
+    throw err;
+  }
+}
+
+export async function startPaystackCheckout(
+  cartId: string,
+  email: string,
+): Promise<{ paymentUrl: string; reference?: string }> {
+  const coll = await fetchStoreJson<{ payment_collection?: { id: string }; id?: string }>(
+    '/store/payment-collections',
+    {
+      method: 'POST',
+      body: JSON.stringify({ cart_id: cartId }),
+    },
+  );
+  const collectionId = coll.payment_collection?.id ?? coll.id;
+  if (!collectionId) throw new Error('Failed to create payment collection');
+  sessionStorage.setItem(PAYMENT_COLLECTION_KEY, collectionId);
+
+  const session = await fetchStoreJson<{
+    payment_session?: { data?: Record<string, unknown> };
+  }>(`/store/payment-collections/${collectionId}/payment-sessions`, {
+    method: 'POST',
+    body: JSON.stringify({
+      provider_id: 'pp_paystack',
+      data: { email, cart_id: cartId },
+    }),
+  });
+
+  const sessionData = session.payment_session?.data ?? {};
+  const paymentUrl = String(
+    sessionData.paystackTxAuthorizationUrl ??
+      sessionData.authorization_url ??
+      sessionData.url ??
+      '',
+  );
+  const sessionId = String((session.payment_session as { id?: string })?.id ?? '');
+  if (sessionId) sessionStorage.setItem(PAYMENT_SESSION_KEY, sessionId);
+
+  const reference = String(sessionData.reference ?? '');
+  if (reference) sessionStorage.setItem('payment_reference', reference);
+
+  if (!paymentUrl) throw new Error('Paystack payment URL not returned');
+  return { paymentUrl, reference };
+}
+
+export async function finalizePaystackPayment(
+  cartId: string,
+  reference: string,
+): Promise<{ orderId: string }> {
+  const sessionId = sessionStorage.getItem(PAYMENT_SESSION_KEY);
+  const data = await fetchStoreJson<{
+    order_id?: string;
+    order?: { id: string };
+    success?: boolean;
+  }>(`/store/carts/${cartId}/finalize-paystack`, {
+    method: 'POST',
+    body: JSON.stringify({
+      reference,
+      ...(sessionId ? { session_id: sessionId } : {}),
+    }),
+  });
+  const orderId = data.order_id ?? data.order?.id;
+  if (!orderId) throw new Error('Order was not created');
+  clearPaymentState();
+  return { orderId };
+}
+
+export type UserTicketView = {
+  id: string;
+  holderName: string;
+  ticketType: string;
+  status: string;
+  eventTitle: string;
+  eventDate: string;
+  editionLabel: string;
+  orderReference: string;
+};
+
+export async function getMyTickets(eventId?: string): Promise<UserTicketView[]> {
+  const params = new URLSearchParams();
+  if (eventId) params.set('event_id', eventId);
+  const qs = params.toString();
+  const data = await fetchStoreJson<{
+    tickets?: Record<string, unknown>[];
+  }>(`/store/tickets/my-tickets${qs ? `?${qs}` : ''}`);
+  return (data.tickets ?? []).map((t) => {
+    const event = (t.event ?? {}) as Record<string, unknown>;
+    return {
+      id: String(t.id ?? ''),
+      holderName: String(t.holder_name ?? t.holderName ?? 'Guest'),
+      ticketType: String(t.ticket_type ?? t.ticketType ?? 'Ticket'),
+      status: String(t.status ?? 'active'),
+      eventTitle: String(event.title ?? event.name ?? 'Event'),
+      eventDate: String(event.event_date ?? event.date ?? ''),
+      editionLabel: String(event.subtitle ?? event.category ?? ''),
+      orderReference: String(t.order_id ?? t.reference ?? t.id ?? ''),
+    };
+  });
+}

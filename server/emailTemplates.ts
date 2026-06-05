@@ -61,6 +61,8 @@ export const GUEST_EMAIL_HERO_IMAGES = {
   mayGatheringPoster: `${SITE_ORIGIN}/images/email-may-gathering-poster.png`,
   siteHero: `${SITE_ORIGIN}/images/_DSC6449.jpg`,
   dj: `${SITE_ORIGIN}/images/event-dj.png`,
+  /** Brown wordmark for day-of emails */
+  youandmeBrownLogo: `${SITE_ORIGIN}/sponsors/youandme%20brown%20.png`,
 } as const;
 
 /** Display size in email (600px wide) */
@@ -469,6 +471,8 @@ export type GuestBroadcastContent = {
    * Use {{name}} for a first-name merge when sending.
    */
   body: string;
+  /** Optional copy after the highlight card */
+  bodyAfter?: string;
   /** Optional date / venue / dress code block */
   highlight?: {
     title: string;
@@ -483,12 +487,16 @@ export type GuestBroadcastContent = {
   centered?: boolean;
   /** Hide sponsor logos/footer (can reduce "Promotions" classification in some inboxes). */
   showSponsors?: boolean;
-  /** Full-width hero image URL (required for guest broadcast layout) */
+  /** `banner` = full-width photo; `logo` = brown YOU&ME wordmark only (day-of). */
+  heroStyle?: 'banner' | 'logo';
+  /** Hero image or logo URL */
   heroImageUrl: string;
   heroImageAlt?: string;
   /** Optional display dimensions for faster layout (defaults 600×400) */
   heroDisplayWidth?: number;
   heroDisplayHeight?: number;
+  /** Lighter send profile: no preheader + Reply-To (HTML design unchanged). */
+  personalDelivery?: boolean;
 };
 
 const BODY_WRAP =
@@ -497,6 +505,18 @@ const BODY_WRAP =
 function applyNameMerge(text: string, guestName?: string): string {
   const name = guestName?.trim() || 'there';
   return text.replace(/\{\{name\}\}/gi, name);
+}
+
+function bodyInlineHtml(text: string): string {
+  const parts = text.split(/(\*[^*]+\*)/g);
+  return parts
+    .map((part) => {
+      if (part.startsWith('*') && part.endsWith('*') && part.length > 2) {
+        return `<em style="font-style:italic;color:${colors.text};">${escapeHtml(part.slice(1, -1))}</em>`;
+      }
+      return escapeHtml(part);
+    })
+    .join('');
 }
 
 function isGreetingParagraph(text: string): boolean {
@@ -543,7 +563,7 @@ function bodyParagraphsHtml(
       if (isCapsSectionTitle(p)) {
         return `<p style="margin:0 0 20px;${type.label}color:${colors.accent};font-size:11px;letter-spacing:0.12em;${align}">${escapeHtml(p)}</p>`;
       }
-      return `<p style="margin:0 0 18px;${type.bodyLight}color:${colors.muted};${BODY_WRAP}${align}">${escapeHtml(p).replace(/\n/g, '<br />')}</p>`;
+      return `<p style="margin:0 0 18px;${type.bodyLight}color:${colors.muted};${BODY_WRAP}${align}">${bodyInlineHtml(p).replace(/\n/g, '<br />')}</p>`;
     })
     .join('');
 
@@ -622,8 +642,32 @@ function guestEmailHeroBlock(
 ): string {
   const heroUrl = escapeHtml(content.heroImageUrl);
   const heroAlt = escapeHtml(content.heroImageAlt ?? content.eyebrow ?? EVENT_TITLE);
+
+  if (content.heroStyle === 'logo') {
+    const eyebrowBlock = content.eyebrow
+      ? `<p style="margin:0 0 12px;${type.label}color:${colors.muted};letter-spacing:0.16em;">${escapeHtml(content.eyebrow)}</p>`
+      : '';
+
+    return `
+    <tr>
+      <td style="padding:40px 32px 32px;text-align:center;background-color:#ffffff;">
+        <img
+          src="${heroUrl}"
+          alt="${heroAlt}"
+          width="200"
+          border="0"
+          style="display:block;width:200px;max-width:72%;height:auto;margin:0 auto 28px;border:0;outline:none;text-decoration:none;-ms-interpolation-mode:bicubic;"
+        />
+        ${eyebrowBlock}
+        <h1 style="margin:0;${type.headingHero}font-size:40px;font-weight:500;color:${colors.text};letter-spacing:-0.02em;">
+          ${safeHeadline}
+        </h1>
+      </td>
+    </tr>`;
+  }
+
   const heroW = content.heroDisplayWidth ?? EMAIL_HERO_HARVEST_DISPLAY.width;
-  const eyebrow = content.eyebrow
+  const eyebrowOnDark = content.eyebrow
     ? `<p style="margin:0 0 10px;${type.label}color:${colors.bg};opacity:0.85;">${escapeHtml(content.eyebrow)}</p>`
     : '';
 
@@ -641,7 +685,7 @@ function guestEmailHeroBlock(
     </tr>
     <tr>
       <td style="padding:32px 28px 36px;text-align:center;background-color:${colors.text};">
-        ${eyebrow}
+        ${eyebrowOnDark}
         <h1 style="margin:0;${type.headingHero}font-size:40px;font-weight:500;color:${colors.bg};letter-spacing:-0.02em;">
           ${safeHeadline}
         </h1>
@@ -853,11 +897,55 @@ export function renderPersonalLetterEmail(
   );
 }
 
+function plainTextFromBody(body: string, guestName?: string): string {
+  return applyNameMerge(body, guestName).replace(/\*([^*]+)\*/g, '$1');
+}
+
+/** Plain-text version for multipart sends (helps Gmail classify as personal). */
+export function renderGuestBroadcastPlainText(
+  content: GuestBroadcastContent,
+  guestName?: string,
+): string {
+  const headline = plainTextFromBody(content.headline, guestName);
+  const body = plainTextFromBody(content.body, guestName);
+  const bodyAfter = content.bodyAfter
+    ? plainTextFromBody(content.bodyAfter, guestName)
+    : '';
+
+  let highlightText = '';
+  if (content.highlight) {
+    const lines = [content.highlight.title, ''];
+    for (const row of content.highlight.details ?? []) {
+      lines.push(row.label, row.value, '');
+    }
+    for (const item of content.highlight.items ?? []) {
+      lines.push(item, '');
+    }
+    highlightText = lines.join('\n').trim();
+  }
+
+  const signoff = content.signoffName ?? content.signoff ?? '';
+  const lines = [
+    headline,
+    '',
+    body,
+    highlightText ? `\n${highlightText}\n` : '',
+    bodyAfter,
+    '',
+    signoff,
+    '',
+    INSTAGRAM_URL,
+  ].filter((line, i, arr) => line !== '' || (i > 0 && arr[i - 1] !== ''));
+
+  return lines.join('\n').replace(/\n{3,}/g, '\n\n').trim();
+}
+
 /** Branded HTML for guest updates / reminders. */
 export function renderGuestBroadcastEmail(
   content: GuestBroadcastContent,
   guestName?: string,
 ): string {
+  const skipPreheader = content.personalDelivery === true;
   const centered = content.centered !== false;
   const safeHeadline = escapeHtml(applyNameMerge(content.headline, guestName));
   const signoffAlign = centered ? 'text-align:center;' : '';
@@ -879,18 +967,19 @@ export function renderGuestBroadcastEmail(
         </tr>`
       : '';
 
-  const preheader = content.preheader
-    ? `<div style="display:none;max-height:0;overflow:hidden;opacity:0;color:transparent;mso-hide:all;">
+  const preheader =
+    !skipPreheader && content.preheader
+      ? `<div style="display:none;max-height:0;overflow:hidden;opacity:0;color:transparent;mso-hide:all;">
         ${escapeHtml(content.preheader)}
       </div>`
-    : '';
+      : '';
 
   const showSponsors = content.showSponsors !== false;
+  const logoHero = content.heroStyle === 'logo';
 
-  return emailShell(
-    `
-    ${preheader}
-    <tr>
+  const outerBrand = logoHero
+    ? ''
+    : `<tr>
       <td style="padding:0 0 20px;text-align:center;">
         <img
           src="${LOGO_URL}"
@@ -903,7 +992,12 @@ export function renderGuestBroadcastEmail(
           ${eventTitleHtml()}
         </p>
       </td>
-    </tr>
+    </tr>`;
+
+  return emailShell(
+    `
+    ${preheader}
+    ${outerBrand}
     <tr>
       <td style="background-color:#ffffff;border:1px solid ${colors.border};padding:0;overflow:hidden;">
         <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0">
@@ -912,6 +1006,7 @@ export function renderGuestBroadcastEmail(
             <td style="padding:36px 32px 12px;${centered ? 'text-align:center;' : ''}background-color:#ffffff;">
               ${bodyParagraphsHtml(content.body, guestName, centered)}
               ${highlightCard(content.highlight, centered)}
+              ${content.bodyAfter ? bodyParagraphsHtml(content.bodyAfter, guestName, centered) : ''}
               ${signoff}
             </td>
           </tr>
