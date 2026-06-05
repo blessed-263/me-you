@@ -96,9 +96,12 @@ export async function fetchOrganizerAttendees(eventId?: string): Promise<MockAtt
   return organizerApi.getOrganizerAttendeesList(eventId);
 }
 
-export async function fetchOrganizerRevenue(eventId: string): Promise<MockRevenue> {
+export async function fetchOrganizerRevenue(
+  eventId: string,
+  period: DashboardPeriod | 'all' = 'all',
+): Promise<MockRevenue> {
   if (useMockData) return mockRevenue(eventId);
-  return organizerApi.getOrganizerRevenue(eventId);
+  return organizerApi.getOrganizerRevenue(eventId, period);
 }
 
 export async function fetchAttendeeTickets(email: string): Promise<UserTicketView[]> {

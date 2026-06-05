@@ -126,23 +126,55 @@ export async function getOrganizerOrders(eventId?: string): Promise<MockOrganize
   });
 }
 
+function mapOrganizerTicketStatus(status: string): MockOrganizerTicket['status'] {
+  if (status === 'used') return 'used';
+  if (status === 'voided' || status === 'cancelled') return 'cancelled';
+  return 'active';
+}
+
+function mapOrganizerTicket(
+  raw: Record<string, unknown>,
+  fallbackEventId?: string,
+): MockOrganizerTicket {
+  const event = raw.event as Record<string, unknown> | null | undefined;
+  const order = raw.order as Record<string, unknown> | null | undefined;
+
+  return {
+    id: String(raw.id ?? raw.ticket_id ?? ''),
+    eventId: String(event?.id ?? raw.event_id ?? fallbackEventId ?? ''),
+    orderId: String(raw.order_id ?? order?.id ?? ''),
+    ticketType: String(raw.ticket_type ?? 'Ticket'),
+    holderName: String(raw.holder_name ?? 'Guest'),
+    status: mapOrganizerTicketStatus(String(raw.status ?? 'active')),
+    reference: String(raw.ticket_code ?? raw.qr_code ?? raw.order_id ?? raw.id ?? ''),
+    issuedAt: String(raw.created_at ?? order?.created_at ?? new Date().toISOString()),
+  };
+}
+
 export async function getOrganizerTicketsList(eventId?: string): Promise<MockOrganizerTicket[]> {
-  const params = new URLSearchParams();
-  if (eventId) params.set('event_id', eventId);
-  const qs = params.toString();
-  const data = await fetchStoreJson<{ tickets?: Record<string, unknown>[] }>(
-    `/store/organizers/tickets${qs ? `?${qs}` : ''}`,
-  );
-  return (data.tickets ?? []).map((t) => ({
-    id: String(t.id ?? ''),
-    eventId: String(t.event_id ?? eventId ?? ''),
-    orderId: String(t.order_id ?? ''),
-    ticketType: String(t.ticket_type ?? 'Ticket'),
-    holderName: String(t.holder_name ?? 'Guest'),
-    status: (String(t.status ?? 'active') as MockOrganizerTicket['status']) || 'active',
-    reference: String(t.order_id ?? t.id ?? ''),
-    issuedAt: String(t.created_at ?? new Date().toISOString()),
-  }));
+  const pageSize = 100;
+  let offset = 0;
+  const all: MockOrganizerTicket[] = [];
+
+  while (true) {
+    const params = new URLSearchParams({
+      limit: String(pageSize),
+      offset: String(offset),
+    });
+    if (eventId) params.set('event_id', eventId);
+
+    const data = await fetchStoreJson<{ tickets?: Record<string, unknown>[]; count?: number }>(
+      `/store/organizers/tickets?${params}`,
+    );
+    const batch = (data.tickets ?? []).map((raw) => mapOrganizerTicket(raw, eventId));
+    all.push(...batch);
+
+    const total = data.count ?? all.length;
+    offset += batch.length;
+    if (batch.length === 0 || offset >= total) break;
+  }
+
+  return all;
 }
 
 export async function getOrganizerAttendeesList(eventId?: string): Promise<MockAttendee[]> {
@@ -176,10 +208,19 @@ export async function getOrganizerAttendeesList(eventId?: string): Promise<MockA
   });
 }
 
-export async function getOrganizerRevenue(eventId?: string, period = '6months'): Promise<MockRevenue> {
+export async function getOrganizerRevenue(
+  eventId?: string,
+  period: DashboardPeriod | 'all' = 'all',
+): Promise<MockRevenue> {
   const params = new URLSearchParams({ period });
   if (eventId) params.set('event_id', eventId);
   const data = await fetchStoreJson<{
+    summary?: {
+      total_revenue?: number;
+      platform_fee?: number;
+      organizer_earnings?: number;
+      commission_rate?: number;
+    };
     gross_revenue?: number;
     platform_fee_percent?: number;
     platform_fee?: number;
@@ -188,20 +229,33 @@ export async function getOrganizerRevenue(eventId?: string, period = '6months'):
     by_month?: { month: string; revenue: number }[];
   }>(`/store/organizers/revenue?${params}`);
 
-  const gross = data.gross_revenue ?? 0;
-  const feePct = data.platform_fee_percent ?? 4.5;
-  const fee = data.platform_fee ?? Math.round(gross * (feePct / 100));
+  const summary = data.summary ?? {};
+  const gross = summary.total_revenue ?? data.gross_revenue ?? 0;
+  const feePct = summary.commission_rate ?? data.platform_fee_percent ?? 4.5;
+  const fee = summary.platform_fee ?? data.platform_fee ?? Math.round(gross * (feePct / 100));
+  const net = summary.organizer_earnings ?? data.net_revenue ?? gross - fee;
+
+  const monthlyRows = normalizeMonthlySales(
+    (data.by_month ?? []).map((m) => ({
+      month: String(m.month ?? '').trim(),
+      amount: typeof m.revenue === 'number' ? m.revenue : 0,
+    })),
+  );
+
   return {
     grossRevenue: gross,
     platformFeePercent: feePct,
     platformFee: fee,
-    netRevenue: data.net_revenue ?? gross - fee,
-    byTicketType: (data.by_ticket_type ?? []).map((t) => ({
-      name: t.name,
-      revenue: t.revenue,
-      sold: t.sold,
-    })),
-    byMonth: (data.by_month ?? []).map((m) => ({ month: m.month, revenue: m.revenue })),
+    netRevenue: net,
+    byTicketType: (data.by_ticket_type ?? [])
+      .map((t) => ({
+        name: String(t.name ?? 'Ticket'),
+        revenue: typeof t.revenue === 'number' ? t.revenue : 0,
+        sold: typeof t.sold === 'number' ? t.sold : 0,
+      }))
+      .filter((t) => t.revenue > 0 || t.sold > 0)
+      .sort((a, b) => b.revenue - a.revenue || a.name.localeCompare(b.name)),
+    byMonth: monthlyRows.map(({ month, amount }) => ({ month, revenue: amount })),
   };
 }
 

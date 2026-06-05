@@ -8,9 +8,9 @@ type OrganizerBarChartProps = {
   className?: string;
 };
 
-const BAR_AREA_PX = 168;
-const BAR_WIDTH_PX = 44;
-const COLUMN_WIDTH_PX = 84;
+const BAR_AREA_PX = 208;
+const BAR_WIDTH_PX = 52;
+const COLUMN_WIDTH_PX = 96;
 
 export default function OrganizerBarChart({
   bars,
@@ -28,7 +28,7 @@ export default function OrganizerBarChart({
         className={`flex items-end gap-3 sm:gap-4 ${
           bars.length === 1 ? 'justify-center' : scrollable ? 'justify-start min-w-max px-1' : 'justify-between'
         }`}
-        style={{ minHeight: BAR_AREA_PX + 56 }}
+        style={{ minHeight: BAR_AREA_PX + 64 }}
       >
         {bars.map((bar, index) => {
           const color = bar.color ?? chartColor(index);
@@ -42,7 +42,7 @@ export default function OrganizerBarChart({
               className="flex flex-col items-center shrink-0"
               style={{ width: COLUMN_WIDTH_PX }}
             >
-              <p className="text-[11px] sm:text-xs font-medium tabular-nums text-brand-text mb-2 text-center leading-tight w-full">
+              <p className="text-xs sm:text-sm font-medium tabular-nums text-brand-text mb-2.5 text-center leading-tight w-full">
                 {formatted}
               </p>
 
@@ -63,7 +63,7 @@ export default function OrganizerBarChart({
               </div>
 
               <p
-                className="mt-2 text-[10px] sm:text-[11px] text-brand-muted text-center leading-snug w-full px-0.5"
+                className="mt-2.5 text-[11px] sm:text-xs text-brand-muted text-center leading-snug w-full px-0.5"
                 title={label}
               >
                 {label}

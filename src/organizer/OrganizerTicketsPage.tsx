@@ -42,6 +42,7 @@ export default function OrganizerTicketsPage() {
   const [allTickets, setAllTickets] = useState<MockOrganizerTicket[]>([]);
   const [loading, setLoading] = useState(true);
   const [query, setQuery] = useState('');
+  const [eventFilter, setEventFilter] = useState('all');
   const [statusFilter, setStatusFilter] = useState<StatusFilter>('all');
   const [typeFilter, setTypeFilter] = useState('all');
   const [eventsPage, setEventsPage] = useState(1);
@@ -55,14 +56,22 @@ export default function OrganizerTicketsPage() {
       .finally(() => setLoading(false));
   }, []);
 
-  const ticketTypes = useMemo(
-    () => ['all', ...Array.from(new Set(allTickets.map((t) => t.ticketType))).sort()],
-    [allTickets],
-  );
+  const ticketsForEvent = useMemo((): MockOrganizerTicket[] => {
+    if (eventFilter === 'all') return allTickets;
+    return allTickets.filter((t) => t.eventId === eventFilter);
+  }, [allTickets, eventFilter]);
+
+  const ticketTypes = useMemo(() => {
+    if (eventFilter === 'all') return ['all'];
+    return [
+      'all',
+      ...Array.from(new Set(ticketsForEvent.map((t) => t.ticketType))).sort(),
+    ];
+  }, [ticketsForEvent, eventFilter]);
 
   const filtered = useMemo((): MockOrganizerTicket[] => {
     const q = query.trim().toLowerCase();
-    return allTickets.filter((t) => {
+    return ticketsForEvent.filter((t) => {
       if (statusFilter !== 'all' && t.status !== statusFilter) return false;
       if (typeFilter !== 'all' && t.ticketType !== typeFilter) return false;
       if (!q) return true;
@@ -73,7 +82,7 @@ export default function OrganizerTicketsPage() {
         t.ticketType.toLowerCase().includes(q)
       );
     });
-  }, [allTickets, query, statusFilter, typeFilter]);
+  }, [ticketsForEvent, query, statusFilter, typeFilter]);
 
   const groups = useMemo(
     (): EventGrouped<MockOrganizerTicket>[] =>
@@ -90,7 +99,11 @@ export default function OrganizerTicketsPage() {
     setEventsPage(1);
     setItemPages({});
     setExpandedId(null);
-  }, [query, statusFilter, typeFilter]);
+  }, [query, eventFilter, statusFilter, typeFilter]);
+
+  useEffect(() => {
+    setTypeFilter('all');
+  }, [eventFilter]);
 
   const getItemPage = (eventId: string) => itemPages[eventId] ?? 1;
   const setItemPage = (eventId: string, page: number) => {
@@ -107,6 +120,18 @@ export default function OrganizerTicketsPage() {
         searchPlaceholder="Search holder, ID, reference…"
         filters={
           <>
+            <OrganizerSelect
+              label="Event"
+              value={eventFilter}
+              onChange={(e) => setEventFilter(e.target.value)}
+              options={[
+                { value: 'all', label: 'All editions' },
+                ...liveEditions.map((edition) => ({
+                  value: edition.id,
+                  label: `${edition.title} · ${edition.editionLabel}`,
+                })),
+              ]}
+            />
             <OrganizerFilterChips
               value={statusFilter}
               onChange={setStatusFilter}
@@ -121,10 +146,15 @@ export default function OrganizerTicketsPage() {
               label="Ticket type"
               value={typeFilter}
               onChange={(e) => setTypeFilter(e.target.value)}
-              options={ticketTypes.map((t) => ({
-                value: t,
-                label: t === 'all' ? 'All types' : t,
-              }))}
+              disabled={eventFilter === 'all'}
+              options={
+                eventFilter === 'all'
+                  ? [{ value: 'all', label: 'Select an event first' }]
+                  : ticketTypes.map((t) => ({
+                      value: t,
+                      label: t === 'all' ? 'All types' : t,
+                    }))
+              }
             />
           </>
         }

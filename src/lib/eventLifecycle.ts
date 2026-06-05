@@ -18,14 +18,41 @@ export function isEventEnded(event: Pick<MockEvent, 'date' | 'publicStatus'>): b
   return event.publicStatus === 'ended';
 }
 
+export function isEventLive(event: Pick<MockEvent, 'publicStatus'>): boolean {
+  return event.publicStatus === 'live';
+}
+
+export function publicEventBadge(event: Pick<MockEvent, 'publicStatus'>): {
+  label: string;
+  tone: 'live' | 'sale' | 'ended';
+} {
+  if (event.publicStatus === 'live') return { label: 'Live', tone: 'live' };
+  if (event.publicStatus === 'upcoming') return { label: 'On sale', tone: 'sale' };
+  return { label: 'Ended', tone: 'ended' };
+}
+
 export function sortPublicEvents(events: MockEvent[]): MockEvent[] {
+  const live = events
+    .filter((e) => e.publicStatus === 'live')
+    .sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
   const upcoming = events
-    .filter((e) => !isEventEnded(e))
+    .filter((e) => e.publicStatus === 'upcoming')
     .sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
   const ended = events
     .filter((e) => isEventEnded(e))
     .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
-  return [...upcoming, ...ended];
+  return [...live, ...upcoming, ...ended];
+}
+
+export function partitionPublicEvents(events: MockEvent[]): {
+  active: MockEvent[];
+  past: MockEvent[];
+} {
+  const sorted = sortPublicEvents(events);
+  return {
+    active: sorted.filter((e) => !isEventEnded(e)),
+    past: sorted.filter((e) => isEventEnded(e)),
+  };
 }
 
 export function pickDefaultPublicEvent(events: MockEvent[]): MockEvent | null {

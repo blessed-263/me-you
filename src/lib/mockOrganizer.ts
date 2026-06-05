@@ -482,8 +482,11 @@ export function getMockRevenue(eventId: string): MockRevenue {
 
   const byMonthMap: Record<string, number> = {};
   for (const o of orders) {
-    const label = new Date(o.paidAt).toLocaleDateString('en-GB', { month: 'long', year: 'numeric' });
-    byMonthMap[label] = (byMonthMap[label] ?? 0) + o.total;
+    const d = new Date(o.paidAt);
+    if (Number.isNaN(d.getTime())) continue;
+    const key = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`;
+    if (!/^\d{4}-\d{2}$/.test(key)) continue;
+    byMonthMap[key] = (byMonthMap[key] ?? 0) + o.total;
   }
 
   return {
@@ -491,12 +494,16 @@ export function getMockRevenue(eventId: string): MockRevenue {
     platformFeePercent,
     platformFee,
     netRevenue: grossRevenue - platformFee,
-    byTicketType: Object.entries(byType).map(([name, v]) => ({
-      name,
-      revenue: v.revenue,
-      sold: v.sold,
-    })),
-    byMonth: Object.entries(byMonthMap).map(([month, revenue]) => ({ month, revenue })),
+    byTicketType: Object.entries(byType)
+      .map(([name, v]) => ({
+        name,
+        revenue: v.revenue,
+        sold: v.sold,
+      }))
+      .sort((a, b) => b.revenue - a.revenue || a.name.localeCompare(b.name)),
+    byMonth: Object.entries(byMonthMap)
+      .sort(([a], [b]) => a.localeCompare(b))
+      .map(([month, revenue]) => ({ month, revenue })),
   };
 }
 

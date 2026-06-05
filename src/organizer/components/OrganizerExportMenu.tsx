@@ -30,7 +30,7 @@ export default function OrganizerExportMenu({ actions, label = 'Export' }: Organ
       <button
         type="button"
         onClick={() => setOpen((v) => !v)}
-        className="inline-flex items-center justify-center gap-2 rounded-full px-5 py-2.5 text-[10px] font-semibold uppercase tracking-[0.14em] bg-brand-text text-brand-bg hover:bg-brand-text/90 shadow-sm"
+        className="inline-flex items-center justify-center gap-2 h-10 rounded-full px-5 text-[10px] font-semibold uppercase tracking-[0.14em] bg-brand-text text-brand-bg hover:bg-brand-text/90 shadow-sm"
         aria-expanded={open}
         aria-haspopup="menu"
       >

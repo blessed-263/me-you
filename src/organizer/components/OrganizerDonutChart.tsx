@@ -25,7 +25,7 @@ export default function OrganizerDonutChart({ segments, centerLabel, centerValue
 
   return (
     <div className="flex flex-col sm:flex-row sm:items-center gap-4">
-      <div className="relative shrink-0 w-24 h-24 sm:w-28 sm:h-28 mx-auto sm:mx-0">
+      <div className="relative shrink-0 w-28 h-28 sm:w-32 sm:h-32 mx-auto sm:mx-0">
         <div
           className="w-full h-full rounded-full organizer-chart-donut"
           style={{ background: gradient }}
@@ -34,7 +34,7 @@ export default function OrganizerDonutChart({ segments, centerLabel, centerValue
         />
         <div className="absolute inset-[22%] rounded-full bg-white flex flex-col items-center justify-center text-center px-1.5">
           {centerValue ? (
-            <p className="font-serif text-sm sm:text-base tabular-nums text-brand-text leading-none">{centerValue}</p>
+            <p className="font-serif text-base sm:text-lg tabular-nums text-brand-text leading-none">{centerValue}</p>
           ) : null}
           {centerLabel ? (
             <p className="mt-0.5 text-[7px] uppercase tracking-[0.1em] text-brand-muted leading-tight">

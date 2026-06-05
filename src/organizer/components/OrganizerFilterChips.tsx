@@ -18,7 +18,7 @@ export default function OrganizerFilterChips<T extends string>({
             key={opt.value}
             type="button"
             onClick={() => onChange(opt.value)}
-            className={`rounded-full px-4 py-2 text-[10px] font-semibold uppercase tracking-[0.12em] border transition-colors ${
+            className={`inline-flex items-center justify-center h-10 rounded-full px-4 text-[10px] font-semibold uppercase tracking-[0.12em] border transition-colors ${
               active
                 ? 'bg-brand-text text-brand-bg border-brand-text'
                 : 'border-brand-border text-brand-muted hover:text-brand-text bg-white/80'
