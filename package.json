@@ -26,8 +26,6 @@
     "export:tickets": "npm run export:harvest-table-tickets && npm run export:after-party-tickets",
     "email:optimize-hero": "npx tsx scripts/optimize-email-hero.ts",
     "hero:optimize": "npx tsx scripts/optimize-site-hero.ts",
-    "content:optimize": "npx tsx scripts/optimize-content-images.ts",
-    "images:optimize": "npm run hero:optimize && npm run content:optimize",
     "email:preview": "npx tsx scripts/preview-may-gathering-email.ts",
     "email:preview:all": "npx tsx scripts/preview-all-emails.ts",
     "email:preview:harvest-table-day-of": "npx tsx scripts/preview-harvest-table-day-of-email.ts",

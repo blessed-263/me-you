@@ -1,37 +1,16 @@
 import { useEffect, useState } from 'react';
 import { AnimatePresence, motion } from 'motion/react';
-import { HERO_IMAGE_SIZES, heroPrefetchUrl, type HeroSlide } from '../lib/heroSlides.ts';
+
+export type HeroSlide = {
+  src: string;
+  alt: string;
+};
 
 type HeroSliderProps = {
   slides: HeroSlide[];
   /** Auto-advance interval in ms */
   intervalMs?: number;
 };
-
-function HeroSlidePicture({
-  slide,
-  priority,
-}: {
-  slide: HeroSlide;
-  priority: boolean;
-}) {
-  return (
-    <picture className="absolute inset-0 block h-full w-full">
-      <source type="image/webp" srcSet={slide.webpSrcSet} sizes={HERO_IMAGE_SIZES} />
-      <img
-        src={slide.jpegSrc}
-        srcSet={slide.jpegSrcSet}
-        sizes={HERO_IMAGE_SIZES}
-        alt={slide.alt}
-        className="absolute inset-0 h-full w-full object-cover object-[center_42%]"
-        decoding={priority ? 'sync' : 'async'}
-        fetchPriority={priority ? 'high' : 'auto'}
-        loading={priority ? 'eager' : 'lazy'}
-        draggable={false}
-      />
-    </picture>
-  );
-}
 
 export default function HeroSlider({ slides, intervalMs = 7000 }: HeroSliderProps) {
   const [index, setIndex] = useState(0);
@@ -57,14 +36,8 @@ export default function HeroSlider({ slides, intervalMs = 7000 }: HeroSliderProp
     if (slides.length <= 1) return;
     const next = slides[(index + 1) % slides.length];
     if (!next) return;
-    const link = document.createElement('link');
-    link.rel = 'prefetch';
-    link.as = 'image';
-    link.href = heroPrefetchUrl(next);
-    document.head.appendChild(link);
-    return () => {
-      link.remove();
-    };
+    const img = new Image();
+    img.src = next.src;
   }, [index, slides]);
 
   if (slides.length === 0) return null;
@@ -74,8 +47,10 @@ export default function HeroSlider({ slides, intervalMs = 7000 }: HeroSliderProp
   return (
     <div className="absolute inset-0">
       <AnimatePresence mode="sync" initial={false}>
-        <motion.div
-          key={current.id}
+        <motion.img
+          key={current.src}
+          src={current.src}
+          alt={current.alt}
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           exit={{ opacity: 0 }}
@@ -83,10 +58,11 @@ export default function HeroSlider({ slides, intervalMs = 7000 }: HeroSliderProp
             duration: reduceMotion ? 0 : 1.2,
             ease: [0.16, 1, 0.3, 1],
           }}
-          className="absolute inset-0"
-        >
-          <HeroSlidePicture slide={current} priority={index === 0} />
-        </motion.div>
+          className="absolute inset-0 h-full w-full object-cover object-[center_42%]"
+          decoding={index === 0 ? 'sync' : 'async'}
+          fetchPriority={index === 0 ? 'high' : 'auto'}
+          draggable={false}
+        />
       </AnimatePresence>
 
       {slides.length > 1 ? (
@@ -97,7 +73,7 @@ export default function HeroSlider({ slides, intervalMs = 7000 }: HeroSliderProp
         >
           {slides.map((slide, i) => (
             <button
-              key={slide.id}
+              key={slide.src}
               type="button"
               role="tab"
               aria-selected={i === index}
@@ -115,5 +91,3 @@ export default function HeroSlider({ slides, intervalMs = 7000 }: HeroSliderProp
     </div>
   );
 }
-
-export type { HeroSlide };
