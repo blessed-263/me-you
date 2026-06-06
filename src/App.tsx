@@ -3,11 +3,13 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { motion, useScroll, useSpring, useTransform } from 'motion/react';
+import { motion, useScroll, useSpring } from 'motion/react';
 import { MapPin, Calendar, Clock, ArrowUpRight } from 'lucide-react';
 import { useState, useEffect, useRef } from 'react';
 import EventAssistant from './components/EventAssistant.tsx';
+import HeroSlider from './components/HeroSlider.tsx';
 import Sponsors from './components/Sponsors.tsx';
+import { HERO_SLIDES } from './lib/heroSlides.ts';
 import { VENUE_AREA, VENUE_MAPS_URL, VENUE_NAME, VENUE_STREET } from './lib/venue.ts';
 
 const TICKETS_URL = '/tickets';
@@ -42,8 +44,6 @@ function EditionInfinity() {
 
 export default function App() {
   const { scrollYProgress } = useScroll();
-  const yHero = useTransform(scrollYProgress, [0, 1], ['0%', '50%']);
-  const opacityHero = useTransform(scrollYProgress, [0, 0.2], [1, 0]);
   const progressScaleX = useSpring(scrollYProgress, {
     stiffness: 120,
     damping: 24,
@@ -103,34 +103,11 @@ export default function App() {
       </nav>
       </motion.header>
 
-      {/* Hero Section */}
-      <section className="relative h-[min(78vh,720px)] min-h-[460px] md:h-[min(84vh,780px)] md:min-h-[520px] pt-20 md:pt-24 flex items-center justify-center overflow-hidden">
-        {/* Parallax Background */}
-        <motion.div style={{ y: yHero }} className="absolute inset-0 z-0 overflow-hidden bg-brand-surface border-b border-brand-border/30">
-          <img
-            src="/images/_DSC6449.jpg"
-            alt=""
-            aria-hidden="true"
-            className="h-[112%] w-full object-cover object-top [clip-path:inset(0_0_calc(11%+1cm)_0)]"
-            decoding="async"
-          />
-        </motion.div>
-
-        <motion.div style={{ opacity: opacityHero }} className="relative z-10 text-center flex flex-col items-center -mt-4 md:-mt-2 px-4">
-          <motion.div
-            initial={{ opacity: 0, scale: 0.95 }}
-            animate={{ opacity: 1, scale: 1 }}
-            transition={{ duration: 1.5, ease: [0.16, 1, 0.3, 1] }}
-          >
-            <img
-              src="/sponsors/youandme white.png"
-              alt="You & Me Africa"
-              className="mx-auto w-[min(68vw,440px)] md:w-[min(46vw,560px)] object-contain"
-              decoding="async"
-            />
-          </motion.div>
-        </motion.div>
-
+      {/* Hero carousel */}
+      <section className="relative h-[min(88vh,820px)] min-h-[480px] md:h-[min(92vh,900px)] md:min-h-[560px] pt-20 md:pt-24 flex items-end justify-center overflow-hidden">
+        <div className="absolute inset-0 z-0 overflow-hidden bg-brand-surface border-b border-brand-border/30">
+          <HeroSlider slides={[...HERO_SLIDES]} />
+        </div>
       </section>
 
       {/* Vision Statement */}
