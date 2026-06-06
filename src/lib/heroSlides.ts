@@ -18,7 +18,7 @@ function buildSlide(id: string, alt: string): HeroSlide {
   return {
     id,
     alt,
-    jpegSrc: `${base}-1920.jpg`,
+    jpegSrc: `${base}-2560.jpg`,
     jpegSrcSet,
     webpSrcSet,
   };
@@ -36,5 +36,5 @@ export const HERO_IMAGE_SIZES = '100vw';
 
 /** Pick best URL to prefetch upcoming slide (next width down from 1920) */
 export function heroPrefetchUrl(slide: HeroSlide): string {
-  return slide.jpegSrc.replace('-1920.jpg', '-1280.webp');
+  return slide.jpegSrc.replace('-2560.jpg', '-1920.webp');
 }

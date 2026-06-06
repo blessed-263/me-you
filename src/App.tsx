@@ -6,6 +6,7 @@
 import { motion, useScroll, useSpring } from 'motion/react';
 import { MapPin, Calendar, Clock, ArrowUpRight } from 'lucide-react';
 import { useState, useEffect, useRef } from 'react';
+import ResponsiveImage from './components/ResponsiveImage.tsx';
 import EventAssistant from './components/EventAssistant.tsx';
 import HeroSlider from './components/HeroSlider.tsx';
 import Sponsors from './components/Sponsors.tsx';
@@ -14,15 +15,15 @@ import { VENUE_AREA, VENUE_MAPS_URL, VENUE_NAME, VENUE_STREET } from './lib/venu
 
 const TICKETS_URL = '/tickets';
 
-const marqueeImages: { src: string; alt: string }[] = [
-  { src: '/images/harvest-table.png', alt: 'Harvest Table' },
-  { src: '/images/event-cake.png', alt: 'Cake unveiling' },
-  { src: '/images/event-martell-bar.png', alt: 'Martell bar' },
-  { src: '/images/event-dj.png', alt: 'DJ set' },
-  { src: '/images/after-party.png', alt: 'After party' },
-  { src: '/images/event-guests-couch.png', alt: 'Guests on lounge' },
-  { src: '/images/event-guests-duo.png', alt: 'Guests portrait' },
-  { src: '/images/martell-bottles.png', alt: 'Martell selection' },
+const marqueeImages: { base: string; alt: string }[] = [
+  { base: '/images/harvest-table', alt: 'Harvest Table' },
+  { base: '/images/event-cake', alt: 'Cake unveiling' },
+  { base: '/images/event-martell-bar', alt: 'Martell bar' },
+  { base: '/images/event-dj', alt: 'DJ set' },
+  { base: '/images/after-party', alt: 'After party' },
+  { base: '/images/event-guests-couch', alt: 'Guests on lounge' },
+  { base: '/images/event-guests-duo', alt: 'Guests portrait' },
+  { base: '/images/martell-bottles', alt: 'Martell selection' },
 ];
 
 function EditionInfinity() {
@@ -139,11 +140,10 @@ export default function App() {
               transition={{ duration: 1.5, ease: [0.16, 1, 0.3, 1] }}
               className="aspect-[4/5] object-cover relative group max-w-sm mx-auto"
             >
-              <img 
-                src="/images/harvest-table.png"
+              <ResponsiveImage
+                base="/images/harvest-table"
                 alt="Harvest Table"
-                loading="lazy"
-                decoding="async"
+                sizes="(max-width: 639px) 90vw, 384px"
                 className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-[2s] ease-out"
               />
             </motion.div>
@@ -211,11 +211,10 @@ export default function App() {
               transition={{ duration: 1.5, ease: [0.16, 1, 0.3, 1] }}
               className="aspect-[4/5] object-cover relative group max-w-sm mx-auto"
             >
-              <img 
-                src="/images/event-dj.png" 
+              <ResponsiveImage
+                base="/images/event-dj"
                 alt="DJ at the after lunch gathering"
-                loading="lazy"
-                decoding="async"
+                sizes="(max-width: 639px) 90vw, 384px"
                 className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-[2s] ease-out"
               />
             </motion.div>
@@ -253,12 +252,11 @@ export default function App() {
             {[...marqueeImages, ...marqueeImages].map((img, i) => (
               <div key={i} className="w-[240px] md:w-[320px] shrink-0 pr-4 md:pr-8">
                 <div className="aspect-[4/5] w-full overflow-hidden relative group rounded-sm shadow-sm">
-                  <img 
-                    src={img.src} 
+                  <ResponsiveImage
+                    base={img.base}
                     alt={img.alt}
-                    loading="lazy"
-                    decoding="async"
-                    className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-[1.5s] ease-out" 
+                    sizes="(max-width: 767px) 240px, 320px"
+                    className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-[1.5s] ease-out"
                   />
                 </div>
               </div>

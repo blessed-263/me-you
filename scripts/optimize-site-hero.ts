@@ -3,12 +3,12 @@
  *
  * Sources (in order of preference):
  *   1. public/images/src/hero/_DSC*.jpg — full camera exports
- *   2. public/images/hero/slide-NN.jpg — existing single-size slides
+ *   2. public/images/hero/slide-NN-2560.jpg — existing masters
  *
  *   npm run hero:optimize
  */
 import { existsSync } from 'node:fs';
-import { mkdir } from 'node:fs/promises';
+import { mkdir, rename, unlink } from 'node:fs/promises';
 import path from 'node:path';
 import sharp from 'sharp';
 
@@ -18,8 +18,8 @@ const OUT_DIR = path.join(IMAGES_DIR, 'hero');
 const SRC_DIR = path.join(IMAGES_DIR, 'src', 'hero');
 
 const WIDTHS = [640, 1280, 1920, 2560] as const;
-const JPEG_QUALITY = 86;
-const WEBP_QUALITY = 84;
+const JPEG_QUALITY = 93;
+const WEBP_QUALITY = 90;
 
 const HERO_SOURCE_NAMES = [
   '_DSC8841.jpg',
@@ -48,29 +48,68 @@ function resolveInput(index: number): string | null {
   return null;
 }
 
+async function writeViaTemp(
+  write: (dest: string) => Promise<unknown>,
+  dest: string,
+): Promise<void> {
+  const temp = `${dest}.tmp`;
+  await write(temp);
+  if (existsSync(dest)) await unlink(dest);
+  await rename(temp, dest);
+}
+
 async function writeVariant(
   input: string,
   id: string,
   width: number,
 ): Promise<{ jpegKb: number; webpKb: number }> {
-  const base = path.join(OUT_DIR, `slide-${id}-${width}`);
-  const pipeline = sharp(input).rotate().resize(width, null, {
-    fit: 'inside',
-    withoutEnlargement: true,
-  });
+  const meta = await sharp(input).metadata();
+  const targetWidth = meta.width && meta.width < width ? meta.width : width;
 
-  await pipeline
-    .clone()
-    .jpeg({ quality: JPEG_QUALITY, progressive: true, mozjpeg: true })
-    .toFile(`${base}.jpg`);
+  const pipeline = sharp(input)
+    .rotate()
+    .resize(targetWidth, null, {
+      fit: 'inside',
+      withoutEnlargement: true,
+      kernel: sharp.kernel.lanczos3,
+    })
+    .sharpen({ sigma: 0.5, m1: 0.5, m2: 0.35 });
 
-  await pipeline
-    .clone()
-    .webp({ quality: WEBP_QUALITY, effort: 4 })
-    .toFile(`${base}.webp`);
+  const jpegOut = path.join(OUT_DIR, `slide-${id}-${width}.jpg`);
+  const webpOut = path.join(OUT_DIR, `slide-${id}-${width}.webp`);
+  const inputResolved = path.resolve(input);
+
+  const writeJpeg = (dest: string) =>
+    pipeline
+      .clone()
+      .jpeg({
+        quality: JPEG_QUALITY,
+        progressive: true,
+        mozjpeg: true,
+        chromaSubsampling: '4:4:4',
+      })
+      .toFile(dest);
+
+  const writeWebp = (dest: string) =>
+    pipeline
+      .clone()
+      .webp({ quality: WEBP_QUALITY, effort: 6, smartSubsample: false })
+      .toFile(dest);
+
+  if (inputResolved === path.resolve(jpegOut)) {
+    await writeViaTemp((d) => writeJpeg(d), jpegOut);
+  } else {
+    await writeJpeg(jpegOut);
+  }
+
+  if (inputResolved === path.resolve(webpOut)) {
+    await writeViaTemp((d) => writeWebp(d), webpOut);
+  } else {
+    await writeWebp(webpOut);
+  }
 
   const fs = await import('node:fs/promises');
-  const [jpeg, webp] = await Promise.all([fs.stat(`${base}.jpg`), fs.stat(`${base}.webp`)]);
+  const [jpeg, webp] = await Promise.all([fs.stat(jpegOut), fs.stat(webpOut)]);
   return { jpegKb: jpeg.size / 1024, webpKb: webp.size / 1024 };
 }
 
@@ -99,7 +138,7 @@ async function main(): Promise<void> {
   }
 
   if (processed === 0) {
-    throw new Error(`No hero sources found. Add JPGs to ${SRC_DIR} or keep slide-NN.jpg in ${OUT_DIR}`);
+    throw new Error(`No hero sources found. Add JPGs to ${SRC_DIR} or keep slide-NN-2560.jpg in ${OUT_DIR}`);
   }
 
   console.log(`\nDone — ${processed} slide(s), ${WIDTHS.length} widths × 2 formats in public/images/hero/`);
