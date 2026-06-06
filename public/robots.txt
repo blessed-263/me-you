@@ -10,3 +10,4 @@ Disallow: /tickets/my-tickets
 Disallow: /api/
 
 Sitemap: https://www.youandmeafrica.com/sitemap.xml
+Sitemap: https://youandmeafrica.com/sitemap.xml
