@@ -1,0 +1,12 @@
+User-agent: *
+Allow: /
+Disallow: /organizer
+Disallow: /organizer/
+Disallow: /login
+Disallow: /tickets/login
+Disallow: /organizer/login
+Disallow: /tickets/payment/
+Disallow: /tickets/my-tickets
+Disallow: /api/
+
+Sitemap: https://www.youandmeafrica.com/sitemap.xml

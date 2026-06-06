@@ -7,6 +7,7 @@ import SignInPage from './SignInPage.tsx';
 import TicketPage from './TicketPage.tsx';
 import OrganizerPage from './OrganizerPage.tsx';
 import ProjectAnalytics from './components/ProjectAnalytics.tsx';
+import SeoHead from './components/SeoHead.tsx';
 import { RSVP_SESSIONS, sessionFromPath } from './lib/rsvpSessions.ts';
 import './index.css';
 
@@ -26,6 +27,7 @@ function Root() {
 
   return (
     <>
+      <SeoHead pathname={pathname} />
       {isSignIn ? (
         <SignInPage />
       ) : isOrganizer ? (
