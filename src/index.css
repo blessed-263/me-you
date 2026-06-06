@@ -15,9 +15,11 @@
 
 html {
   scroll-behavior: smooth;
+  overflow-x: clip;
 }
 
 body {
+  overflow-x: clip;
   background-color: var(--color-brand-bg);
   color: var(--color-brand-text);
   font-family: var(--font-sans);

@@ -28,10 +28,10 @@ const HERO_JOBS = {
   after: {
     label: 'After Lunch Party hero',
     output: 'email-hero-after-party.jpg',
-    defaultSrc: path.join(ROOT, 'public/images/src/event-dj.png'),
+    defaultSrc: path.join(ROOT, 'public/images/event-dj.png'),
     fallbacks: [
-      path.join(ROOT, 'public/images/src/event-dj.png'),
-      path.join(ROOT, 'public/images/src/after-party.png'),
+      path.join(ROOT, 'public/images/event-dj.png'),
+      path.join(ROOT, 'public/images/after-party.png'),
     ],
   },
 } as const;

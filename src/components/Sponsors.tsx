@@ -53,7 +53,7 @@ const imageHeights = (compact: boolean, size: 'side' | 'center') => {
 export default function Sponsors({ className = '', compact = false }: SponsorsProps) {
   return (
     <div
-      className={`flex w-full flex-col items-center gap-6 overflow-visible border-t border-brand-border/30 pt-10 ${className}`}
+      className={`flex w-full max-w-full flex-col items-center gap-6 overflow-hidden border-t border-brand-border/30 pt-10 ${className}`}
     >
       <div className="flex items-center gap-4 text-brand-muted">
         <span className="hidden h-px w-10 bg-brand-border sm:block" aria-hidden />
@@ -64,7 +64,7 @@ export default function Sponsors({ className = '', compact = false }: SponsorsPr
       </div>
 
       <div
-        className="flex w-full flex-nowrap items-end justify-between gap-3 overflow-visible px-0 sm:justify-center sm:gap-8 md:gap-12 lg:gap-16"
+        className="flex w-full max-w-full flex-wrap items-end justify-center gap-x-4 gap-y-6 px-2 sm:flex-nowrap sm:justify-center sm:gap-8 md:gap-12 lg:gap-16"
         role="list"
       >
         {SPONSORS.map((sponsor) => (
@@ -81,7 +81,7 @@ export default function Sponsors({ className = '', compact = false }: SponsorsPr
             <img
               src={sponsor.src}
               alt={sponsor.alt}
-              className={`w-auto max-w-none object-contain ${imageHeights(compact, sponsor.size)} ${sponsor.size === 'center' ? '-mx-1 sm:mx-0' : ''}`}
+              className={`w-auto max-w-[28vw] sm:max-w-none object-contain ${imageHeights(compact, sponsor.size)} ${sponsor.size === 'center' ? 'sm:mx-0' : ''}`}
               decoding="async"
             />
           </a>

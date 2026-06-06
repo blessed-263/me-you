@@ -29,9 +29,9 @@ function EditionInfinity() {
   const slots = ['Days', 'Hours', 'Minutes', 'Seconds'] as const;
 
   return (
-    <div className="flex gap-4 md:gap-8 justify-center items-center text-center mt-12">
+    <div className="flex flex-wrap gap-x-4 gap-y-6 md:gap-8 justify-center items-center text-center mt-12 max-w-full px-2">
       {slots.map((label) => (
-        <div key={label} className="flex flex-col items-center min-w-[80px]">
+        <div key={label} className="flex flex-col items-center min-w-[4.5rem] sm:min-w-[80px]">
           <span className="font-serif text-4xl md:text-6xl text-brand-text leading-none" aria-hidden>
             ∞
           </span>
@@ -71,7 +71,7 @@ export default function App() {
   }, []);
 
   return (
-    <div className="min-h-screen bg-brand-bg text-brand-text font-sans selection:bg-brand-accent/30 selection:text-brand-text">
+    <div className="min-h-screen overflow-x-clip bg-brand-bg text-brand-text font-sans selection:bg-brand-accent/30 selection:text-brand-text">
       <motion.div
         aria-hidden
         style={{ scaleX: progressScaleX }}
@@ -82,7 +82,7 @@ export default function App() {
         initial={false}
         animate={{ y: navHidden ? '-100%' : 0 }}
         transition={{ duration: 0.35, ease: [0.16, 1, 0.3, 1] }}
-        className="fixed top-0 left-0 right-0 z-[60] bg-brand-bg border-b border-brand-border shadow-sm"
+        className="fixed inset-x-0 top-0 z-[60] w-full max-w-full bg-brand-bg border-b border-brand-border shadow-sm"
       >
         <nav className="relative px-5 py-4 md:px-12 md:py-5 flex justify-between items-center gap-4">
         <a href="/" className="shrink-0 flex items-center group">
@@ -142,6 +142,8 @@ export default function App() {
               <img 
                 src="/images/harvest-table.png"
                 alt="Harvest Table"
+                loading="lazy"
+                decoding="async"
                 className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-[2s] ease-out"
               />
             </motion.div>
@@ -212,6 +214,8 @@ export default function App() {
               <img 
                 src="/images/event-dj.png" 
                 alt="DJ at the after lunch gathering"
+                loading="lazy"
+                decoding="async"
                 className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-[2s] ease-out"
               />
             </motion.div>
@@ -241,7 +245,7 @@ export default function App() {
           </h3>
         </motion.div>
 
-        <div className="w-full relative mt-8 cursor-ew-resize">
+        <div className="w-full max-w-full relative mt-8 cursor-ew-resize overflow-x-clip">
           <div className="absolute left-0 top-0 bottom-0 w-24 md:w-32 bg-gradient-to-r from-brand-bg to-transparent z-10 pointer-events-none"></div>
           <div className="absolute right-0 top-0 bottom-0 w-24 md:w-32 bg-gradient-to-l from-brand-bg to-transparent z-10 pointer-events-none"></div>
           
@@ -251,7 +255,9 @@ export default function App() {
                 <div className="aspect-[4/5] w-full overflow-hidden relative group rounded-sm shadow-sm">
                   <img 
                     src={img.src} 
-                    alt={img.alt} 
+                    alt={img.alt}
+                    loading="lazy"
+                    decoding="async"
                     className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-[1.5s] ease-out" 
                   />
                 </div>
@@ -285,7 +291,7 @@ export default function App() {
             <div className="flex flex-col gap-6 items-center text-center px-4">
               <MapPin className="w-5 h-5 text-brand-accent mb-4 stroke-1" />
               <h5 className="text-[9px] uppercase tracking-[0.16em] font-semibold text-brand-muted">The Setting</h5>
-              <p className="font-serif text-3xl lg:text-4xl font-medium text-brand-text">
+              <p className="font-serif text-3xl lg:text-4xl font-medium text-brand-text text-balance break-words">
                 {VENUE_NAME},{' '}
                 <span className="italic text-brand-muted">
                   {VENUE_STREET}, {VENUE_AREA}

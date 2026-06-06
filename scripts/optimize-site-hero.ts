@@ -1,5 +1,9 @@
 /**
- * Build optimized homepage hero slides from full-resolution sources in public/images/.
+ * Build responsive hero slides (WebP + JPEG at multiple widths).
+ *
+ * Sources (in order of preference):
+ *   1. public/images/src/hero/_DSC*.jpg — full camera exports
+ *   2. public/images/hero/slide-NN.jpg — existing single-size slides
  *
  *   npm run hero:optimize
  */
@@ -11,12 +15,13 @@ import sharp from 'sharp';
 const ROOT = path.resolve(import.meta.dirname, '..');
 const IMAGES_DIR = path.join(ROOT, 'public', 'images');
 const OUT_DIR = path.join(IMAGES_DIR, 'hero');
+const SRC_DIR = path.join(IMAGES_DIR, 'src', 'hero');
 
-const MAX_WIDTH = 2560;
-const JPEG_QUALITY = 88;
+const WIDTHS = [640, 1280, 1920, 2560] as const;
+const JPEG_QUALITY = 86;
+const WEBP_QUALITY = 84;
 
-/** Full-res sources added for the homepage hero carousel (order = slide order). */
-const HERO_SOURCES = [
+const HERO_SOURCE_NAMES = [
   '_DSC8841.jpg',
   '_DSC8291.jpg',
   '_DSC9040.jpg',
@@ -24,46 +29,80 @@ const HERO_SOURCES = [
   '_DSC9266.jpg',
 ] as const;
 
-async function optimizeSlide(input: string, output: string, label: string): Promise<void> {
-  const metaIn = await sharp(input).metadata();
+const SLIDE_COUNT = HERO_SOURCE_NAMES.length;
 
-  await sharp(input)
-    .rotate()
-    .resize(MAX_WIDTH, null, {
-      fit: 'inside',
-      withoutEnlargement: true,
-    })
+function slideId(n: number): string {
+  return String(n).padStart(2, '0');
+}
+
+function resolveInput(index: number): string | null {
+  const fromSrc = path.join(SRC_DIR, HERO_SOURCE_NAMES[index]!);
+  if (existsSync(fromSrc)) return fromSrc;
+
+  const legacy = path.join(OUT_DIR, `slide-${slideId(index + 1)}-2560.jpg`);
+  if (existsSync(legacy)) return legacy;
+
+  const oldLegacy = path.join(OUT_DIR, `slide-${slideId(index + 1)}.jpg`);
+  if (existsSync(oldLegacy)) return oldLegacy;
+
+  return null;
+}
+
+async function writeVariant(
+  input: string,
+  id: string,
+  width: number,
+): Promise<{ jpegKb: number; webpKb: number }> {
+  const base = path.join(OUT_DIR, `slide-${id}-${width}`);
+  const pipeline = sharp(input).rotate().resize(width, null, {
+    fit: 'inside',
+    withoutEnlargement: true,
+  });
+
+  await pipeline
+    .clone()
     .jpeg({ quality: JPEG_QUALITY, progressive: true, mozjpeg: true })
-    .toFile(output);
+    .toFile(`${base}.jpg`);
 
-  const metaOut = await sharp(output).metadata();
-  const { size } = await import('node:fs/promises').then((fs) => fs.stat(output));
+  await pipeline
+    .clone()
+    .webp({ quality: WEBP_QUALITY, effort: 4 })
+    .toFile(`${base}.webp`);
 
-  console.log(
-    `${label}: ${metaIn.width}×${metaIn.height} → ${metaOut.width}×${metaOut.height}, ${(size / 1024).toFixed(0)} KB`,
-  );
+  const fs = await import('node:fs/promises');
+  const [jpeg, webp] = await Promise.all([fs.stat(`${base}.jpg`), fs.stat(`${base}.webp`)]);
+  return { jpegKb: jpeg.size / 1024, webpKb: webp.size / 1024 };
 }
 
 async function main(): Promise<void> {
+  await mkdir(SRC_DIR, { recursive: true });
   await mkdir(OUT_DIR, { recursive: true });
 
-  let index = 0;
-  for (const filename of HERO_SOURCES) {
-    const input = path.join(IMAGES_DIR, filename);
-    if (!existsSync(input)) {
-      console.warn(`Skip (missing): ${filename}`);
+  let processed = 0;
+
+  for (let i = 0; i < SLIDE_COUNT; i++) {
+    const input = resolveInput(i);
+    if (!input) {
+      console.warn(`Skip slide ${i + 1}: no source`);
       continue;
     }
-    index += 1;
-    const output = path.join(OUT_DIR, `slide-${String(index).padStart(2, '0')}.jpg`);
-    await optimizeSlide(input, output, `Slide ${index} (${filename})`);
+
+    const id = slideId(i + 1);
+    console.log(`Slide ${id} ← ${path.relative(ROOT, input)}`);
+
+    for (const width of WIDTHS) {
+      const { jpegKb, webpKb } = await writeVariant(input, id, width);
+      console.log(`  ${width}px — jpeg ${jpegKb.toFixed(0)} KB, webp ${webpKb.toFixed(0)} KB`);
+    }
+
+    processed += 1;
   }
 
-  if (index === 0) {
-    throw new Error(`No hero sources found. Add files to ${IMAGES_DIR}`);
+  if (processed === 0) {
+    throw new Error(`No hero sources found. Add JPGs to ${SRC_DIR} or keep slide-NN.jpg in ${OUT_DIR}`);
   }
 
-  console.log(`\nDone — ${index} slide(s) in public/images/hero/`);
+  console.log(`\nDone — ${processed} slide(s), ${WIDTHS.length} widths × 2 formats in public/images/hero/`);
 }
 
 main().catch((err) => {
