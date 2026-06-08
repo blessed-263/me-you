@@ -19,7 +19,6 @@ const JPEG_QUALITY = 92;
 /** Full-res sources for the homepage hero carousel (order = slide order). */
 const HERO_SOURCES = [
   '_DSC8841.jpg',
-  '_DSC8291.jpg',
   '_DSC9040.jpg',
   '_DSC9016.jpg',
   '_DSC9266.jpg',

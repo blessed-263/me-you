@@ -5,10 +5,6 @@ export const HERO_SLIDES = [
     alt: 'Guests in conversation at You & Me Africa',
   },
   {
-    src: '/images/hero/slide-02.jpg',
-    alt: 'You & Me Africa gathering moment',
-  },
-  {
     src: '/images/hero/slide-03.jpg',
     alt: 'You & Me Africa cultural event',
   },
