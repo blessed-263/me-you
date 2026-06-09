@@ -6,7 +6,6 @@
 import { motion, useScroll, useSpring } from 'motion/react';
 import { MapPin, Calendar, Clock, ArrowUpRight } from 'lucide-react';
 import { useState, useEffect, useRef } from 'react';
-import EventAssistant from './components/EventAssistant.tsx';
 import HeroSlider from './components/HeroSlider.tsx';
 import Sponsors from './components/Sponsors.tsx';
 import { HERO_SLIDES } from './lib/heroSlides.ts';
@@ -362,7 +361,6 @@ export default function App() {
           </div>
         </div>
       </footer>
-      <EventAssistant />
     </div>
   );
 }

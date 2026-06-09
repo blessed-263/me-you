@@ -787,40 +787,6 @@ body {
   background: rgb(246 241 232 / 0.45);
 }
 
-.event-assistant-panel {
-  animation: event-assistant-in 0.35s ease;
-}
-
-.event-assistant-fab {
-  box-shadow: 0 12px 40px -12px rgb(26 26 26 / 0.2);
-}
-
-.event-assistant-fab:not(.bg-brand-text) img {
-  filter: none;
-}
-
-.event-assistant-messages {
-  scrollbar-width: thin;
-  scrollbar-color: var(--color-brand-border) transparent;
-}
-
-@keyframes event-assistant-in {
-  from {
-    opacity: 0;
-    transform: translateY(8px) scale(0.98);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0) scale(1);
-  }
-}
-
-@media (prefers-reduced-motion: reduce) {
-  .event-assistant-panel {
-    animation: none;
-  }
-}
-
 .scrollbar-none {
   -ms-overflow-style: none;
   scrollbar-width: none;

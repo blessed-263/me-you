@@ -8,7 +8,6 @@ import {
 } from '../lib/attendeeAuth.ts';
 import { TICKETS_BASE, TICKETS_MY } from '../lib/mockCheckout.ts';
 import { SIGN_IN_PATH } from '../lib/signInAuth.ts';
-import EventAssistant from '../components/EventAssistant.tsx';
 import StepIndicator, { type TicketStepId } from './StepIndicator.tsx';
 
 type TicketsLayoutProps = {
@@ -138,7 +137,6 @@ export default function TicketsLayout({
       </motion.header>
 
       <main>{children}</main>
-      <EventAssistant />
     </div>
   );
 }
