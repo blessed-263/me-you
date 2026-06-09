@@ -7,7 +7,7 @@ import {
   ticketsLoginUrl,
 } from '../lib/attendeeAuth.ts';
 import { TICKETS_BASE, TICKETS_MY } from '../lib/mockCheckout.ts';
-import { SIGN_IN_LABEL, SIGN_IN_PATH } from '../lib/signInAuth.ts';
+import { SIGN_IN_PATH } from '../lib/signInAuth.ts';
 import EventAssistant from '../components/EventAssistant.tsx';
 import StepIndicator, { type TicketStepId } from './StepIndicator.tsx';
 
@@ -113,9 +113,9 @@ export default function TicketsLayout({
             ) : (
               <a
                 href={loginHref}
-                className={`${navLinkClass} text-brand-accent hover:text-brand-text leading-snug text-[9px] sm:text-[10px] max-w-[10.5rem] sm:max-w-[14rem] md:max-w-none`}
+                className={`${navLinkClass} text-brand-accent hover:text-brand-text`}
               >
-                {SIGN_IN_LABEL}
+                Sign in
               </a>
             )}
 

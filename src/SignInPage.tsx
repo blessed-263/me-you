@@ -14,7 +14,6 @@ import {
   redirectAfterSignIn,
   resolveSignInReturnTo,
   SIGN_IN_LABEL,
-  SIGN_IN_SHORT_LABEL,
   universalSignInAsync,
 } from './lib/signInAuth.ts';
 
@@ -178,7 +177,7 @@ export default function SignInPage() {
                   mode === 'signin' ? 'bg-brand-text text-brand-bg' : 'border border-brand-border text-brand-muted'
                 }`}
               >
-                {SIGN_IN_SHORT_LABEL}
+                Sign in
               </button>
               <button
                 type="button"
