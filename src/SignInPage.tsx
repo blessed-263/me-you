@@ -9,20 +9,23 @@ import {
 import { loadOrganizerSession } from './lib/organizerAuth.ts';
 import { useMockData } from './lib/dataSource.ts';
 import { resendVerification } from './lib/storeApi.ts';
+import { ORGANIZER_ROUTES } from './lib/mockOrganizer.ts';
 import {
   redirectAfterSignIn,
   resolveSignInReturnTo,
+  SIGN_IN_LABEL,
+  SIGN_IN_SHORT_LABEL,
   universalSignInAsync,
 } from './lib/signInAuth.ts';
 
 type Mode = 'signin' | 'register';
 
 function redirectIfAlreadySignedIn(): boolean {
-  const returnTo = resolveSignInReturnTo();
-  if (returnTo.startsWith('/organizer') && loadOrganizerSession()) {
-    window.location.replace(returnTo);
+  if (loadOrganizerSession()) {
+    window.location.replace(ORGANIZER_ROUTES.DASHBOARD);
     return true;
   }
+  const returnTo = resolveSignInReturnTo();
   if (returnTo.startsWith('/tickets') && loadAttendeeSession()) {
     window.location.replace(returnTo);
     return true;
@@ -154,8 +157,8 @@ export default function SignInPage() {
 
         <div className="flex-1 flex items-center justify-center px-5 py-16">
           <div className="w-full max-w-md organizer-surface rounded-sm p-8 md:p-10">
-            <h1 className="font-serif text-3xl md:text-4xl font-semibold text-brand-text">
-              {mode === 'signin' ? 'Sign in' : 'Create account'}
+            <h1 className="font-serif text-2xl md:text-3xl font-semibold text-brand-text text-balance">
+              {mode === 'signin' ? SIGN_IN_LABEL : 'Create account'}
             </h1>
             <p className="mt-2 text-sm font-light text-brand-muted leading-relaxed">
               {useMockData
@@ -175,7 +178,7 @@ export default function SignInPage() {
                   mode === 'signin' ? 'bg-brand-text text-brand-bg' : 'border border-brand-border text-brand-muted'
                 }`}
               >
-                Sign in
+                {SIGN_IN_SHORT_LABEL}
               </button>
               <button
                 type="button"
@@ -271,7 +274,7 @@ export default function SignInPage() {
                 disabled={submitting}
                 className="w-full rounded-full py-4 text-[10px] font-semibold uppercase tracking-[0.14em] bg-brand-text text-brand-bg hover:bg-brand-text/90 disabled:opacity-70 transition-colors shadow-sm"
               >
-                {submitting ? 'Please wait…' : mode === 'signin' ? 'Sign in' : 'Create account'}
+                {submitting ? 'Please wait…' : mode === 'signin' ? SIGN_IN_LABEL : 'Create account'}
               </button>
             </form>
 

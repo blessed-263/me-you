@@ -6,6 +6,9 @@ import { ORGANIZER_ROUTES } from './mockOrganizer.ts';
 export type SignInRole = 'organizer' | 'attendee';
 
 export const SIGN_IN_PATH = '/login';
+export const SIGN_IN_LABEL = 'Sign In with your AmpEx Account';
+/** Shorter label for compact nav / tab toggles */
+export const SIGN_IN_SHORT_LABEL = 'AmpEx sign in';
 
 export function signInUrl(returnTo?: string): string {
   if (!returnTo || returnTo === SIGN_IN_PATH) return SIGN_IN_PATH;
@@ -70,10 +73,7 @@ export async function universalSignInAsync(
 
 export function redirectAfterSignIn(role: SignInRole): void {
   if (role === 'organizer') {
-    const returnTo = resolveSignInReturnTo();
-    window.location.href = returnTo.startsWith('/organizer')
-      ? returnTo
-      : ORGANIZER_ROUTES.DASHBOARD;
+    window.location.href = ORGANIZER_ROUTES.DASHBOARD;
     return;
   }
 
