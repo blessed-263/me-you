@@ -2,18 +2,18 @@
 export const HERO_SLIDES = [
   {
     src: '/images/hero/slide-01.jpg',
-    alt: 'Guests in conversation at You & Me Africa',
+    alt: 'You & Me Africa gathering at Primedia Rooftop',
+  },
+  {
+    src: '/images/hero/slide-02.jpg',
+    alt: 'Guests at You & Me Africa cultural event',
   },
   {
     src: '/images/hero/slide-03.jpg',
-    alt: 'You & Me Africa cultural event',
-  },
-  {
-    src: '/images/hero/slide-04.jpg',
     alt: 'You & Me Africa community celebration',
   },
   {
-    src: '/images/hero/slide-05.jpg',
-    alt: 'You & Me Africa second edition',
+    src: '/images/hero/slide-04.jpg',
+    alt: 'You & Me Africa second edition moments',
   },
 ] as const;

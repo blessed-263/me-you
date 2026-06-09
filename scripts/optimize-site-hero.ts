@@ -1,5 +1,9 @@
 /**
- * Build optimized homepage hero slides from full-resolution sources in public/images/src/hero/.
+ * Build optimized homepage hero slides from full-resolution sources.
+ *
+ * Sources (in order of preference):
+ *   1. public/images/src/hero/_DSC*.jpg
+ *   2. public/images/hero/_DSC*.jpg
  *
  *   npm run hero:optimize
  */
@@ -18,11 +22,21 @@ const JPEG_QUALITY = 92;
 
 /** Full-res sources for the homepage hero carousel (order = slide order). */
 const HERO_SOURCES = [
-  '_DSC8841.jpg',
-  '_DSC9040.jpg',
-  '_DSC9016.jpg',
-  '_DSC9266.jpg',
+  '_DSC8537.jpg',
+  '_DSC9003.jpg',
+  '_DSC8855.jpg',
+  '_DSC8306.jpg',
 ] as const;
+
+function resolveInput(name: string): string | null {
+  const fromSrc = path.join(SRC_DIR, name);
+  if (existsSync(fromSrc)) return fromSrc;
+
+  const fromHero = path.join(OUT_DIR, name);
+  if (existsSync(fromHero)) return fromHero;
+
+  return null;
+}
 
 async function optimizeSlide(input: string, output: string, label: string): Promise<void> {
   const metaIn = await sharp(input).metadata();
@@ -52,19 +66,20 @@ async function main(): Promise<void> {
 
   for (let i = 0; i < HERO_SOURCES.length; i++) {
     const name = HERO_SOURCES[i]!;
-    const input = path.join(SRC_DIR, name);
-    if (!existsSync(input)) {
-      console.warn(`Skip slide ${i + 1}: ${input} not found`);
+    const input = resolveInput(name);
+    if (!input) {
+      console.warn(`Skip slide ${i + 1}: ${name} not found`);
       continue;
     }
 
     const output = path.join(OUT_DIR, `slide-${String(i + 1).padStart(2, '0')}.jpg`);
+    console.log(`Slide ${i + 1} ← ${path.relative(ROOT, input)}`);
     await optimizeSlide(input, output, `Slide ${i + 1}`);
     processed += 1;
   }
 
   if (processed === 0) {
-    throw new Error(`No hero sources found. Add JPGs to ${SRC_DIR}`);
+    throw new Error(`No hero sources found. Add JPGs to ${SRC_DIR} or ${OUT_DIR}`);
   }
 
   console.log(`\nDone — ${processed} slide(s) in public/images/hero/`);
