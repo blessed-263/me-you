@@ -1,10 +1,6 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { AnimatePresence, motion } from 'motion/react';
-
-export type HeroSlide = {
-  src: string;
-  alt: string;
-};
+import type { HeroSlide } from '../lib/heroSlides.ts';
 
 type HeroSliderProps = {
   slides: HeroSlide[];
@@ -12,9 +8,37 @@ type HeroSliderProps = {
   intervalMs?: number;
 };
 
+const MOBILE_MQ = '(max-width: 767px)';
+
+function useIsMobile(): boolean {
+  const [isMobile, setIsMobile] = useState(
+    () => typeof window !== 'undefined' && window.matchMedia(MOBILE_MQ).matches,
+  );
+
+  useEffect(() => {
+    const mq = window.matchMedia(MOBILE_MQ);
+    const update = () => setIsMobile(mq.matches);
+    update();
+    mq.addEventListener('change', update);
+    return () => mq.removeEventListener('change', update);
+  }, []);
+
+  return isMobile;
+}
+
 export default function HeroSlider({ slides, intervalMs = 7000 }: HeroSliderProps) {
+  const isMobile = useIsMobile();
+  const visibleSlides = useMemo(
+    () => slides.filter((slide) => !slide.mobileOnly || isMobile),
+    [slides, isMobile],
+  );
+
   const [index, setIndex] = useState(0);
   const [reduceMotion, setReduceMotion] = useState(false);
+
+  useEffect(() => {
+    setIndex(0);
+  }, [isMobile]);
 
   useEffect(() => {
     const mq = window.matchMedia('(prefers-reduced-motion: reduce)');
@@ -25,24 +49,24 @@ export default function HeroSlider({ slides, intervalMs = 7000 }: HeroSliderProp
   }, []);
 
   useEffect(() => {
-    if (slides.length <= 1 || reduceMotion) return;
+    if (visibleSlides.length <= 1 || reduceMotion) return;
     const id = window.setInterval(() => {
-      setIndex((current) => (current + 1) % slides.length);
+      setIndex((current) => (current + 1) % visibleSlides.length);
     }, intervalMs);
     return () => window.clearInterval(id);
-  }, [slides.length, intervalMs, reduceMotion]);
+  }, [visibleSlides.length, intervalMs, reduceMotion]);
 
   useEffect(() => {
-    if (slides.length <= 1) return;
-    const next = slides[(index + 1) % slides.length];
+    if (visibleSlides.length <= 1) return;
+    const next = visibleSlides[(index + 1) % visibleSlides.length];
     if (!next) return;
     const img = new Image();
     img.src = next.src;
-  }, [index, slides]);
+  }, [index, visibleSlides]);
 
-  if (slides.length === 0) return null;
+  if (visibleSlides.length === 0) return null;
 
-  const current = slides[index] ?? slides[0];
+  const current = visibleSlides[index] ?? visibleSlides[0];
 
   return (
     <div className="absolute inset-0">
@@ -65,19 +89,19 @@ export default function HeroSlider({ slides, intervalMs = 7000 }: HeroSliderProp
         />
       </AnimatePresence>
 
-      {slides.length > 1 ? (
+      {visibleSlides.length > 1 ? (
         <div
           className="absolute bottom-6 left-0 right-0 z-10 flex justify-center gap-2 md:bottom-8"
           role="tablist"
           aria-label="Hero slides"
         >
-          {slides.map((slide, i) => (
+          {visibleSlides.map((slide, i) => (
             <button
               key={slide.src}
               type="button"
               role="tab"
               aria-selected={i === index}
-              aria-label={`Show slide ${i + 1} of ${slides.length}`}
+              aria-label={`Show slide ${i + 1} of ${visibleSlides.length}`}
               onClick={() => setIndex(i)}
               className={`h-1.5 rounded-full transition-all duration-500 ${
                 i === index
@@ -91,3 +115,5 @@ export default function HeroSlider({ slides, intervalMs = 7000 }: HeroSliderProp
     </div>
   );
 }
+
+export type { HeroSlide };
