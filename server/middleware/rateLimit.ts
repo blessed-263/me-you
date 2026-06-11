@@ -1,3 +1,4 @@
+import type { RequestHandler } from 'express';
 import rateLimit, { type RateLimitRequestHandler } from 'express-rate-limit';
 import { RedisStore } from 'rate-limit-redis';
 import type { RedisClientType } from 'redis';
@@ -29,7 +30,7 @@ async function buildRateLimiter(): Promise<RateLimitRequestHandler> {
   });
 }
 
-export function createRsvpRateLimit(): RateLimitRequestHandler {
+export function createRsvpRateLimit(): RequestHandler {
   let handler: RateLimitRequestHandler | null = null;
   let initPromise: Promise<RateLimitRequestHandler> | null = null;
 
