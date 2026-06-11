@@ -165,6 +165,9 @@ export function getRouteSeo(pathname: string): RouteSeo {
   if (path === '/tickets' || path.startsWith('/tickets/') || path.startsWith('/event/')) {
     const isPrivate =
       path.includes('/payment/') ||
+      path === '/tickets/pick' ||
+      path === '/tickets/checkout' ||
+      path === '/tickets/success' ||
       path === '/tickets/my-tickets' ||
       path.startsWith('/tickets/my-tickets/');
     return {

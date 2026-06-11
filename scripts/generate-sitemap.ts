@@ -4,6 +4,7 @@
  */
 import { writeFileSync } from 'node:fs';
 import path from 'node:path';
+import { SITEMAP_PATHS } from '../src/lib/seo.ts';
 
 const ROOT = path.resolve(import.meta.dirname, '..');
 const OUT = path.join(ROOT, 'public', 'sitemap.xml');
@@ -15,12 +16,11 @@ const SITE_URL = (
   'https://www.youandmeafrica.com'
 ).replace(/\/$/, '');
 
-const PATHS: { loc: string; changefreq: string; priority: string }[] = [
-  { loc: '/', changefreq: 'weekly', priority: '1.0' },
-  { loc: '/tickets', changefreq: 'weekly', priority: '0.9' },
-  { loc: '/harvest-table', changefreq: 'monthly', priority: '0.7' },
-  { loc: '/after-party-lunch', changefreq: 'monthly', priority: '0.7' },
-];
+const PATHS: { loc: string; changefreq: string; priority: string }[] = SITEMAP_PATHS.map((loc) => ({
+  loc,
+  changefreq: loc === '/tickets' ? 'weekly' : loc === '/' ? 'weekly' : 'monthly',
+  priority: loc === '/' ? '1.0' : loc === '/tickets' ? '0.9' : '0.7',
+}));
 
 const lastmod = new Date().toISOString().slice(0, 10);
 

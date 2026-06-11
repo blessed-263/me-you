@@ -2,6 +2,8 @@ import { useEffect, useMemo, useState } from 'react';
 import { CalendarDays, Loader2, Ticket } from 'lucide-react';
 import { attendeeDisplayName, loadAttendeeSession, ticketsPickHref } from '../lib/attendeeAuth.ts';
 import { fetchAttendeeTickets } from '../lib/dataSource.ts';
+import { VENUE_ADDRESS_ONE_LINE } from '../lib/venue.ts';
+import { ticketPartFromType } from '../lib/ticketVisuals.ts';
 import type { UserTicketView } from '../lib/storeApi.ts';
 import { TICKETS_BASE } from '../lib/mockCheckout.ts';
 import TicketsLayout from './TicketsLayout.tsx';
@@ -19,6 +21,7 @@ type TicketGroup = {
   eventTitle: string;
   editionLabel: string;
   eventDateLabel: string;
+  venueLabel: string;
   tickets: UserTicketView[];
 };
 
@@ -35,6 +38,7 @@ function groupTickets(tickets: UserTicketView[]): TicketGroup[] {
         eventTitle: t.eventTitle,
         editionLabel: t.editionLabel,
         eventDateLabel: t.eventDate,
+        venueLabel: VENUE_ADDRESS_ONE_LINE,
         tickets: [t],
       });
     }
@@ -142,6 +146,8 @@ export default function MyTicketsPage() {
                             <div>
                               <p className="text-brand-text font-medium">{t.holderName}</p>
                               <p className="text-[12px] text-brand-muted">{t.ticketType}</p>
+                              <p className="text-[10px] uppercase tracking-[0.12em] text-brand-accent mt-1">{ticketPartFromType(t.ticketType)}</p>
+                              <p className="text-[11px] text-brand-muted">{group.venueLabel}</p>
                               <p className="font-mono text-[10px] text-brand-muted mt-1">{t.id}</p>
                             </div>
                             <span className="text-[10px] uppercase tracking-[0.12em] font-semibold text-brand-accent">

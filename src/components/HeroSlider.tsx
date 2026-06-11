@@ -1,6 +1,8 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { AnimatePresence, motion } from 'motion/react';
 import type { HeroSlide } from '../lib/heroSlides.ts';
+
+const ease = [0.16, 1, 0.3, 1] as const;
 
 type HeroSliderProps = {
   slides: HeroSlide[];
@@ -35,6 +37,7 @@ export default function HeroSlider({ slides, intervalMs = 7000 }: HeroSliderProp
 
   const [index, setIndex] = useState(0);
   const [reduceMotion, setReduceMotion] = useState(false);
+  const landingDone = useRef(false);
 
   useEffect(() => {
     setIndex(0);
@@ -67,6 +70,7 @@ export default function HeroSlider({ slides, intervalMs = 7000 }: HeroSliderProp
   if (visibleSlides.length === 0) return null;
 
   const current = visibleSlides[index] ?? visibleSlides[0];
+  const isLandingSlide = index === 0 && !landingDone.current;
 
   return (
     <div className="absolute inset-0">
@@ -75,12 +79,21 @@ export default function HeroSlider({ slides, intervalMs = 7000 }: HeroSliderProp
           key={current.src}
           src={current.src}
           alt={current.alt}
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
+          initial={
+            reduceMotion
+              ? { opacity: 1, scale: 1 }
+              : isLandingSlide
+                ? { opacity: 0, scale: 1.06 }
+                : { opacity: 0, scale: 1 }
+          }
+          animate={{ opacity: 1, scale: 1 }}
           exit={{ opacity: 0 }}
           transition={{
-            duration: reduceMotion ? 0 : 1.2,
-            ease: [0.16, 1, 0.3, 1],
+            duration: reduceMotion ? 0 : isLandingSlide ? 1.6 : 1.2,
+            ease,
+          }}
+          onAnimationComplete={() => {
+            if (index === 0) landingDone.current = true;
           }}
           className="absolute inset-0 h-full w-full object-cover object-[center_42%]"
           decoding={index === 0 ? 'sync' : 'async'}

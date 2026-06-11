@@ -70,11 +70,13 @@ export async function universalSignInAsync(
 }
 
 export function redirectAfterSignIn(role: SignInRole): void {
+  const returnTo = resolveSignInReturnTo();
   if (role === 'organizer') {
-    window.location.href = ORGANIZER_ROUTES.DASHBOARD;
+    window.location.href = returnTo.startsWith('/organizer')
+      ? returnTo
+      : ORGANIZER_ROUTES.DASHBOARD;
     return;
   }
 
-  const returnTo = resolveSignInReturnTo();
   window.location.href = returnTo.startsWith('/tickets') ? returnTo : '/tickets/pick';
 }

@@ -23,3 +23,11 @@ export const TICKET_VISUALS: Record<
 export function ticketImageForId(ticketId: string, fallback: string): string {
   return TICKET_VISUALS[ticketId]?.image ?? fallback;
 }
+
+export function ticketPartFromType(ticketType: string): string {
+  const normalized = ticketType.toLowerCase();
+  if (normalized.includes('harvest')) return 'Part I';
+  if (normalized.includes('after')) return 'Part II';
+  if (normalized.includes('full')) return 'Full journey';
+  return 'Ticket';
+}

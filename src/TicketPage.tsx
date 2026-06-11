@@ -35,7 +35,11 @@ export default function TicketPage() {
     return <MyTicketsPage />;
   }
 
-  if (PROTECTED.has(path) && !loadAttendeeSession()) {
+  const allowPublicSuccess =
+    path === TICKETS_SUCCESS &&
+    Boolean(new URLSearchParams(window.location.search).get('reference'));
+
+  if (PROTECTED.has(path) && !loadAttendeeSession() && !allowPublicSuccess) {
     window.location.replace(ticketsLoginUrl(path));
     return null;
   }

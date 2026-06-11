@@ -13,6 +13,14 @@ import './index.css';
 
 function Root() {
   const pathname = window.location.pathname.replace(/\/$/, '') || '/';
+  if (pathname === '/tickets/login') {
+    window.location.replace('/login?return=%2Ftickets%2Fpick');
+    return null;
+  }
+  if (pathname === '/organizer/login') {
+    window.location.replace('/login?return=%2Forganizer%2Fdashboard');
+    return null;
+  }
   const sessionId = sessionFromPath(pathname);
   const isSignIn =
     pathname === '/login' ||

@@ -2,6 +2,9 @@ import { useEffect, useMemo, useState } from 'react';
 import { Check, Download, Mail, Ticket } from 'lucide-react';
 import { motion } from 'motion/react';
 import { formatEventDate, formatPrice } from '../lib/mockTickets.ts';
+import { resolvePublicEventStatus } from '../lib/eventLifecycle.ts';
+import { ticketPartFromType } from '../lib/ticketVisuals.ts';
+import { VENUE_ADDRESS_ONE_LINE } from '../lib/venue.ts';
 import { fetchEventById, useMockData } from '../lib/dataSource.ts';
 import {
   cartSubtotal,
@@ -25,6 +28,9 @@ export default function SuccessStep() {
   );
   const [order] = useState<MockOrder | null>(() => loadOrder());
   const [eventDateLabel, setEventDateLabel] = useState('');
+  const [eventStatusLabel, setEventStatusLabel] = useState('active');
+  const [eventTitle, setEventTitle] = useState('');
+  const [eventEdition, setEventEdition] = useState('');
 
   useEffect(() => {
     if (!order) window.location.replace(TICKETS_BASE);
@@ -37,7 +43,12 @@ export default function SuccessStep() {
   useEffect(() => {
     if (!order) return;
     fetchEventById(order.cart.eventId).then((event) => {
-      if (event) setEventDateLabel(formatEventDate(event.date));
+      if (event) {
+        setEventDateLabel(formatEventDate(event.date));
+        setEventStatusLabel(resolvePublicEventStatus(event.publicStatus, event.date));
+        setEventTitle(event.title);
+        setEventEdition(event.subtitle || '');
+      }
     });
   }, [order]);
 
@@ -78,7 +89,7 @@ export default function SuccessStep() {
           </div>
           <div className="flex justify-between gap-4 text-sm">
             <span className="text-brand-muted">Event</span>
-            <span className="text-brand-text text-right">{order.cart.eventTitle}</span>
+            <span className="text-brand-text text-right">{eventTitle || order.cart.eventTitle}</span>
           </div>
           {eventDateLabel ? (
             <div className="flex justify-between gap-4 text-sm">
@@ -89,9 +100,17 @@ export default function SuccessStep() {
           <div className="space-y-2 text-sm border-b border-brand-border pb-4">
             <span className="text-brand-muted block mb-1">Tickets</span>
             {order.cart.items.map((item) => (
-              <div key={item.ticketId} className="flex justify-between gap-3">
-                <span className="text-brand-text">{item.ticketName}</span>
-                <span className="tabular-nums shrink-0">× {item.quantity}</span>
+              <div key={item.ticketId} className="rounded-sm border border-brand-border/60 bg-white/70 p-3">
+                <div className="flex justify-between gap-3">
+                  <span className="text-brand-text">{item.ticketName}</span>
+                  <span className="tabular-nums shrink-0">× {item.quantity}</span>
+                </div>
+                <p className="mt-1 text-[10px] uppercase tracking-[0.12em] text-brand-accent">
+                  {ticketPartFromType(item.ticketName)}{eventEdition ? ` · ${eventEdition}` : ''}
+                </p>
+                <p className="mt-1 text-[12px] text-brand-muted">
+                  {eventDateLabel || 'Date TBA'} · {VENUE_ADDRESS_ONE_LINE}
+                </p>
               </div>
             ))}
           </div>
@@ -131,7 +150,7 @@ export default function SuccessStep() {
 
         <p className="mt-10 inline-flex items-center gap-2 text-[11px] text-brand-muted">
           <Mail className="w-4 h-4" aria-hidden />
-          Confirmation sent to your email
+          Confirmation sent to your email · {eventStatusLabel}
         </p>
       </section>
     </TicketsLayout>

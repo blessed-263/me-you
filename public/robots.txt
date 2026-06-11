@@ -5,6 +5,9 @@ Disallow: /organizer/
 Disallow: /login
 Disallow: /tickets/login
 Disallow: /organizer/login
+Disallow: /tickets/pick
+Disallow: /tickets/checkout
+Disallow: /tickets/success
 Disallow: /tickets/payment/
 Disallow: /tickets/my-tickets
 Disallow: /api/
