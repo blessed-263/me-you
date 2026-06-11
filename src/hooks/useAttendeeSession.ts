@@ -2,21 +2,21 @@ import { useEffect, useState } from 'react';
 import { useLocation } from 'react-router-dom';
 import { AUTH_CHANGED_EVENT } from '../lib/authEvents.ts';
 import {
-  loadOrganizerSession,
-  resolveOrganizerSession,
-  type OrganizerSession,
-} from '../lib/organizerAuth.ts';
+  loadAttendeeSession,
+  resolveAttendeeSession,
+  type AttendeeSession,
+} from '../lib/attendeeAuth.ts';
 
-/** Reactive organizer session (sessionStorage + live cookie validation). */
-export function useOrganizerSession(): OrganizerSession | null {
+/** Reactive attendee session (sessionStorage + live cookie validation). */
+export function useAttendeeSession(): AttendeeSession | null {
   const { pathname } = useLocation();
-  const [session, setSession] = useState<OrganizerSession | null>(() => loadOrganizerSession());
+  const [session, setSession] = useState<AttendeeSession | null>(() => loadAttendeeSession());
 
   useEffect(() => {
     let cancelled = false;
 
     const refresh = () => {
-      void resolveOrganizerSession().then((resolved) => {
+      void resolveAttendeeSession().then((resolved) => {
         if (!cancelled) setSession(resolved);
       });
     };

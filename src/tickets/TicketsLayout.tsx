@@ -1,15 +1,10 @@
 import type { ReactNode } from 'react';
-import { Link, useLocation, useNavigate } from 'react-router-dom';
+import { Link, useLocation } from 'react-router-dom';
 import { motion } from 'motion/react';
-import {
-  attendeeDisplayName,
-  loadAttendeeSession,
-  logoutAttendee,
-  ticketsLoginUrl,
-} from '../lib/attendeeAuth.ts';
 import { TICKETS_BASE, TICKETS_MY } from '../lib/mockCheckout.ts';
-import { SIGN_IN_PATH } from '../lib/signInAuth.ts';
-import OrganizerDashboardLink from '../components/OrganizerDashboardLink.tsx';
+import SiteNavAuth from '../components/SiteNavAuth.tsx';
+import { useAttendeeSession } from '../hooks/useAttendeeSession.ts';
+import { useOrganizerSession } from '../hooks/useOrganizerSession.ts';
 import StepIndicator, { type TicketStepId } from './StepIndicator.tsx';
 
 type TicketsLayoutProps = {
@@ -30,19 +25,11 @@ export default function TicketsLayout({
   children,
   showSteps = true,
 }: TicketsLayoutProps) {
-  const navigate = useNavigate();
   const { pathname } = useLocation();
   const path = pathname.replace(/\/$/, '') || '/';
-  const session = loadAttendeeSession();
-  const loginHref = ticketsLoginUrl(
-    path === SIGN_IN_PATH || path === '/tickets/login' ? '/tickets/pick' : path,
-  );
+  const organizerSession = useOrganizerSession();
+  const attendeeSession = useAttendeeSession();
   const onEventsPage = path === TICKETS_BASE;
-
-  const handleSignOut = () => {
-    void logoutAttendee().then(() => navigate(TICKETS_BASE));
-  };
-
   const showBackLink = Boolean(backHref && backHref !== TICKETS_BASE);
 
   return (
@@ -66,16 +53,18 @@ export default function TicketsLayout({
             </div>
           ) : (
             <div className="flex flex-1 items-center justify-end gap-4 sm:gap-5 min-w-0">
-              <Link
-                to={TICKETS_BASE}
-                className={`${navLinkClass} ${
-                  onEventsPage ? 'text-brand-text' : 'text-brand-muted hover:text-brand-text'
-                }`}
-                aria-current={onEventsPage ? 'page' : undefined}
-              >
-                Events
-              </Link>
-              {session ? (
+              {!organizerSession ? (
+                <Link
+                  to={TICKETS_BASE}
+                  className={`${navLinkClass} ${
+                    onEventsPage ? 'text-brand-text' : 'text-brand-muted hover:text-brand-text'
+                  }`}
+                  aria-current={onEventsPage ? 'page' : undefined}
+                >
+                  Events
+                </Link>
+              ) : null}
+              {!organizerSession && attendeeSession ? (
                 <Link
                   to={TICKETS_MY}
                   className={`${navLinkClass} ${
@@ -90,47 +79,19 @@ export default function TicketsLayout({
             </div>
           )}
 
-          <div className="flex items-center gap-3 sm:gap-4 shrink-0">
-            <OrganizerDashboardLink className={`hidden sm:inline ${navLinkClass} text-brand-accent hover:text-brand-text`} />
-            {session ? (
-              <>
-                {showSteps ? (
-                  <Link
-                    to={TICKETS_MY}
-                    className={`hidden sm:inline ${navLinkClass} text-brand-accent hover:text-brand-text`}
-                  >
-                    My tickets
-                  </Link>
-                ) : null}
-                <span className="hidden lg:inline text-[10px] text-brand-muted truncate max-w-[7rem]">
-                  {attendeeDisplayName(session)}
-                </span>
-                <button
-                  type="button"
-                  onClick={handleSignOut}
-                  className={`${navLinkClass} text-brand-muted hover:text-brand-text`}
-                >
-                  Sign out
-                </button>
-              </>
-            ) : (
-              <a
-                href={loginHref}
-                className={`${navLinkClass} text-brand-accent hover:text-brand-text`}
-              >
-                Sign in
-              </a>
-            )}
+          <SiteNavAuth
+            variant="tickets"
+            showMyTicketsInline={showSteps && !organizerSession && Boolean(attendeeSession)}
+          />
 
-            {showBackLink ? (
-              <a
-                href={backHref}
-                className={`${navLinkClass} text-brand-muted hover:text-brand-text hidden sm:inline`}
-              >
-                ← {backLabel}
-              </a>
-            ) : null}
-          </div>
+          {showBackLink ? (
+            <a
+              href={backHref}
+              className={`${navLinkClass} text-brand-muted hover:text-brand-text hidden sm:inline shrink-0`}
+            >
+              ← {backLabel}
+            </a>
+          ) : null}
         </nav>
 
         {showSteps ? (

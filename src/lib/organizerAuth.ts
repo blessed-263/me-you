@@ -1,7 +1,10 @@
 import { AMPEX, fetchStore } from './ampexConfig.ts';
+import { dispatchAuthChanged } from './authEvents.ts';
 import { ORGANIZER_ROUTES } from './mockOrganizer.ts';
 import { signInUrl } from './signInAuth.ts';
 import * as organizerApi from './organizerApi.ts';
+
+const ATTENDEE_SESSION_KEY = 'yme_attendee_session';
 
 const SESSION_KEY = 'yme_organizer_session';
 
@@ -19,7 +22,12 @@ export function loginMock(email: string, _password: string): OrganizerSession {
     loggedInAt: new Date().toISOString(),
   };
   sessionStorage.setItem(SESSION_KEY, JSON.stringify(session));
+  dispatchAuthChanged();
   return session;
+}
+
+function clearAttendeeSessionLocal(): void {
+  sessionStorage.removeItem(ATTENDEE_SESSION_KEY);
 }
 
 export async function loginOrganizerAsync(
@@ -36,6 +44,15 @@ export async function loginOrganizerAsync(
     loggedInAt: new Date().toISOString(),
   };
   sessionStorage.setItem(SESSION_KEY, JSON.stringify(session));
+  clearAttendeeSessionLocal();
+  if (!AMPEX.USE_MOCK_DATA) {
+    try {
+      await fetchStore('/store/auth/logout', { method: 'POST' });
+    } catch {
+      /* organizer session is authoritative */
+    }
+  }
+  dispatchAuthChanged();
   return session;
 }
 
@@ -51,6 +68,7 @@ export function loadOrganizerSession(): OrganizerSession | null {
 
 function saveOrganizerSession(session: OrganizerSession): OrganizerSession {
   sessionStorage.setItem(SESSION_KEY, JSON.stringify(session));
+  dispatchAuthChanged();
   return session;
 }
 
@@ -83,6 +101,7 @@ export async function logoutOrganizer(): Promise<void> {
     }
   }
   sessionStorage.removeItem(SESSION_KEY);
+  dispatchAuthChanged();
 }
 
 export function requireOrganizerSession(): OrganizerSession | null {

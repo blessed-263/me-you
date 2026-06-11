@@ -28,6 +28,12 @@ export function resolveSignInReturnTo(): string {
 
 type LoginErr = Error & { code?: string; status?: number };
 
+/** Buyer-only accounts get 403 from organizer login; safe to try attendee next. */
+function shouldTryAttendeeAfterOrganizerFailure(err: LoginErr): boolean {
+  if (err.code === 'PENDING_APPROVAL' || err.code === 'EMAIL_NOT_VERIFIED') return false;
+  return err.status === 403;
+}
+
 function pickLoginError(attendeeError: LoginErr | null, organizerError: LoginErr | null): LoginErr {
   if (organizerError?.code === 'PENDING_APPROVAL') return organizerError;
   if (attendeeError?.code === 'EMAIL_NOT_VERIFIED') return attendeeError;
@@ -49,45 +55,24 @@ export async function universalSignInAsync(
     return 'attendee';
   }
 
-  const preferOrganizer = resolveSignInReturnTo().startsWith('/organizer');
-
-  let attendeeError: LoginErr | null = null;
   let organizerError: LoginErr | null = null;
 
-  const tryAttendee = async (): Promise<SignInRole> => {
-    await loginAttendeeAsync(email, password);
-    return 'attendee';
-  };
-
-  const tryOrganizer = async (): Promise<SignInRole> => {
+  try {
     await loginOrganizerAsync(email, password);
     return 'organizer';
-  };
-
-  const first = preferOrganizer ? tryOrganizer : tryAttendee;
-  const second = preferOrganizer ? tryAttendee : tryOrganizer;
-
-  try {
-    return await first();
   } catch (e) {
-    if (preferOrganizer) {
-      organizerError = e as LoginErr;
-    } else {
-      attendeeError = e as LoginErr;
+    organizerError = e as LoginErr;
+    if (!shouldTryAttendeeAfterOrganizerFailure(organizerError)) {
+      throw organizerError;
     }
   }
 
   try {
-    return await second();
+    await loginAttendeeAsync(email, password);
+    return 'attendee';
   } catch (e) {
-    if (preferOrganizer) {
-      attendeeError = e as LoginErr;
-    } else {
-      organizerError = e as LoginErr;
-    }
+    throw pickLoginError(e as LoginErr, organizerError);
   }
-
-  throw pickLoginError(attendeeError, organizerError);
 }
 
 export function redirectAfterSignInTarget(role: SignInRole): string {

@@ -1,13 +1,10 @@
-import { useState, type FormEvent } from 'react';
+import { useEffect, useState, type FormEvent } from 'react';
 import { Navigate, useNavigate } from 'react-router-dom';
 import { Mail } from 'lucide-react';
 import AmpexWordmark from './components/AmpexWordmark.tsx';
 import PasswordInput from './components/PasswordInput.tsx';
-import {
-  loadAttendeeSession,
-  registerAttendeeAsync,
-} from './lib/attendeeAuth.ts';
-import { loadOrganizerSession } from './lib/organizerAuth.ts';
+import { loadAttendeeSession, registerAttendeeAsync } from './lib/attendeeAuth.ts';
+import { loadOrganizerSession, resolveOrganizerSession } from './lib/organizerAuth.ts';
 import { useMockData } from './lib/dataSource.ts';
 import { resendVerification } from './lib/storeApi.ts';
 import { ORGANIZER_ROUTES } from './lib/mockOrganizer.ts';
@@ -32,13 +29,37 @@ export default function SignInPage() {
   const [info, setInfo] = useState('');
   const [pendingVerifyEmail, setPendingVerifyEmail] = useState('');
   const [submitting, setSubmitting] = useState(false);
+  const [sessionCheck, setSessionCheck] = useState<'loading' | 'ready'>('loading');
 
+  useEffect(() => {
+    let cancelled = false;
+    void resolveOrganizerSession().then((organizer) => {
+      if (cancelled) return;
+      if (organizer) {
+        navigate(ORGANIZER_ROUTES.DASHBOARD, { replace: true });
+        return;
+      }
+      setSessionCheck('ready');
+    });
+    return () => {
+      cancelled = true;
+    };
+  }, [navigate]);
+
+  const returnTo = resolveSignInReturnTo();
   if (loadOrganizerSession()) {
     return <Navigate to={ORGANIZER_ROUTES.DASHBOARD} replace />;
   }
-  const returnTo = resolveSignInReturnTo();
   if (returnTo.startsWith('/tickets') && loadAttendeeSession()) {
     return <Navigate to={returnTo} replace />;
+  }
+
+  if (sessionCheck === 'loading') {
+    return (
+      <div className="organizer-app min-h-screen bg-brand-bg flex items-center justify-center">
+        <p className="text-sm text-brand-muted">Loading…</p>
+      </div>
+    );
   }
 
   const handleResend = async () => {

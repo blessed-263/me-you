@@ -1,7 +1,11 @@
 import { AMPEX, fetchStore } from './ampexConfig.ts';
+import { dispatchAuthChanged } from './authEvents.ts';
+import { loadOrganizerSession } from './organizerAuth.ts';
+import { getOrganizerProfile } from './organizerApi.ts';
 import * as storeApi from './storeApi.ts';
 
 const SESSION_KEY = 'yme_attendee_session';
+const ORGANIZER_SESSION_KEY = 'yme_organizer_session';
 
 export type AttendeeSession = {
   email: string;
@@ -35,7 +39,12 @@ export function loginAttendee(input: {
     loggedInAt: new Date().toISOString(),
   };
   sessionStorage.setItem(SESSION_KEY, JSON.stringify(session));
+  dispatchAuthChanged();
   return session;
+}
+
+function clearOrganizerSessionLocal(): void {
+  sessionStorage.removeItem(ORGANIZER_SESSION_KEY);
 }
 
 export async function loginAttendeeAsync(
@@ -54,6 +63,15 @@ export async function loginAttendeeAsync(
     loggedInAt: new Date().toISOString(),
   };
   sessionStorage.setItem(SESSION_KEY, JSON.stringify(session));
+  clearOrganizerSessionLocal();
+  if (!AMPEX.USE_MOCK_DATA) {
+    try {
+      await fetchStore('/store/organizers/logout', { method: 'POST' });
+    } catch {
+      /* attendee session is authoritative */
+    }
+  }
+  dispatchAuthChanged();
   return session;
 }
 
@@ -86,13 +104,21 @@ export function loadAttendeeSession(): AttendeeSession | null {
 function saveAttendeeSession(session: AttendeeSession): AttendeeSession {
   const normalized = { ...session, email: session.email.toLowerCase() };
   sessionStorage.setItem(SESSION_KEY, JSON.stringify(normalized));
+  dispatchAuthChanged();
   return normalized;
 }
 
 /** Validate cookie session with Medusa and refresh sessionStorage (live mode). */
 export async function resolveAttendeeSession(): Promise<AttendeeSession | null> {
   if (AMPEX.USE_MOCK_DATA) {
+    if (loadOrganizerSession()) return null;
     return loadAttendeeSession();
+  }
+
+  const organizerProfile = await getOrganizerProfile();
+  if (organizerProfile?.email) {
+    sessionStorage.removeItem(SESSION_KEY);
+    return null;
   }
 
   const profile = await storeApi.getCustomerProfile();
@@ -120,6 +146,7 @@ export async function logoutAttendee(): Promise<void> {
     }
   }
   sessionStorage.removeItem(SESSION_KEY);
+  dispatchAuthChanged();
 }
 
 import { signInUrl } from './signInAuth.ts';
