@@ -97,6 +97,7 @@ describe('API integration', () => {
   });
 
   it('POST /api/rsvp returns 429 after rate limit exceeded', async () => {
+    process.env.RATE_LIMIT_ENABLED = 'true';
     process.env.RSVP_RATE_LIMIT_MAX = '2';
     process.env.RSVP_RATE_LIMIT_WINDOW_MS = '60000';
 

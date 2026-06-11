@@ -4,6 +4,23 @@ import { RedisStore } from 'rate-limit-redis';
 import type { RedisClientType } from 'redis';
 import { getRateLimitRedisClient } from './rate-limit-redis-client.js';
 
+// TODO(FIX): Re-enable RSVP rate limiting before production hardening.
+// Disabled by default — set RATE_LIMIT_ENABLED=true to turn back on.
+let rateLimitDisabledLogged = false;
+
+export function isRateLimitEnabled(): boolean {
+  return process.env.RATE_LIMIT_ENABLED === 'true';
+}
+
+function logRateLimitDisabledOnce(): void {
+  if (!rateLimitDisabledLogged && !isRateLimitEnabled()) {
+    rateLimitDisabledLogged = true;
+    console.warn(
+      '[rsvp-rate-limit] DISABLED (RATE_LIMIT_ENABLED is not true). TODO: fix and re-enable before production.',
+    );
+  }
+}
+
 function createRedisStore(client: RedisClientType): RedisStore {
   return new RedisStore({
     prefix: 'yme:rsvp:rl:',
@@ -31,6 +48,11 @@ async function buildRateLimiter(): Promise<RateLimitRequestHandler> {
 }
 
 export function createRsvpRateLimit(): RequestHandler {
+  if (!isRateLimitEnabled()) {
+    logRateLimitDisabledOnce();
+    return (_req, _res, next) => next();
+  }
+
   let handler: RateLimitRequestHandler | null = null;
   let initPromise: Promise<RateLimitRequestHandler> | null = null;
 
