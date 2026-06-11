@@ -42,7 +42,6 @@ function EventCharts({
 }) {
   const monthlySorted = normalizeMonthlySales(stats.monthlySales);
   const ticketMix = prepareTicketMixRows(stats.ticketTypeDistribution);
-  const ticketMixTotal = ticketMix.reduce((sum, row) => sum + row.value, 0);
   const hasTicketMix = ticketMix.length > 0;
 
   return (
@@ -76,8 +75,8 @@ function EventCharts({
                 label: row.label,
                 value: row.value,
               }))}
-              centerValue={String(ticketMixTotal || stats.ticketsSold)}
               centerLabel="Tickets"
+              size="md"
             />
           ) : (
             <p className="text-sm text-brand-muted">No tickets sold yet.</p>
