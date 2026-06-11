@@ -19,6 +19,8 @@ import {
   normalizeMonthlySales,
   prepareTicketMixRows,
 } from '../lib/organizerListUtils.ts';
+import { organizerManageEventsUrl } from '../lib/organizerApi.ts';
+import { useMockData } from '../lib/dataSource.ts';
 import { useOrganizerEvent } from './OrganizerEventContext.tsx';
 
 type EventStatsRow = {
@@ -88,7 +90,7 @@ function EventCharts({
 
 export default function OrganizerDashboardPage() {
   const session = requireOrganizerSession();
-  const { liveEditions } = useOrganizerEvent();
+  const { liveEditions, loading: eventsLoading } = useOrganizerEvent();
   const [eventsPage, setEventsPage] = useState(1);
   const [eventStats, setEventStats] = useState<EventStatsRow[]>([]);
   const [period, setPeriod] = useState<DashboardPeriod>('6months');
@@ -177,6 +179,29 @@ export default function OrganizerDashboardPage() {
         </div>
 
         <div className="space-y-8 md:space-y-10">
+          {eventsLoading ? (
+            <p className="text-sm text-brand-muted">Loading events…</p>
+          ) : liveEditions.length === 0 ? (
+            <div className="organizer-surface rounded-sm p-8 md:p-10 text-center max-w-lg mx-auto">
+              <p className="text-[10px] uppercase tracking-[0.18em] font-semibold text-brand-accent">
+                No events yet
+              </p>
+              <p className="mt-4 text-sm font-light text-brand-muted leading-relaxed">
+                When an event is published on AmpEx it will appear here with orders, tickets, and
+                revenue stats.
+              </p>
+              {!useMockData ? (
+                <a
+                  href={organizerManageEventsUrl()}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="mt-6 inline-block text-[10px] uppercase tracking-[0.14em] font-semibold text-brand-accent hover:text-brand-text"
+                >
+                  Manage events on AmpEx →
+                </a>
+              ) : null}
+            </div>
+          ) : null}
           {eventStats.map((row) => (
             <div key={row.eventId} className="organizer-surface rounded-sm p-6 md:p-8">
               <OrganizerEventGroupHeader

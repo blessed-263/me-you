@@ -1,5 +1,5 @@
 import { useEffect, useState, type ReactNode } from 'react';
-import { Navigate } from 'react-router-dom';
+import { Navigate, useLocation } from 'react-router-dom';
 import { ORGANIZER_ROUTES } from '../lib/mockOrganizer.ts';
 import { resolveOrganizerSession } from '../lib/organizerAuth.ts';
 import { signInUrl } from '../lib/signInAuth.ts';
@@ -7,6 +7,7 @@ import { signInUrl } from '../lib/signInAuth.ts';
 type GateState = 'loading' | 'authed' | 'guest';
 
 export default function OrganizerSessionGate({ children }: { children: ReactNode }) {
+  const location = useLocation();
   const [state, setState] = useState<GateState>('loading');
 
   useEffect(() => {
@@ -20,7 +21,7 @@ export default function OrganizerSessionGate({ children }: { children: ReactNode
     return () => {
       cancelled = true;
     };
-  }, []);
+  }, [location.pathname]);
 
   if (state === 'loading') {
     return (

@@ -7,6 +7,7 @@ import { motion, useScroll, useSpring } from 'motion/react';
 import { MapPin, Calendar, Clock, ArrowUpRight } from 'lucide-react';
 import { useState, useEffect, useRef } from 'react';
 import HeroSlider from './components/HeroSlider.tsx';
+import OrganizerDashboardLink from './components/OrganizerDashboardLink.tsx';
 import Sponsors from './components/Sponsors.tsx';
 import { HERO_SLIDES } from './lib/heroSlides.ts';
 import { VENUE_AREA, VENUE_MAPS_URL, VENUE_NAME, VENUE_STREET } from './lib/venue.ts';
@@ -91,7 +92,8 @@ export default function App() {
             className="h-9 w-auto md:h-10 object-contain invert group-hover:opacity-80 transition-opacity duration-300"
           />
         </a>
-        <div className="flex items-center gap-2 md:gap-3">
+        <div className="flex items-center gap-3 md:gap-4">
+          <OrganizerDashboardLink />
           <a
             href={TICKETS_URL}
             className="text-[10px] rounded-full px-4 py-2.5 md:px-8 md:py-3 uppercase tracking-[0.14em] font-semibold bg-brand-text text-brand-bg hover:bg-brand-text/90 transition-colors whitespace-nowrap"

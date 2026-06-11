@@ -9,6 +9,7 @@ import {
 } from '../lib/attendeeAuth.ts';
 import { TICKETS_BASE, TICKETS_MY } from '../lib/mockCheckout.ts';
 import { SIGN_IN_PATH } from '../lib/signInAuth.ts';
+import OrganizerDashboardLink from '../components/OrganizerDashboardLink.tsx';
 import StepIndicator, { type TicketStepId } from './StepIndicator.tsx';
 
 type TicketsLayoutProps = {
@@ -90,6 +91,7 @@ export default function TicketsLayout({
           )}
 
           <div className="flex items-center gap-3 sm:gap-4 shrink-0">
+            <OrganizerDashboardLink className={`hidden sm:inline ${navLinkClass} text-brand-accent hover:text-brand-text`} />
             {session ? (
               <>
                 {showSteps ? (

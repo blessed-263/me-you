@@ -272,12 +272,18 @@ export default function SignInPage() {
               </button>
             </form>
 
-            <p className="mt-8 text-center">
+            <p className="mt-8 flex flex-col items-center gap-3 text-center">
               <a
                 href={backHref}
                 className="text-[10px] uppercase tracking-[0.14em] font-semibold text-brand-accent hover:text-brand-text"
               >
                 ← Back to tickets
+              </a>
+              <a
+                href="/login?return=%2Forganizer%2Fdashboard"
+                className="text-[10px] uppercase tracking-[0.14em] font-semibold text-brand-muted hover:text-brand-text"
+              >
+                Organizer sign in →
               </a>
             </p>
 

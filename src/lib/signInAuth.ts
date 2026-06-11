@@ -49,21 +49,42 @@ export async function universalSignInAsync(
     return 'attendee';
   }
 
+  const preferOrganizer = resolveSignInReturnTo().startsWith('/organizer');
+
   let attendeeError: LoginErr | null = null;
   let organizerError: LoginErr | null = null;
 
-  try {
+  const tryAttendee = async (): Promise<SignInRole> => {
     await loginAttendeeAsync(email, password);
     return 'attendee';
+  };
+
+  const tryOrganizer = async (): Promise<SignInRole> => {
+    await loginOrganizerAsync(email, password);
+    return 'organizer';
+  };
+
+  const first = preferOrganizer ? tryOrganizer : tryAttendee;
+  const second = preferOrganizer ? tryAttendee : tryOrganizer;
+
+  try {
+    return await first();
   } catch (e) {
-    attendeeError = e as LoginErr;
+    if (preferOrganizer) {
+      organizerError = e as LoginErr;
+    } else {
+      attendeeError = e as LoginErr;
+    }
   }
 
   try {
-    await loginOrganizerAsync(email, password);
-    return 'organizer';
+    return await second();
   } catch (e) {
-    organizerError = e as LoginErr;
+    if (preferOrganizer) {
+      attendeeError = e as LoginErr;
+    } else {
+      organizerError = e as LoginErr;
+    }
   }
 
   throw pickLoginError(attendeeError, organizerError);
