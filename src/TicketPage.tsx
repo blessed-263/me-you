@@ -1,19 +1,10 @@
 /**
- * Routes ticket flows by pathname.
+ * Ticket flow routes (nested under /tickets/* and /event/*).
  * @license SPDX-License-Identifier: Apache-2.0
  */
 
-import { loadAttendeeSession, ticketsLoginUrl } from './lib/attendeeAuth.ts';
-import {
-  TICKETS_BASE,
-  TICKETS_CHECKOUT,
-  TICKETS_MY,
-  TICKETS_PAYMENT,
-  TICKETS_PAYMENT_CALLBACK,
-  TICKETS_PICK,
-  TICKETS_PROTECTED_PATHS,
-  TICKETS_SUCCESS,
-} from './lib/mockCheckout.ts';
+import { Navigate, Route, Routes, useLocation } from 'react-router-dom';
+import AttendeeSessionGate from './components/AttendeeSessionGate.tsx';
 import MyTicketsPage from './tickets/MyTicketsPage.tsx';
 import TicketIntroStep from './tickets/TicketIntroStep.tsx';
 import TicketPickStep from './tickets/TicketPickStep.tsx';
@@ -22,34 +13,62 @@ import PaymentStep from './tickets/PaymentStep.tsx';
 import PaymentCallbackStep from './tickets/PaymentCallbackStep.tsx';
 import SuccessStep from './tickets/SuccessStep.tsx';
 
-const PROTECTED = new Set<string>(TICKETS_PROTECTED_PATHS);
+function SuccessRoute() {
+  const location = useLocation();
+  const allowPublicSuccess = Boolean(
+    new URLSearchParams(location.search).get('reference'),
+  );
+
+  if (allowPublicSuccess) {
+    return <SuccessStep />;
+  }
+
+  return (
+    <AttendeeSessionGate>
+      <SuccessStep />
+    </AttendeeSessionGate>
+  );
+}
 
 export default function TicketPage() {
-  const path = window.location.pathname.replace(/\/$/, '') || '/';
-
-  if (path === TICKETS_MY) {
-    if (!loadAttendeeSession()) {
-      window.location.replace(ticketsLoginUrl(TICKETS_MY));
-      return null;
-    }
-    return <MyTicketsPage />;
-  }
-
-  const allowPublicSuccess =
-    path === TICKETS_SUCCESS &&
-    Boolean(new URLSearchParams(window.location.search).get('reference'));
-
-  if (PROTECTED.has(path) && !loadAttendeeSession() && !allowPublicSuccess) {
-    window.location.replace(ticketsLoginUrl(path));
-    return null;
-  }
-
-  if (path === TICKETS_CHECKOUT) return <CheckoutStep />;
-  if (path === TICKETS_PAYMENT) return <PaymentStep />;
-  if (path === TICKETS_PAYMENT_CALLBACK) return <PaymentCallbackStep />;
-  if (path === TICKETS_SUCCESS) return <SuccessStep />;
-  if (path === TICKETS_PICK) return <TicketPickStep />;
-  if (path === TICKETS_BASE || path.startsWith('/event/')) return <TicketIntroStep />;
-
-  return <TicketIntroStep />;
+  return (
+    <Routes>
+      <Route index element={<TicketIntroStep />} />
+      <Route
+        path="pick"
+        element={
+          <AttendeeSessionGate>
+            <TicketPickStep />
+          </AttendeeSessionGate>
+        }
+      />
+      <Route
+        path="checkout"
+        element={
+          <AttendeeSessionGate>
+            <CheckoutStep />
+          </AttendeeSessionGate>
+        }
+      />
+      <Route
+        path="payment"
+        element={
+          <AttendeeSessionGate>
+            <PaymentStep />
+          </AttendeeSessionGate>
+        }
+      />
+      <Route path="payment/callback" element={<PaymentCallbackStep />} />
+      <Route path="success" element={<SuccessRoute />} />
+      <Route
+        path="my-tickets"
+        element={
+          <AttendeeSessionGate>
+            <MyTicketsPage />
+          </AttendeeSessionGate>
+        }
+      />
+      <Route path="*" element={<TicketIntroStep />} />
+    </Routes>
+  );
 }

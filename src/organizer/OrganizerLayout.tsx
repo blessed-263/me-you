@@ -1,4 +1,5 @@
 import type { ReactNode } from 'react';
+import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { ArrowUpRight, LayoutDashboard, LogOut, Receipt, Ticket, Users, Wallet } from 'lucide-react';
 import { useMockData } from '../lib/dataSource.ts';
 import { formatEditionDate } from '../lib/eventEditions.ts';
@@ -27,7 +28,9 @@ type OrganizerLayoutProps = {
 };
 
 export default function OrganizerLayout({ session, title, children }: OrganizerLayoutProps) {
-  const path = window.location.pathname.replace(/\/$/, '') || '/';
+  const navigate = useNavigate();
+  const { pathname } = useLocation();
+  const path = pathname.replace(/\/$/, '') || '/';
   const { selectedEdition } = useOrganizerEvent();
   const ticketsHref = useSelectedPublicTicketsHref();
 
@@ -59,9 +62,9 @@ export default function OrganizerLayout({ session, title, children }: OrganizerL
               {NAV.map(({ href, label, icon: Icon }) => {
                 const active = path === href;
                 return (
-                  <a
+                  <Link
                     key={href}
-                    href={href}
+                    to={href}
                     className={`organizer-nav-link group flex items-center gap-3 px-3 py-3 transition-all duration-200 ${
                       active ? 'organizer-nav-link--active' : 'hover:bg-black/[0.04]'
                     }`}
@@ -82,7 +85,7 @@ export default function OrganizerLayout({ session, title, children }: OrganizerL
                     >
                       {label}
                     </span>
-                  </a>
+                  </Link>
                 );
               })}
             </nav>
@@ -111,8 +114,7 @@ export default function OrganizerLayout({ session, title, children }: OrganizerL
               <button
                 type="button"
                 onClick={() => {
-                  logoutOrganizer();
-                  window.location.href = ORGANIZER_ROUTES.LOGIN;
+                  void logoutOrganizer().then(() => navigate(ORGANIZER_ROUTES.LOGIN));
                 }}
                 className="w-full flex items-center justify-center gap-2 rounded-full py-3 text-[10px] font-semibold uppercase tracking-[0.14em] bg-brand-text text-brand-bg hover:bg-brand-text/90 transition-colors"
               >
@@ -143,8 +145,7 @@ export default function OrganizerLayout({ session, title, children }: OrganizerL
               <button
                 type="button"
                 onClick={() => {
-                  logoutOrganizer();
-                  window.location.href = ORGANIZER_ROUTES.LOGIN;
+                  void logoutOrganizer().then(() => navigate(ORGANIZER_ROUTES.LOGIN));
                 }}
                 className="text-[10px] uppercase tracking-[0.12em] font-semibold text-brand-muted"
               >
@@ -156,9 +157,9 @@ export default function OrganizerLayout({ session, title, children }: OrganizerL
               {NAV.map(({ href, label }) => {
                 const active = path === href;
                 return (
-                  <a
+                  <Link
                     key={href}
-                    href={href}
+                    to={href}
                     className={`shrink-0 rounded-full px-4 py-2 text-[10px] uppercase tracking-[0.12em] font-semibold transition-colors ${
                       active
                         ? 'bg-brand-text text-white shadow-sm'
@@ -166,7 +167,7 @@ export default function OrganizerLayout({ session, title, children }: OrganizerL
                     }`}
                   >
                     {label}
-                  </a>
+                  </Link>
                 );
               })}
             </nav>

@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react';
+import { useLocation, useNavigate } from 'react-router-dom';
 import { Loader2 } from 'lucide-react';
 import { finalizePaystackPayment, getMedusaCartId } from '../lib/storeApi.ts';
 import {
@@ -11,12 +12,14 @@ import {
 import TicketsLayout from './TicketsLayout.tsx';
 
 export default function PaymentCallbackStep() {
+  const navigate = useNavigate();
+  const { search } = useLocation();
   const [error, setError] = useState('');
 
   useEffect(() => {
     let cancelled = false;
     (async () => {
-      const params = new URLSearchParams(window.location.search);
+      const params = new URLSearchParams(search);
       const reference =
         params.get('reference')?.trim() ||
         params.get('trxref')?.trim() ||
@@ -42,8 +45,9 @@ export default function PaymentCallbackStep() {
           cart,
           buyer,
         });
-        window.location.replace(
+        navigate(
           `${TICKETS_SUCCESS}?reference=${encodeURIComponent(reference)}&order=${encodeURIComponent(orderId)}`,
+          { replace: true },
         );
       } catch (e) {
         if (!cancelled) {
@@ -54,7 +58,7 @@ export default function PaymentCallbackStep() {
     return () => {
       cancelled = true;
     };
-  }, []);
+  }, [navigate, search]);
 
   return (
     <TicketsLayout step="payment" showSteps={false} backHref={TICKETS_CHECKOUT} backLabel="Checkout">

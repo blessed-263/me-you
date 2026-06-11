@@ -1,4 +1,4 @@
-import { AMPEX, fetchStoreJson, getOrganizerToken, setOrganizerToken } from './ampexConfig.ts';
+import { AMPEX, fetchStoreJson } from './ampexConfig.ts';
 import { normalizeMonthlySales, prepareTicketMixRows, type DashboardPeriod } from './organizerListUtils.ts';
 import { mapBackendEventToEdition, zarFromCents } from './eventMappers.ts';
 import type { EventEdition } from './eventEditions.ts';
@@ -11,23 +11,46 @@ import type {
   OrganizerOrderStatus,
 } from './mockOrganizer.ts';
 
+export async function getOrganizerProfile(): Promise<{
+  email: string;
+  name: string;
+} | null> {
+  try {
+    const data = await fetchStoreJson<{
+      profile?: {
+        email?: string;
+        first_name?: string;
+        last_name?: string;
+        company_name?: string;
+      };
+    }>('/store/organizers/profile');
+    const profile = data.profile;
+    if (!profile?.email) return null;
+    const name =
+      profile.company_name ||
+      [profile.first_name, profile.last_name].filter(Boolean).join(' ') ||
+      'Organizer';
+    return { email: profile.email, name };
+  } catch {
+    return null;
+  }
+}
+
 export async function organizerLogin(
   email: string,
   password: string,
-): Promise<{ token: string; email: string; name: string }> {
+): Promise<{ email: string; name: string }> {
   const data = await fetchStoreJson<{
-    access_token?: string;
-    token?: string;
     user?: { email?: string; first_name?: string; last_name?: string };
   }>('/store/organizers/login', {
     method: 'POST',
     body: JSON.stringify({ email: email.trim().toLowerCase(), password }),
   });
-  const token = data.access_token ?? data.token ?? '';
-  if (!token) throw new Error('No organizer token returned');
-  setOrganizerToken(token);
-  const name = [data.user?.first_name, data.user?.last_name].filter(Boolean).join(' ') || 'Organizer';
-  return { token, email: data.user?.email ?? email, name };
+  if (!data.user?.email) {
+    throw new Error('Organizer login failed');
+  }
+  const name = [data.user.first_name, data.user.last_name].filter(Boolean).join(' ') || 'Organizer';
+  return { email: data.user.email, name };
 }
 
 export async function listOrganizerEvents(): Promise<EventEdition[]> {
@@ -265,5 +288,9 @@ export function organizerManageEventsUrl(): string {
 }
 
 export function isOrganizerAuthenticated(): boolean {
-  return Boolean(getOrganizerToken());
+  try {
+    return Boolean(sessionStorage.getItem('yme_organizer_session'));
+  } catch {
+    return false;
+  }
 }

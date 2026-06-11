@@ -1,4 +1,4 @@
-import { AMPEX, setOrganizerToken } from './ampexConfig.ts';
+import { AMPEX, fetchStore } from './ampexConfig.ts';
 import { ORGANIZER_ROUTES } from './mockOrganizer.ts';
 import { signInUrl } from './signInAuth.ts';
 import * as organizerApi from './organizerApi.ts';
@@ -9,7 +9,6 @@ export type OrganizerSession = {
   email: string;
   name: string;
   loggedInAt: string;
-  token?: string;
 };
 
 export function loginMock(email: string, _password: string): OrganizerSession {
@@ -19,7 +18,7 @@ export function loginMock(email: string, _password: string): OrganizerSession {
     name: 'You & Me Africa',
     loggedInAt: new Date().toISOString(),
   };
-  localStorage.setItem(SESSION_KEY, JSON.stringify(session));
+  sessionStorage.setItem(SESSION_KEY, JSON.stringify(session));
   return session;
 }
 
@@ -35,37 +34,60 @@ export async function loginOrganizerAsync(
     email: result.email,
     name: result.name,
     loggedInAt: new Date().toISOString(),
-    token: result.token,
   };
-  localStorage.setItem(SESSION_KEY, JSON.stringify(session));
+  sessionStorage.setItem(SESSION_KEY, JSON.stringify(session));
   return session;
 }
 
 export function loadOrganizerSession(): OrganizerSession | null {
   try {
-    const raw = localStorage.getItem(SESSION_KEY);
+    const raw = sessionStorage.getItem(SESSION_KEY);
     if (!raw) return null;
-    const session = JSON.parse(raw) as OrganizerSession;
-    if (session.token) setOrganizerToken(session.token);
-    return session;
+    return JSON.parse(raw) as OrganizerSession;
   } catch {
     return null;
   }
 }
 
-export function logoutOrganizer(): void {
-  localStorage.removeItem(SESSION_KEY);
-  setOrganizerToken(null);
+function saveOrganizerSession(session: OrganizerSession): OrganizerSession {
+  sessionStorage.setItem(SESSION_KEY, JSON.stringify(session));
+  return session;
+}
+
+/** Validate cookie session with Medusa and refresh sessionStorage (live mode). */
+export async function resolveOrganizerSession(): Promise<OrganizerSession | null> {
+  if (AMPEX.USE_MOCK_DATA) {
+    return loadOrganizerSession();
+  }
+
+  const profile = await organizerApi.getOrganizerProfile();
+  if (!profile?.email) {
+    sessionStorage.removeItem(SESSION_KEY);
+    return null;
+  }
+
+  const cached = loadOrganizerSession();
+  return saveOrganizerSession({
+    email: profile.email,
+    name: profile.name || cached?.name || 'Organizer',
+    loggedInAt: cached?.loggedInAt ?? new Date().toISOString(),
+  });
+}
+
+export async function logoutOrganizer(): Promise<void> {
+  if (!AMPEX.USE_MOCK_DATA) {
+    try {
+      await fetchStore('/store/organizers/logout', { method: 'POST' });
+    } catch {
+      /* clear local session even if API call fails */
+    }
+  }
+  sessionStorage.removeItem(SESSION_KEY);
 }
 
 export function requireOrganizerSession(): OrganizerSession | null {
   const session = loadOrganizerSession();
   if (!session) {
-    window.location.replace(signInUrl(ORGANIZER_ROUTES.DASHBOARD));
-    return null;
-  }
-  if (!AMPEX.USE_MOCK_DATA && !session.token) {
-    logoutOrganizer();
     window.location.replace(signInUrl(ORGANIZER_ROUTES.DASHBOARD));
     return null;
   }

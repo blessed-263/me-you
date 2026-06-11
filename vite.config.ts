@@ -9,6 +9,12 @@ export default defineConfig(({ mode }) => {
     env.VITE_MEDUSA_API_URL?.replace(/\/$/, '') || 'http://127.0.0.1:9000';
   const apiPort = env.API_PORT || process.env.API_PORT || '3001';
 
+  if (mode === 'production' && env.VITE_USE_MOCK_DATA === 'true') {
+    console.warn(
+      '[vite] VITE_USE_MOCK_DATA=true in a production build — mock auth will be enabled. Set VITE_USE_MOCK_DATA=false for live AmpEx.',
+    );
+  }
+
   return {
     plugins: [react(), tailwindcss()],
     resolve: {
@@ -28,6 +34,7 @@ export default defineConfig(({ mode }) => {
           target: medusaApiUrl,
           changeOrigin: true,
           secure: true,
+          cookieDomainRewrite: '',
         },
         '/get-publishable-key': {
           target: medusaApiUrl,

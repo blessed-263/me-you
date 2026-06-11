@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { CreditCard, Loader2, Lock } from 'lucide-react';
 import { formatPrice } from '../lib/mockTickets.ts';
 import { useMockData } from '../lib/dataSource.ts';
@@ -20,6 +21,7 @@ import { useTicketCart } from './useTicketCart.ts';
 const MOCK_PAY_DELAY_MS = 2200;
 
 export default function PaymentStep() {
+  const navigate = useNavigate();
   const cart = useTicketCart(true);
   const [buyer] = useState<BuyerDetails | null>(() => loadBuyer());
   const [paying, setPaying] = useState(false);
@@ -29,8 +31,8 @@ export default function PaymentStep() {
   const [error, setError] = useState('');
 
   useEffect(() => {
-    if (!buyer) window.location.replace(TICKETS_CHECKOUT);
-  }, [buyer]);
+    if (!buyer) navigate(TICKETS_CHECKOUT, { replace: true });
+  }, [buyer, navigate]);
 
   if (!cart || !buyer) return null;
 
@@ -46,7 +48,7 @@ export default function PaymentStep() {
     await new Promise((r) => window.setTimeout(r, MOCK_PAY_DELAY_MS));
     const reference = createMockReference();
     saveOrder(buildMockOrder(cart, buyer, reference));
-    window.location.href = `${TICKETS_SUCCESS}?reference=${encodeURIComponent(reference)}`;
+    navigate(`${TICKETS_SUCCESS}?reference=${encodeURIComponent(reference)}`);
   };
 
   const handleLivePay = async () => {

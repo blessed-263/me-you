@@ -3,7 +3,7 @@
  * Usage: npm run db:migrate
  */
 import 'dotenv/config';
-import { getDatabaseUrl, getPool, logDatabaseConfig } from '../server/db.js';
+import { getPool, logDatabaseConfig } from '../server/db.js';
 import { ensureRsvpTable } from '../server/rsvp.js';
 
 logDatabaseConfig();
@@ -17,15 +17,6 @@ if (!pool) {
 }
 
 try {
-  await pool.query(`
-    CREATE TABLE IF NOT EXISTS newsletter_subscribers (
-      id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
-      email text NOT NULL UNIQUE,
-      created_at timestamptz NOT NULL DEFAULT now()
-    );
-  `);
-  console.log('[newsletter] Table newsletter_subscribers is ready.');
-
   await ensureRsvpTable(() => pool);
   console.log('[db] Migration finished.');
 } catch (err) {

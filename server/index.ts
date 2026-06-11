@@ -1,159 +1,30 @@
 import 'dotenv/config';
-import express from 'express';
-import path from 'path';
-import { fileURLToPath } from 'url';
 import { checkDatabase, getPool, logDatabaseConfig } from './db.js';
-import { createJuneRsvpHandler, ensureJuneRsvpTable } from './juneRsvp.js';
-import { createRsvpHandler, ensureRsvpTable } from './rsvp.js';
+import { createApp } from './app.js';
+import { getAllowedOrigins } from './middleware/allowedOrigins.js';
+import { ensureJuneRsvpTable } from './juneRsvp.js';
+import { ensureRsvpTable } from './rsvp.js';
 
-const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const isProd =
   process.env.NODE_ENV === 'production' ||
   process.env.RAILWAY_ENVIRONMENT === 'production';
 const apiPort = Number(process.env.API_PORT) || 3001;
 const port = Number(process.env.PORT) || apiPort;
 
-async function ensureNewsletterTable(): Promise<void> {
-  const p = getPool();
-  if (!p) {
-    console.warn(
-      '[newsletter] DATABASE_URL is not set; POST /api/newsletter will return 503.',
-    );
-    return;
-  }
-  await p.query(`
-    CREATE TABLE IF NOT EXISTS newsletter_subscribers (
-      id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
-      email text NOT NULL UNIQUE,
-      created_at timestamptz NOT NULL DEFAULT now()
-    );
-  `);
-  console.log('[newsletter] Table newsletter_subscribers is ready.');
-}
-
-const app = express();
-
-const allowedOrigins = (
-  process.env.ALLOWED_ORIGINS ||
-  process.env.FRONTEND_URL ||
-  ''
-)
-  .split(',')
-  .map((o) => o.trim())
-  .filter(Boolean);
-
-app.use((req, res, next) => {
-  const origin = req.headers.origin;
-  if (
-    origin &&
-    (allowedOrigins.length === 0 || allowedOrigins.includes(origin))
-  ) {
-    res.setHeader('Access-Control-Allow-Origin', origin);
-    res.setHeader('Vary', 'Origin');
-  }
-  res.setHeader('Access-Control-Allow-Methods', 'GET, POST, OPTIONS');
-  res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
-  if (req.method === 'OPTIONS') {
-    res.sendStatus(204);
-    return;
-  }
-  next();
-});
-
-app.use(express.json({ limit: '32kb' }));
-
-async function healthHandler(
-  _req: express.Request,
-  res: express.Response,
-): Promise<void> {
-  const database = await checkDatabase();
-  const ok = database === 'connected' || database === 'not_configured';
-  res.status(ok ? 200 : 503).json({
-    ok: database === 'connected',
-    database,
-    ...(database === 'not_configured'
-      ? {
-          hint: 'Set DATABASE_URL on this Railway service (reference from Postgres plugin).',
-        }
-      : {}),
-  });
-}
-
-app.get('/api/health', healthHandler);
-app.get('/health', healthHandler);
-
-app.post('/api/rsvp', createRsvpHandler({ getPool }));
-app.post('/api/rsvp/june', createJuneRsvpHandler({ getPool }));
-
-app.post('/api/newsletter', async (req, res) => {
-  const p = getPool();
-  if (!p) {
-    res.status(503).json({ error: 'Database not configured' });
-    return;
-  }
-
-  const raw = req.body?.email;
-  if (typeof raw !== 'string') {
-    res.status(400).json({ error: 'Email is required' });
-    return;
-  }
-
-  const email = raw.trim().toLowerCase();
-  if (!email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
-    res.status(400).json({ error: 'Invalid email address' });
-    return;
-  }
-
-  try {
-    const result = await p.query(
-      `INSERT INTO newsletter_subscribers (email) VALUES ($1)
-       ON CONFLICT (email) DO NOTHING
-       RETURNING id`,
-      [email],
-    );
-
-    if (result.rowCount === 0) {
-      res.status(200).json({ ok: true, alreadySubscribed: true });
-      return;
-    }
-
-    res.status(201).json({ ok: true });
-  } catch (err) {
-    console.error('[newsletter] insert failed', err);
-    res.status(500).json({ error: 'Could not save subscription' });
-  }
-});
-
-/** Frontend is on Vercel. Only serve static files when SERVE_STATIC=true. */
 function serveStaticSite(): boolean {
   return process.env.SERVE_STATIC === 'true';
 }
 
 async function main() {
+  if (isProd && getAllowedOrigins().length === 0) {
+    throw new Error(
+      'ALLOWED_ORIGINS or FRONTEND_URL must be set in production for CORS and RSVP security.',
+    );
+  }
+
   const listenPort = isProd ? port : apiPort;
   const withStatic = isProd && serveStaticSite();
-
-  if (withStatic) {
-    const staticDir = path.join(__dirname, '../dist');
-    app.use(express.static(staticDir));
-    app.get(/^(?!\/api).*/, (_req, res) => {
-      res.sendFile(path.join(staticDir, 'index.html'));
-    });
-  } else {
-    app.get('/', (_req, res) => {
-      res.json({
-        service: 'You & Me API',
-        health: '/api/health',
-        rsvp: 'POST /api/rsvp',
-        juneRsvp: 'POST /api/rsvp/june',
-      });
-    });
-    if (isProd && allowedOrigins.length === 0) {
-      console.warn(
-        '[server] API-only: set ALLOWED_ORIGINS or FRONTEND_URL for Vercel CORS.',
-      );
-    }
-  }
+  const app = createApp({ serveStatic: withStatic });
 
   logDatabaseConfig();
 
@@ -173,7 +44,7 @@ async function main() {
   const dbStatus = await checkDatabase();
   if (dbStatus === 'not_configured') {
     console.error(
-      '[server] RSVP and newsletter will return "Database not configured" until DATABASE_URL is set on this service.',
+      '[server] RSVP will return "Database not configured" until DATABASE_URL is set on this service.',
     );
   } else if (dbStatus === 'error') {
     console.error(
@@ -182,7 +53,6 @@ async function main() {
   }
 
   try {
-    await ensureNewsletterTable();
     await ensureRsvpTable(getPool);
     await ensureJuneRsvpTable(getPool);
   } catch (err) {

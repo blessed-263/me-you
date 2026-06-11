@@ -1,5 +1,6 @@
 import { Ticket, ShieldCheck, Minus, Plus, Loader2 } from 'lucide-react';
 import { useEffect, useMemo, useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import Sponsors from '../components/Sponsors.tsx';
 import { formatPrice, type MockEvent, type MockTicketType } from '../lib/mockTickets.ts';
 import { fetchEventTickets, fetchPublicEvents } from '../lib/dataSource.ts';
@@ -156,6 +157,7 @@ function TicketLineCard({
 }
 
 export default function TicketPickStep() {
+  const navigate = useNavigate();
   const [event, setEvent] = useState<MockEvent | null>(null);
   const [ticketTypes, setTicketTypes] = useState<MockTicketType[]>([]);
   const [loading, setLoading] = useState(true);
@@ -219,7 +221,7 @@ export default function TicketPickStep() {
   const handleContinue = () => {
     if (!previewCart) return;
     saveCart(previewCart);
-    window.location.href = TICKETS_CHECKOUT;
+    navigate(TICKETS_CHECKOUT);
   };
 
   if (loading) {

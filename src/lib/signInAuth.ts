@@ -69,14 +69,24 @@ export async function universalSignInAsync(
   throw pickLoginError(attendeeError, organizerError);
 }
 
-export function redirectAfterSignIn(role: SignInRole): void {
+export function redirectAfterSignInTarget(role: SignInRole): string {
   const returnTo = resolveSignInReturnTo();
   if (role === 'organizer') {
-    window.location.href = returnTo.startsWith('/organizer')
+    return returnTo.startsWith('/organizer')
       ? returnTo
       : ORGANIZER_ROUTES.DASHBOARD;
+  }
+  return returnTo.startsWith('/tickets') ? returnTo : '/tickets/pick';
+}
+
+export function redirectAfterSignIn(
+  role: SignInRole,
+  navigate?: (to: string) => void,
+): void {
+  const target = redirectAfterSignInTarget(role);
+  if (navigate) {
+    navigate(target);
     return;
   }
-
-  window.location.href = returnTo.startsWith('/tickets') ? returnTo : '/tickets/pick';
+  window.location.href = target;
 }

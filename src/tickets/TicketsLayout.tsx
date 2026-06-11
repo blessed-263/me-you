@@ -1,4 +1,5 @@
 import type { ReactNode } from 'react';
+import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { motion } from 'motion/react';
 import {
   attendeeDisplayName,
@@ -28,16 +29,17 @@ export default function TicketsLayout({
   children,
   showSteps = true,
 }: TicketsLayoutProps) {
+  const navigate = useNavigate();
+  const { pathname } = useLocation();
+  const path = pathname.replace(/\/$/, '') || '/';
   const session = loadAttendeeSession();
-  const path = window.location.pathname.replace(/\/$/, '') || '/';
   const loginHref = ticketsLoginUrl(
     path === SIGN_IN_PATH || path === '/tickets/login' ? '/tickets/pick' : path,
   );
   const onEventsPage = path === TICKETS_BASE;
 
   const handleSignOut = () => {
-    logoutAttendee();
-    window.location.href = TICKETS_BASE;
+    void logoutAttendee().then(() => navigate(TICKETS_BASE));
   };
 
   const showBackLink = Boolean(backHref && backHref !== TICKETS_BASE);
@@ -63,18 +65,18 @@ export default function TicketsLayout({
             </div>
           ) : (
             <div className="flex flex-1 items-center justify-end gap-4 sm:gap-5 min-w-0">
-              <a
-                href={TICKETS_BASE}
+              <Link
+                to={TICKETS_BASE}
                 className={`${navLinkClass} ${
                   onEventsPage ? 'text-brand-text' : 'text-brand-muted hover:text-brand-text'
                 }`}
                 aria-current={onEventsPage ? 'page' : undefined}
               >
                 Events
-              </a>
+              </Link>
               {session ? (
-                <a
-                  href={TICKETS_MY}
+                <Link
+                  to={TICKETS_MY}
                   className={`${navLinkClass} ${
                     path === TICKETS_MY
                       ? 'text-brand-text'
@@ -82,7 +84,7 @@ export default function TicketsLayout({
                   }`}
                 >
                   My tickets
-                </a>
+                </Link>
               ) : null}
             </div>
           )}
@@ -91,12 +93,12 @@ export default function TicketsLayout({
             {session ? (
               <>
                 {showSteps ? (
-                  <a
-                    href={TICKETS_MY}
+                  <Link
+                    to={TICKETS_MY}
                     className={`hidden sm:inline ${navLinkClass} text-brand-accent hover:text-brand-text`}
                   >
                     My tickets
-                  </a>
+                  </Link>
                 ) : null}
                 <span className="hidden lg:inline text-[10px] text-brand-muted truncate max-w-[7rem]">
                   {attendeeDisplayName(session)}

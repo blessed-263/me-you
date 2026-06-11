@@ -1,6 +1,6 @@
 # You & Me Africa — event site
 
-Vite + React + TypeScript + Tailwind CSS, with a small **Express + PostgreSQL** API for newsletter signups and a **secret RSVP** form (Resend emails).
+Vite + React + TypeScript + Tailwind CSS, with a small **Express + PostgreSQL** API for **secret RSVP** forms (Resend emails).
 
 ## Prerequisites
 
@@ -13,7 +13,7 @@ Copy [.env.example](.env.example) to `.env` (or edit the included `.env`) and se
 
 | Variable | Required | Description |
 | -------- | -------- | ----------- |
-| `DATABASE_URL` | Yes (for newsletter & RSVP) | Postgres connection string (Railway provides this). |
+| `DATABASE_URL` | Yes (for RSVP) | Postgres connection string (Railway provides this). |
 | `API_PORT` | Dev only | API listen port; default `3001`. Vite proxies `/api` here. |
 | `RESEND_API_KEY` | For RSVP emails | From [Resend](https://resend.com/api-keys). |
 | `RESEND_FROM_EMAIL` | For RSVP emails | Verified sender, e.g. `You & Me <hello@yourdomain.com>`. |
@@ -21,7 +21,7 @@ Copy [.env.example](.env.example) to `.env` (or edit the included `.env`) and se
 
 On **Railway**, add the same `DATABASE_URL` to your **web/API** service (reference the variable from your Postgres plugin if offered). On every deploy/restart the API runs an **idempotent migration** that:
 
-- Ensures `newsletter_subscribers` and `rsvp_submissions` exist
+- Ensures `rsvp_submissions` exists
 - Adds `session` on RSVPs (`harvest-table` or `after-party-lunch`)
 - Renames legacy session `the-after-party` → `after-party-lunch`
 - Enforces **one RSVP per email** (unique index on `lower(email)`); duplicate rows from older per-session rules are removed (earliest kept)
@@ -47,7 +47,7 @@ Set `DATABASE_URL` in `.env`, then:
 npm run dev
 ```
 
-This runs the API (watch) and Vite together. Open the URL Vite prints (port **3000**). Submits go to `/api/newsletter` via the dev proxy.
+This runs the API (watch) and Vite together. Open the URL Vite prints (port **3000**). RSVP submits go to `/api/rsvp` via the dev proxy.
 
 Frontend only (no API):
 
@@ -131,7 +131,8 @@ To host site + API on Railway only (no Vercel):
 | `npm run build` | `vite build` + compile `server/` to `dist-server/` |
 | `npm start` | Production: static site + API |
 | `npm run preview` | Vite preview of `dist/` only (no API) |
-| `npm run lint` | Typecheck client (`tsc --noEmit`) |
+| `npm run lint` | ESLint + TypeScript check (`eslint . && tsc --noEmit`) |
+| `npm run lint:fix` | Auto-fix ESLint issues |
 
 ## Private RSVP (secret links)
 
@@ -167,9 +168,22 @@ Set `VITE_USE_MOCK_DATA` in `.env`:
 | `VITE_YME_ORGANIZER_ID` | Yes | Filters public events to You & Me organizer |
 | `VITE_AMPEX_FRONTEND_URL` | Yes (live) | AmpEx organizer portal link for “Manage events on AmpEx” |
 
-`VITE_API_URL` remains for RSVP/assistant Express API only (separate from Medusa).
+`VITE_API_URL` remains for the RSVP Express API only (separate from Medusa).
 
-In dev, Vite proxies `/store` → `VITE_MEDUSA_API_URL`. Event **create/publish** stays in [ampex-frontend](../ampex-frontend); me-you only lists, sells, and reports on published organizer events.
+In dev, Vite proxies `/store` → `VITE_MEDUSA_API_URL`.
+
+### Event management (ampex.store)
+
+**Create, edit, publish events, and upload images** on **[ampex.store](https://www.ampex.store)** via [ampex-frontend](../ampex-frontend) — not in me-you.
+
+| Concern | Where |
+| ------- | ----- |
+| Event create / edit UI | ampex-frontend (`CreateEditEventPage`, organizer settings) |
+| Image uploads | ampex-frontend → Medusa `POST /store/upload` |
+| Event publish | ampex-frontend → Medusa `POST /admin/events` |
+| List / sell / report | me-you (published events for `VITE_YME_ORGANIZER_ID`) |
+
+Organizer sidebar **Manage events on AmpEx** opens `VITE_AMPEX_FRONTEND_URL` (see [`src/lib/organizerApi.ts`](src/lib/organizerApi.ts)). me-you does not implement event upload endpoints.
 
 ### Ticket URLs
 
@@ -230,6 +244,8 @@ Mock data modules: [`src/lib/mockOrganizer.ts`](src/lib/mockOrganizer.ts), [`src
 
 ## API
 
-- `POST /api/rsvp` — JSON `{ "fullName", "email", "session", "phone?" }` where `session` is `harvest-table` or `after-party-lunch` → `201` saved, `200` if that email already RSVP'd, `503` if DB not configured.
-- `POST /api/newsletter` — JSON `{ "email": "you@example.com" }` → `201` new subscriber, `200` already subscribed, `400` / `503` / `500` with `{ "error": "..." }`.
+- `POST /api/rsvp` — JSON `{ "fullName", "email", "session", "phone?" }` where `session` is `harvest-table` or `after-party-lunch` → `201` saved, `200` if that email already RSVP'd, `400` validation error, `403` unknown origin (production), `429` rate limited, `503` if DB not configured.
+- `POST /api/rsvp/june` — June RSVP form (same protections).
 - `GET /api/health` — `{ "ok": true }`.
+
+RSVP POST routes in production require `Origin` or `Referer` from `ALLOWED_ORIGINS` / `FRONTEND_URL`. Rate limit defaults: **10 requests / 15 min / IP** (override with `RSVP_RATE_LIMIT_MAX`, `RSVP_RATE_LIMIT_WINDOW_MS`).

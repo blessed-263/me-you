@@ -1,3 +1,4 @@
+import { useNavigate } from 'react-router-dom';
 import { organizerManageEventsUrl } from '../lib/organizerApi.ts';
 import { useMockData } from '../lib/dataSource.ts';
 import { ORGANIZER_ROUTES } from '../lib/mockOrganizer.ts';
@@ -9,6 +10,8 @@ type OrganizerNoLiveEventsProps = {
 };
 
 export default function OrganizerNoLiveEvents({ session }: OrganizerNoLiveEventsProps) {
+  const navigate = useNavigate();
+
   return (
     <div className="organizer-app min-h-screen bg-brand-bg text-brand-text font-sans flex flex-col">
       <header className="border-b border-brand-border px-6 py-5 flex items-center justify-between">
@@ -18,8 +21,7 @@ export default function OrganizerNoLiveEvents({ session }: OrganizerNoLiveEvents
         <button
           type="button"
           onClick={() => {
-            logoutOrganizer();
-            window.location.href = ORGANIZER_ROUTES.LOGIN;
+            void logoutOrganizer().then(() => navigate(ORGANIZER_ROUTES.LOGIN));
           }}
           className="text-[10px] uppercase tracking-[0.12em] font-semibold text-brand-muted"
         >

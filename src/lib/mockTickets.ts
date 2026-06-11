@@ -1,4 +1,4 @@
-import { VENUE_ADDRESS_LINE, VENUE_MAPS_URL, VENUE_NAME } from './venue.ts';
+import { VENUE_ADDRESS_LINE, VENUE_MAPS_URL } from './venue.ts';
 
 export type MockTicketType = {
   id: string;

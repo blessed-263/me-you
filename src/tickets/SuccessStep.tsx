@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState } from 'react';
+import { useLocation, useNavigate } from 'react-router-dom';
 import { Check, Download, Mail, Ticket } from 'lucide-react';
 import { motion } from 'motion/react';
 import { formatEventDate, formatPrice } from '../lib/mockTickets.ts';
@@ -18,13 +19,15 @@ import { appendMockOrder } from '../lib/mockOrganizer.ts';
 import TicketsLayout from './TicketsLayout.tsx';
 
 export default function SuccessStep() {
+  const navigate = useNavigate();
+  const { search } = useLocation();
   const referenceFromUrl = useMemo(
-    () => new URLSearchParams(window.location.search).get('reference') || '',
-    [],
+    () => new URLSearchParams(search).get('reference') || '',
+    [search],
   );
   const orderIdFromUrl = useMemo(
-    () => new URLSearchParams(window.location.search).get('order') || '',
-    [],
+    () => new URLSearchParams(search).get('order') || '',
+    [search],
   );
   const [order] = useState<MockOrder | null>(() => loadOrder());
   const [eventDateLabel, setEventDateLabel] = useState('');
@@ -33,8 +36,8 @@ export default function SuccessStep() {
   const [eventEdition, setEventEdition] = useState('');
 
   useEffect(() => {
-    if (!order) window.location.replace(TICKETS_BASE);
-  }, [order]);
+    if (!order) navigate(TICKETS_BASE, { replace: true });
+  }, [order, navigate]);
 
   useEffect(() => {
     if (order && useMockData) appendMockOrder(order);

@@ -1,4 +1,5 @@
 import { useEffect } from 'react';
+import { useLocation } from 'react-router-dom';
 import {
   DEFAULT_OG_IMAGE,
   SITE_KEYWORDS,
@@ -45,11 +46,8 @@ function upsertJsonLd(data: Record<string, unknown> | Record<string, unknown>[] 
   el.textContent = JSON.stringify(data);
 }
 
-type SeoHeadProps = {
-  pathname?: string;
-};
-
-export default function SeoHead({ pathname = window.location.pathname }: SeoHeadProps) {
+export default function SeoHead() {
+  const { pathname } = useLocation();
   useEffect(() => {
     const path = normalizePathname(pathname);
     const seo = getRouteSeo(path);

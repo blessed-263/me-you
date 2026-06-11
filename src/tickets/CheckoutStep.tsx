@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState, type FormEvent } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { Lock } from 'lucide-react';
 import { loadAttendeeSession } from '../lib/attendeeAuth.ts';
 import { useMockData } from '../lib/dataSource.ts';
@@ -15,6 +16,7 @@ import PurchaseSidebar from './PurchaseSidebar.tsx';
 import { useTicketCart } from './useTicketCart.ts';
 
 export default function CheckoutStep() {
+  const navigate = useNavigate();
   const cart = useTicketCart(true);
   const attendee = loadAttendeeSession();
   const qty = cart ? cartTotalTickets(cart) : 0;
@@ -107,7 +109,7 @@ export default function CheckoutStep() {
       phone: phone.trim(),
       holderNames: names,
     });
-    window.location.href = TICKETS_PAYMENT;
+    navigate(TICKETS_PAYMENT);
   };
 
   return (

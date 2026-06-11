@@ -1,4 +1,5 @@
 import { useState, type FormEvent } from 'react';
+import { Navigate, useNavigate } from 'react-router-dom';
 import { Mail } from 'lucide-react';
 import AmpexWordmark from './components/AmpexWordmark.tsx';
 import PasswordInput from './components/PasswordInput.tsx';
@@ -19,22 +20,8 @@ import {
 
 type Mode = 'signin' | 'register';
 
-function redirectIfAlreadySignedIn(): boolean {
-  if (loadOrganizerSession()) {
-    window.location.replace(ORGANIZER_ROUTES.DASHBOARD);
-    return true;
-  }
-  const returnTo = resolveSignInReturnTo();
-  if (returnTo.startsWith('/tickets') && loadAttendeeSession()) {
-    window.location.replace(returnTo);
-    return true;
-  }
-  return false;
-}
-
 export default function SignInPage() {
-  if (redirectIfAlreadySignedIn()) return null;
-
+  const navigate = useNavigate();
   const [mode, setMode] = useState<Mode>('signin');
   const [firstName, setFirstName] = useState('');
   const [lastName, setLastName] = useState('');
@@ -45,6 +32,14 @@ export default function SignInPage() {
   const [info, setInfo] = useState('');
   const [pendingVerifyEmail, setPendingVerifyEmail] = useState('');
   const [submitting, setSubmitting] = useState(false);
+
+  if (loadOrganizerSession()) {
+    return <Navigate to={ORGANIZER_ROUTES.DASHBOARD} replace />;
+  }
+  const returnTo = resolveSignInReturnTo();
+  if (returnTo.startsWith('/tickets') && loadAttendeeSession()) {
+    return <Navigate to={returnTo} replace />;
+  }
 
   const handleResend = async () => {
     if (!pendingVerifyEmail) return;
@@ -92,7 +87,7 @@ export default function SignInPage() {
           return;
         }
         const role = await universalSignInAsync(email, password);
-        redirectAfterSignIn(role);
+        redirectAfterSignIn(role, navigate);
         return;
       }
 
@@ -102,7 +97,7 @@ export default function SignInPage() {
       }
 
       const role = await universalSignInAsync(email, password);
-      redirectAfterSignIn(role);
+      redirectAfterSignIn(role, navigate);
     } catch (e) {
       const err = e as Error & { code?: string };
       if (err.code === 'EMAIL_NOT_VERIFIED') {

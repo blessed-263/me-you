@@ -210,12 +210,6 @@ async function sendRsvpEmails(payload: {
 
 export function createRsvpHandler(deps: RsvpDeps) {
   return async (req: Request, res: Response): Promise<void> => {
-    const p = deps.getPool();
-    if (!p) {
-      res.status(503).json({ error: 'Database not configured' });
-      return;
-    }
-
     const fullName =
       typeof req.body?.fullName === 'string' ? req.body.fullName.trim() : '';
     const rawEmail =
@@ -247,6 +241,12 @@ export function createRsvpHandler(deps: RsvpDeps) {
         error: 'This experience is fully booked',
         sessionFull: true,
       });
+      return;
+    }
+
+    const p = deps.getPool();
+    if (!p) {
+      res.status(503).json({ error: 'Database not configured' });
       return;
     }
 

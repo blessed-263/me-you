@@ -1,10 +1,4 @@
-import {
-  AMPEX,
-  fetchStore,
-  fetchStoreJson,
-  getAttendeeToken,
-  setAttendeeToken,
-} from './ampexConfig.ts';
+import { AMPEX, fetchStore, fetchStoreJson } from './ampexConfig.ts';
 import {
   mapBackendEventToMockEvent,
   mapTicketsEndpoint,
@@ -94,23 +88,20 @@ export async function customerRegister(input: {
 export async function customerLogin(
   email: string,
   password: string,
-): Promise<{ token: string; email: string; firstName: string; lastName: string }> {
+): Promise<{ email: string; firstName: string; lastName: string }> {
   const data = await fetchStoreJson<{
-    access_token?: string;
-    token?: string;
     user?: { email?: string; first_name?: string; last_name?: string };
   }>('/store/auth/login', {
     method: 'POST',
     body: JSON.stringify({ email: email.trim().toLowerCase(), password }),
   });
-  const token = data.access_token ?? data.token ?? '';
-  if (!token) throw new Error('No access token returned');
-  setAttendeeToken(token);
+  if (!data.user?.email) {
+    throw new Error('Login failed');
+  }
   return {
-    token,
-    email: data.user?.email ?? email,
-    firstName: data.user?.first_name ?? '',
-    lastName: data.user?.last_name ?? '',
+    email: data.user.email,
+    firstName: data.user.first_name ?? '',
+    lastName: data.user.last_name ?? '',
   };
 }
 
@@ -122,7 +113,6 @@ export async function resendVerification(email: string): Promise<void> {
 }
 
 export async function getCustomerProfile(): Promise<BuyerDetails | null> {
-  if (!getAttendeeToken()) return null;
   try {
     const data = await fetchStoreJson<{
       customer?: {

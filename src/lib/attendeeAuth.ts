@@ -1,4 +1,4 @@
-import { AMPEX, setAttendeeToken } from './ampexConfig.ts';
+import { AMPEX, fetchStore } from './ampexConfig.ts';
 import * as storeApi from './storeApi.ts';
 
 const SESSION_KEY = 'yme_attendee_session';
@@ -9,7 +9,6 @@ export type AttendeeSession = {
   lastName: string;
   phone: string;
   loggedInAt: string;
-  token?: string;
 };
 
 export function attendeeDisplayName(session: AttendeeSession): string {
@@ -35,7 +34,7 @@ export function loginAttendee(input: {
     phone: (input.phone ?? existing?.phone ?? '').trim(),
     loggedInAt: new Date().toISOString(),
   };
-  localStorage.setItem(SESSION_KEY, JSON.stringify(session));
+  sessionStorage.setItem(SESSION_KEY, JSON.stringify(session));
   return session;
 }
 
@@ -53,9 +52,8 @@ export async function loginAttendeeAsync(
     lastName: result.lastName,
     phone: '',
     loggedInAt: new Date().toISOString(),
-    token: result.token,
   };
-  localStorage.setItem(SESSION_KEY, JSON.stringify(session));
+  sessionStorage.setItem(SESSION_KEY, JSON.stringify(session));
   return session;
 }
 
@@ -75,21 +73,53 @@ export async function registerAttendeeAsync(input: {
 
 export function loadAttendeeSession(): AttendeeSession | null {
   try {
-    const raw = localStorage.getItem(SESSION_KEY);
+    const raw = sessionStorage.getItem(SESSION_KEY);
     if (!raw) return null;
     const parsed = JSON.parse(raw) as AttendeeSession;
     if (!parsed.email) return null;
-    const session = { ...parsed, email: parsed.email.toLowerCase() };
-    if (session.token) setAttendeeToken(session.token);
-    return session;
+    return { ...parsed, email: parsed.email.toLowerCase() };
   } catch {
     return null;
   }
 }
 
-export function logoutAttendee(): void {
-  localStorage.removeItem(SESSION_KEY);
-  setAttendeeToken(null);
+function saveAttendeeSession(session: AttendeeSession): AttendeeSession {
+  const normalized = { ...session, email: session.email.toLowerCase() };
+  sessionStorage.setItem(SESSION_KEY, JSON.stringify(normalized));
+  return normalized;
+}
+
+/** Validate cookie session with Medusa and refresh sessionStorage (live mode). */
+export async function resolveAttendeeSession(): Promise<AttendeeSession | null> {
+  if (AMPEX.USE_MOCK_DATA) {
+    return loadAttendeeSession();
+  }
+
+  const profile = await storeApi.getCustomerProfile();
+  if (!profile?.email) {
+    sessionStorage.removeItem(SESSION_KEY);
+    return null;
+  }
+
+  const cached = loadAttendeeSession();
+  return saveAttendeeSession({
+    email: profile.email,
+    firstName: profile.firstName || cached?.firstName || 'Guest',
+    lastName: profile.lastName || cached?.lastName || '',
+    phone: profile.phone || cached?.phone || '',
+    loggedInAt: cached?.loggedInAt ?? new Date().toISOString(),
+  });
+}
+
+export async function logoutAttendee(): Promise<void> {
+  if (!AMPEX.USE_MOCK_DATA) {
+    try {
+      await fetchStore('/store/auth/logout', { method: 'POST' });
+    } catch {
+      /* clear local session even if API call fails */
+    }
+  }
+  sessionStorage.removeItem(SESSION_KEY);
 }
 
 import { signInUrl } from './signInAuth.ts';
@@ -108,11 +138,6 @@ export function parseTicketsReturnTo(): string {
 export function requireAttendeeSession(returnTo?: string): AttendeeSession | null {
   const session = loadAttendeeSession();
   if (!session) {
-    window.location.replace(ticketsLoginUrl(returnTo ?? window.location.pathname));
-    return null;
-  }
-  if (!AMPEX.USE_MOCK_DATA && !session.token) {
-    logoutAttendee();
     window.location.replace(ticketsLoginUrl(returnTo ?? window.location.pathname));
     return null;
   }

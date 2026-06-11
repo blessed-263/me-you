@@ -26,4 +26,11 @@ describe('redirectAfterSignIn', () => {
     redirectAfterSignIn('attendee');
     expect(window.location.href).toBe('/tickets/pick');
   });
+
+  it('uses navigate callback when provided', () => {
+    const navigate = vi.fn();
+    redirectAfterSignIn('organizer', navigate);
+    expect(navigate).toHaveBeenCalledWith('/organizer/orders');
+    expect(window.location.href).toBe('http://localhost/login?return=%2Forganizer%2Forders');
+  });
 });
