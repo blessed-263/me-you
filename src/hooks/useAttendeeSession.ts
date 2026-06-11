@@ -16,6 +16,7 @@ export function useAttendeeSession(): AttendeeSession | null {
     let cancelled = false;
 
     const refresh = () => {
+      setSession(loadAttendeeSession());
       void resolveAttendeeSession().then((resolved) => {
         if (!cancelled) setSession(resolved);
       });

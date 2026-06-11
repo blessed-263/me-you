@@ -1,10 +1,6 @@
 import { Link, useNavigate } from 'react-router-dom';
-import {
-  attendeeDisplayName,
-  logoutAttendee,
-  ticketsLoginUrl,
-} from '../lib/attendeeAuth.ts';
-import { logoutOrganizer } from '../lib/organizerAuth.ts';
+import { attendeeDisplayName, ticketsLoginUrl } from '../lib/attendeeAuth.ts';
+import { logoutAllSessions } from '../lib/sessionLogout.ts';
 import { ORGANIZER_ROUTES } from '../lib/mockOrganizer.ts';
 import { SIGN_IN_PATH } from '../lib/signInAuth.ts';
 import { TICKETS_MY } from '../lib/mockCheckout.ts';
@@ -50,7 +46,7 @@ export default function SiteNavAuth({
         <button
           type="button"
           onClick={() => {
-            void logoutOrganizer().then(() => navigate('/'));
+            void logoutAllSessions().then(() => navigate('/'));
           }}
           className={`${navLinkClass} text-brand-muted hover:text-brand-text`}
         >
@@ -93,7 +89,7 @@ export default function SiteNavAuth({
           <button
             type="button"
             onClick={() => {
-              void logoutAttendee().then(() => navigate(ticketsPath));
+              void logoutAllSessions().then(() => navigate(ticketsPath));
             }}
             className={`${navLinkClass} text-brand-muted hover:text-brand-text`}
           >

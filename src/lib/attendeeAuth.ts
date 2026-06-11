@@ -2,6 +2,11 @@ import { AMPEX, fetchStore } from './ampexConfig.ts';
 import { dispatchAuthChanged } from './authEvents.ts';
 import { loadOrganizerSession } from './organizerAuth.ts';
 import { getOrganizerProfile } from './organizerApi.ts';
+import {
+  currentSessionLogoutGeneration,
+  isSessionLogoutStale,
+  logoutAllSessions,
+} from './sessionLogout.ts';
 import * as storeApi from './storeApi.ts';
 
 const SESSION_KEY = 'yme_attendee_session';
@@ -110,18 +115,28 @@ function saveAttendeeSession(session: AttendeeSession): AttendeeSession {
 
 /** Validate cookie session with Medusa and refresh sessionStorage (live mode). */
 export async function resolveAttendeeSession(): Promise<AttendeeSession | null> {
+  const generation = currentSessionLogoutGeneration();
+
   if (AMPEX.USE_MOCK_DATA) {
     if (loadOrganizerSession()) return null;
     return loadAttendeeSession();
   }
 
   const organizerProfile = await getOrganizerProfile();
+  if (isSessionLogoutStale(generation)) {
+    return null;
+  }
+
   if (organizerProfile?.email) {
     sessionStorage.removeItem(SESSION_KEY);
     return null;
   }
 
   const profile = await storeApi.getCustomerProfile();
+  if (isSessionLogoutStale(generation)) {
+    return null;
+  }
+
   if (!profile?.email) {
     sessionStorage.removeItem(SESSION_KEY);
     return null;
@@ -138,15 +153,7 @@ export async function resolveAttendeeSession(): Promise<AttendeeSession | null> 
 }
 
 export async function logoutAttendee(): Promise<void> {
-  if (!AMPEX.USE_MOCK_DATA) {
-    try {
-      await fetchStore('/store/auth/logout', { method: 'POST' });
-    } catch {
-      /* clear local session even if API call fails */
-    }
-  }
-  sessionStorage.removeItem(SESSION_KEY);
-  dispatchAuthChanged();
+  await logoutAllSessions();
 }
 
 import { signInUrl } from './signInAuth.ts';

@@ -1,6 +1,11 @@
 import { AMPEX, fetchStore } from './ampexConfig.ts';
 import { dispatchAuthChanged } from './authEvents.ts';
 import { ORGANIZER_ROUTES } from './mockOrganizer.ts';
+import {
+  currentSessionLogoutGeneration,
+  isSessionLogoutStale,
+  logoutAllSessions,
+} from './sessionLogout.ts';
 import { signInUrl } from './signInAuth.ts';
 import * as organizerApi from './organizerApi.ts';
 
@@ -74,11 +79,17 @@ function saveOrganizerSession(session: OrganizerSession): OrganizerSession {
 
 /** Validate cookie session with Medusa and refresh sessionStorage (live mode). */
 export async function resolveOrganizerSession(): Promise<OrganizerSession | null> {
+  const generation = currentSessionLogoutGeneration();
+
   if (AMPEX.USE_MOCK_DATA) {
     return loadOrganizerSession();
   }
 
   const profile = await organizerApi.getOrganizerProfile();
+  if (isSessionLogoutStale(generation)) {
+    return null;
+  }
+
   if (!profile?.email) {
     sessionStorage.removeItem(SESSION_KEY);
     return null;
@@ -93,15 +104,7 @@ export async function resolveOrganizerSession(): Promise<OrganizerSession | null
 }
 
 export async function logoutOrganizer(): Promise<void> {
-  if (!AMPEX.USE_MOCK_DATA) {
-    try {
-      await fetchStore('/store/organizers/logout', { method: 'POST' });
-    } catch {
-      /* clear local session even if API call fails */
-    }
-  }
-  sessionStorage.removeItem(SESSION_KEY);
-  dispatchAuthChanged();
+  await logoutAllSessions();
 }
 
 export function requireOrganizerSession(): OrganizerSession | null {

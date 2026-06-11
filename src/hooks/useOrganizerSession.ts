@@ -16,6 +16,7 @@ export function useOrganizerSession(): OrganizerSession | null {
     let cancelled = false;
 
     const refresh = () => {
+      setSession(loadOrganizerSession());
       void resolveOrganizerSession().then((resolved) => {
         if (!cancelled) setSession(resolved);
       });
