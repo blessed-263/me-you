@@ -1,5 +1,6 @@
 import { AMPEX, fetchStore } from './ampexConfig.ts';
 import { dispatchAuthChanged } from './authEvents.ts';
+import { clearAllSessionTokens } from './sessionTokens.ts';
 
 const ATTENDEE_SESSION_KEY = 'yme_attendee_session';
 const ORGANIZER_SESSION_KEY = 'yme_organizer_session';
@@ -23,6 +24,7 @@ export function currentSessionLogoutGeneration(): number {
 function clearLocalSessions(): void {
   sessionStorage.removeItem(ATTENDEE_SESSION_KEY);
   sessionStorage.removeItem(ORGANIZER_SESSION_KEY);
+  clearAllSessionTokens();
 }
 
 /** Clear every client and server session (both attendee and organizer). */

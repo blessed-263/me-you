@@ -7,6 +7,7 @@ import {
   logoutAllSessions,
 } from './sessionLogout.ts';
 import { signInUrl } from './signInAuth.ts';
+import { getOrganizerToken, setAttendeeToken } from './sessionTokens.ts';
 import * as organizerApi from './organizerApi.ts';
 
 const ATTENDEE_SESSION_KEY = 'yme_attendee_session';
@@ -50,6 +51,7 @@ export async function loginOrganizerAsync(
   };
   sessionStorage.setItem(SESSION_KEY, JSON.stringify(session));
   clearAttendeeSessionLocal();
+  setAttendeeToken(null);
   if (!AMPEX.USE_MOCK_DATA) {
     try {
       await fetchStore('/store/auth/logout', { method: 'POST' });
@@ -83,6 +85,10 @@ export async function resolveOrganizerSession(): Promise<OrganizerSession | null
 
   if (AMPEX.USE_MOCK_DATA) {
     return loadOrganizerSession();
+  }
+
+  if (!loadOrganizerSession() && !getOrganizerToken()) {
+    return null;
   }
 
   const profile = await organizerApi.getOrganizerProfile();

@@ -1,4 +1,5 @@
 import { AMPEX, fetchStoreJson } from './ampexConfig.ts';
+import { extractLoginToken, setOrganizerToken } from './sessionTokens.ts';
 import { normalizeMonthlySales, prepareTicketMixRows, type DashboardPeriod } from './organizerListUtils.ts';
 import { mapBackendEventToEdition, zarFromCents } from './eventMappers.ts';
 import type { EventEdition } from './eventEditions.ts';
@@ -42,10 +43,16 @@ export async function organizerLogin(
 ): Promise<{ email: string; name: string }> {
   const data = await fetchStoreJson<{
     user?: { email?: string; first_name?: string; last_name?: string };
+    token?: string;
+    access_token?: string;
   }>('/store/organizers/login', {
     method: 'POST',
     body: JSON.stringify({ email: email.trim().toLowerCase(), password }),
   });
+  const token = extractLoginToken(data);
+  if (token) {
+    setOrganizerToken(token);
+  }
   if (!data.user?.email) {
     throw new Error('Organizer login failed');
   }

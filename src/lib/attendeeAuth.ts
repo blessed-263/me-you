@@ -7,6 +7,7 @@ import {
   isSessionLogoutStale,
   logoutAllSessions,
 } from './sessionLogout.ts';
+import { getAttendeeToken, getOrganizerToken, setOrganizerToken } from './sessionTokens.ts';
 import * as storeApi from './storeApi.ts';
 
 const SESSION_KEY = 'yme_attendee_session';
@@ -69,6 +70,7 @@ export async function loginAttendeeAsync(
   };
   sessionStorage.setItem(SESSION_KEY, JSON.stringify(session));
   clearOrganizerSessionLocal();
+  setOrganizerToken(null);
   if (!AMPEX.USE_MOCK_DATA) {
     try {
       await fetchStore('/store/organizers/logout', { method: 'POST' });
@@ -122,13 +124,19 @@ export async function resolveAttendeeSession(): Promise<AttendeeSession | null> 
     return loadAttendeeSession();
   }
 
-  const organizerProfile = await getOrganizerProfile();
-  if (isSessionLogoutStale(generation)) {
-    return null;
+  if (getOrganizerToken() || loadOrganizerSession()) {
+    const organizerProfile = await getOrganizerProfile();
+    if (isSessionLogoutStale(generation)) {
+      return null;
+    }
+
+    if (organizerProfile?.email) {
+      sessionStorage.removeItem(SESSION_KEY);
+      return null;
+    }
   }
 
-  if (organizerProfile?.email) {
-    sessionStorage.removeItem(SESSION_KEY);
+  if (!loadAttendeeSession() && !getAttendeeToken()) {
     return null;
   }
 

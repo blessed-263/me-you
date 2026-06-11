@@ -1,4 +1,5 @@
 import { AMPEX, fetchStore, fetchStoreJson } from './ampexConfig.ts';
+import { extractLoginToken, setAttendeeToken } from './sessionTokens.ts';
 import {
   mapBackendEventToMockEvent,
   mapTicketsEndpoint,
@@ -91,10 +92,16 @@ export async function customerLogin(
 ): Promise<{ email: string; firstName: string; lastName: string }> {
   const data = await fetchStoreJson<{
     user?: { email?: string; first_name?: string; last_name?: string };
+    token?: string;
+    access_token?: string;
   }>('/store/auth/login', {
     method: 'POST',
     body: JSON.stringify({ email: email.trim().toLowerCase(), password }),
   });
+  const token = extractLoginToken(data);
+  if (token) {
+    setAttendeeToken(token);
+  }
   if (!data.user?.email) {
     throw new Error('Login failed');
   }

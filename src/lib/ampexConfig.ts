@@ -1,3 +1,5 @@
+import { resolveBearerTokenForStorePath } from './sessionTokens.ts';
+
 /** AmpEx / Medusa storefront configuration */
 
 const mockEnv = import.meta.env.VITE_USE_MOCK_DATA as string | undefined;
@@ -36,6 +38,11 @@ export async function fetchStore(path: string, init: RequestInit = {}): Promise<
 
   if (AMPEX.PUBLISHABLE_KEY && !headers.has('x-publishable-api-key')) {
     headers.set('x-publishable-api-key', AMPEX.PUBLISHABLE_KEY);
+  }
+
+  const bearer = resolveBearerTokenForStorePath(path);
+  if (bearer && !headers.has('Authorization')) {
+    headers.set('Authorization', `Bearer ${bearer}`);
   }
 
   if (init.body && typeof init.body === 'string' && !headers.has('Content-Type')) {
