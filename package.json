@@ -24,6 +24,7 @@
     "test:email": "npx tsx scripts/test-resend-email.ts",
     "db:migrate": "npx tsx scripts/migrate-db.ts",
     "export:rsvps": "npx tsx scripts/export-rsvps.ts",
+    "export:event-summary": "npx tsx scripts/generate-event-summary-csv.ts",
     "export:june-rsvps": "npx tsx scripts/export-june-rsvps.ts",
     "export:after-party-tickets": "npx tsx scripts/export-after-party-tickets.ts",
     "export:harvest-table-tickets": "npx tsx scripts/export-harvest-table-tickets.ts",
