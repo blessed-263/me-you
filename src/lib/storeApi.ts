@@ -7,7 +7,7 @@ import {
 } from './eventMappers.ts';
 import { sortPublicEvents } from './eventLifecycle.ts';
 import type { MockEvent } from './mockTickets.ts';
-import type { BuyerDetails } from './mockCheckout.ts';
+import { TICKETS_PAYMENT_CALLBACK, type BuyerDetails } from './mockCheckout.ts';
 
 const MEDUSA_CART_KEY = 'medusa_cart_id';
 const PAYMENT_CART_KEY = 'payment_cart_id';
@@ -221,7 +221,11 @@ export async function startPaystackCheckout(
     method: 'POST',
     body: JSON.stringify({
       provider_id: 'pp_paystack',
-      data: { email, cart_id: cartId },
+      data: {
+        email,
+        cart_id: cartId,
+        callback_url: `${window.location.origin}${TICKETS_PAYMENT_CALLBACK}`,
+      },
     }),
   });
 

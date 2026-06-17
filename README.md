@@ -218,9 +218,9 @@ Before setting `VITE_USE_MOCK_DATA=false`:
 1. **You & Me organizer** exists in AmpEx with known `organizer_id` → set `VITE_YME_ORGANIZER_ID`
 2. At least one **published** event with ticket variants (created via ampex-frontend)
 3. Publishable API key + region id configured
-4. Paystack callback URL includes your me-you domain + `/tickets/payment/callback`
+4. Paystack **Live Callback URL** (dashboard): set to `https://www.ampex.store/payment-callback` as the default fallback. Each storefront also sends its own `callback_url` per checkout (`youandmeafrica.com/tickets/payment/callback`, etc.) — add those origins to AmpEx `STORE_CORS` / `ALLOWED_ORIGINS`.
 5. me-you origin in AmpEx backend env: `STORE_CORS` and/or `ALLOWED_ORIGINS` (include `https://www.youandmeafrica.com` and dev localhost origins)
-6. `FRONTEND_URL` on AmpEx backend set to your me-you site (email links, Paystack callback)
+6. `FRONTEND_URL` on AmpEx backend set to your primary storefront (email links, Paystack fallback callback)
 7. Medusa backend running (e.g. port 9000)
 
 **Local smoke test:**
