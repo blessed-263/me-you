@@ -8,7 +8,17 @@ import {
   logoutAllSessions,
 } from './sessionLogout.ts';
 import { getAttendeeToken, getOrganizerToken, setOrganizerToken } from './sessionTokens.ts';
+import {
+  getResolveAttendeeCache,
+  getResolveAttendeeInFlight,
+  invalidateAttendeeSessionCache,
+  RESOLVE_ATTENDEE_CACHE_MS,
+  setResolveAttendeeCache,
+  setResolveAttendeeInFlight,
+} from './attendeeSessionCache.ts';
 import * as storeApi from './storeApi.ts';
+import { invalidateCustomerProfileCache } from './storeApi.ts';
+import { signInUrl } from './signInAuth.ts';
 
 const SESSION_KEY = 'yme_attendee_session';
 const ORGANIZER_SESSION_KEY = 'yme_organizer_session';
@@ -78,6 +88,8 @@ export async function loginAttendeeAsync(
       /* attendee session is authoritative */
     }
   }
+  invalidateAttendeeSessionCache();
+  invalidateCustomerProfileCache();
   dispatchAuthChanged();
   return session;
 }
@@ -108,21 +120,64 @@ export function loadAttendeeSession(): AttendeeSession | null {
   }
 }
 
+function attendeeSessionsEqual(
+  a: AttendeeSession | null,
+  b: AttendeeSession,
+): boolean {
+  if (!a) return false;
+  return (
+    a.email === b.email &&
+    a.firstName === b.firstName &&
+    a.lastName === b.lastName &&
+    a.phone === b.phone
+  );
+}
+
 function saveAttendeeSession(session: AttendeeSession): AttendeeSession {
   const normalized = { ...session, email: session.email.toLowerCase() };
+  const existing = loadAttendeeSession();
+  const changed = !attendeeSessionsEqual(existing, normalized);
   sessionStorage.setItem(SESSION_KEY, JSON.stringify(normalized));
-  dispatchAuthChanged();
+  if (changed) {
+    dispatchAuthChanged();
+  }
   return normalized;
 }
 
 /** Validate cookie session with Medusa and refresh sessionStorage (live mode). */
 export async function resolveAttendeeSession(): Promise<AttendeeSession | null> {
-  const generation = currentSessionLogoutGeneration();
-
   if (AMPEX.USE_MOCK_DATA) {
     if (loadOrganizerSession()) return null;
     return loadAttendeeSession();
   }
+
+  const now = Date.now();
+  const cached = getResolveAttendeeCache();
+  if (cached && now - cached.checkedAt < RESOLVE_ATTENDEE_CACHE_MS) {
+    return cached.session;
+  }
+
+  const inFlight = getResolveAttendeeInFlight();
+  if (inFlight) {
+    return inFlight;
+  }
+
+  const promise = (async () => {
+    try {
+      const session = await resolveAttendeeSessionUncached();
+      setResolveAttendeeCache(session, Date.now());
+      return session;
+    } finally {
+      setResolveAttendeeInFlight(null);
+    }
+  })();
+
+  setResolveAttendeeInFlight(promise);
+  return promise;
+}
+
+async function resolveAttendeeSessionUncached(): Promise<AttendeeSession | null> {
+  const generation = currentSessionLogoutGeneration();
 
   if (getOrganizerToken() || loadOrganizerSession()) {
     const organizerProfile = await getOrganizerProfile();
@@ -131,7 +186,11 @@ export async function resolveAttendeeSession(): Promise<AttendeeSession | null> 
     }
 
     if (organizerProfile?.email) {
+      const hadSession = Boolean(loadAttendeeSession());
       sessionStorage.removeItem(SESSION_KEY);
+      if (hadSession) {
+        dispatchAuthChanged();
+      }
       return null;
     }
   }
@@ -146,7 +205,11 @@ export async function resolveAttendeeSession(): Promise<AttendeeSession | null> 
   }
 
   if (!profile?.email) {
+    const hadSession = Boolean(loadAttendeeSession());
     sessionStorage.removeItem(SESSION_KEY);
+    if (hadSession) {
+      dispatchAuthChanged();
+    }
     return null;
   }
 
@@ -163,8 +226,6 @@ export async function resolveAttendeeSession(): Promise<AttendeeSession | null> 
 export async function logoutAttendee(): Promise<void> {
   await logoutAllSessions();
 }
-
-import { signInUrl } from './signInAuth.ts';
 
 export function ticketsLoginUrl(returnTo?: string): string {
   if (!returnTo || returnTo === '/tickets/login') return signInUrl('/tickets/pick');

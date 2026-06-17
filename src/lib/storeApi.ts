@@ -101,6 +101,7 @@ export async function customerLogin(
   const token = extractLoginToken(data);
   if (token) {
     setAttendeeToken(token);
+    invalidateCustomerProfileCache();
   }
   if (!data.user?.email) {
     throw new Error('Login failed');
@@ -119,28 +120,56 @@ export async function resendVerification(email: string): Promise<void> {
   });
 }
 
+let customerProfileCache: { data: BuyerDetails | null; fetchedAt: number } | null = null;
+let customerProfileInFlight: Promise<BuyerDetails | null> | null = null;
+const CUSTOMER_PROFILE_CACHE_MS = 30_000;
+
+export function invalidateCustomerProfileCache(): void {
+  customerProfileCache = null;
+}
+
 export async function getCustomerProfile(): Promise<BuyerDetails | null> {
-  try {
-    const data = await fetchStoreJson<{
-      customer?: {
-        email?: string;
-        first_name?: string;
-        last_name?: string;
-        phone?: string;
-      };
-    }>('/store/customers/profile');
-    const c = data.customer;
-    if (!c) return null;
-    return {
-      firstName: c.first_name ?? '',
-      lastName: c.last_name ?? '',
-      email: c.email ?? '',
-      phone: c.phone ?? '',
-      holderNames: [],
-    };
-  } catch {
-    return null;
+  const now = Date.now();
+  if (customerProfileCache && now - customerProfileCache.fetchedAt < CUSTOMER_PROFILE_CACHE_MS) {
+    return customerProfileCache.data;
   }
+
+  if (customerProfileInFlight) {
+    return customerProfileInFlight;
+  }
+
+  customerProfileInFlight = (async () => {
+    try {
+      const data = await fetchStoreJson<{
+        customer?: {
+          email?: string;
+          first_name?: string;
+          last_name?: string;
+          phone?: string;
+        };
+      }>('/store/customers/profile');
+      const c = data.customer;
+      if (!c) {
+        customerProfileCache = { data: null, fetchedAt: Date.now() };
+        return null;
+      }
+      const profile: BuyerDetails = {
+        firstName: c.first_name ?? '',
+        lastName: c.last_name ?? '',
+        email: c.email ?? '',
+        phone: c.phone ?? '',
+        holderNames: [],
+      };
+      customerProfileCache = { data: profile, fetchedAt: Date.now() };
+      return profile;
+    } catch {
+      return null;
+    } finally {
+      customerProfileInFlight = null;
+    }
+  })();
+
+  return customerProfileInFlight;
 }
 
 async function resolveRegionId(): Promise<string> {
