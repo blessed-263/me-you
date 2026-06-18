@@ -71,6 +71,7 @@ export default function PaymentStep() {
             unitPriceZar: item.unitPrice,
             eventId: cart.eventId,
             holderNames: names,
+            ticketName: item.ticketName,
           };
         }),
       );

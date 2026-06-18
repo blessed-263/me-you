@@ -199,6 +199,7 @@ export type CheckoutLineInput = {
   unitPriceZar: number;
   eventId: string;
   holderNames: string[];
+  ticketName: string;
 };
 
 export async function addItemsToCart(cartId: string, items: CheckoutLineInput[]): Promise<void> {
@@ -211,6 +212,7 @@ export async function addItemsToCart(cartId: string, items: CheckoutLineInput[])
         type: 'EVENT',
         event_id: i.eventId,
         holder_names: i.holderNames,
+        ticket_type: i.ticketName,
       },
     })),
   };
