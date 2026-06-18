@@ -261,6 +261,15 @@ export async function startPaystackCheckout(
       },
     }),
   });
+  if (import.meta.env.DEV) {
+    console.debug('[Paystack debug] payment-sessions response shape', {
+      has_payment_session: !!session.payment_session,
+      payment_sessions_count: session.payment_sessions?.length ?? 0,
+      has_payment_collection: !!session.payment_collection,
+      nested_payment_sessions_count: session.payment_collection?.payment_sessions?.length ?? 0,
+      raw_session_response: session,
+    });
+  }
 
   const isRecord = (value: unknown): value is Record<string, unknown> =>
     typeof value === 'object' && value !== null && !Array.isArray(value);
