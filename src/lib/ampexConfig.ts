@@ -16,6 +16,7 @@ export const AMPEX = {
     ? mockEnv === 'true'
     : (mockEnv ?? 'true') === 'true',
 } as const;
+const STORE_REQUEST_TIMEOUT_MS = 20_000;
 
 export function storeUrl(path: string): string {
   const normalized = path.startsWith('/') ? path : `/${path}`;
@@ -54,7 +55,29 @@ export async function fetchStore(path: string, init: RequestInit = {}): Promise<
     }
   }
 
-  return fetch(storeUrl(path), { ...init, headers, credentials: 'include' });
+  const timeoutController = new AbortController();
+  const timeoutId = window.setTimeout(() => timeoutController.abort(), STORE_REQUEST_TIMEOUT_MS);
+  const signal = init.signal ?? timeoutController.signal;
+
+  try {
+    return await fetch(storeUrl(path), { ...init, headers, credentials: 'include', signal });
+  } catch (error) {
+    const isTimeout =
+      error instanceof DOMException &&
+      error.name === 'AbortError' &&
+      !init.signal;
+    if (isTimeout) {
+      const err = new Error('The payment server took too long to respond. Please try again.');
+      (err as Error & { code?: string }).code = 'network_timeout';
+      throw err;
+    }
+
+    const err = new Error('Could not reach the payment server. Check your connection and try again.');
+    (err as Error & { code?: string }).code = 'network_error';
+    throw err;
+  } finally {
+    window.clearTimeout(timeoutId);
+  }
 }
 
 export async function fetchStoreJson<T>(path: string, init?: RequestInit): Promise<T> {
