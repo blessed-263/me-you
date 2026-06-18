@@ -17,7 +17,7 @@ import {
   setResolveAttendeeInFlight,
 } from './attendeeSessionCache.ts';
 import * as storeApi from './storeApi.ts';
-import { invalidateCustomerProfileCache } from './storeApi.ts';
+import { invalidateCustomerProfileCache, invalidateMyTicketsCache } from './storeApi.ts';
 import { signInUrl } from './signInAuth.ts';
 
 const SESSION_KEY = 'yme_attendee_session';
@@ -90,6 +90,7 @@ export async function loginAttendeeAsync(
   }
   invalidateAttendeeSessionCache();
   invalidateCustomerProfileCache();
+  invalidateMyTicketsCache();
   dispatchAuthChanged();
   return session;
 }

@@ -1,7 +1,7 @@
 import { AMPEX, fetchStore } from './ampexConfig.ts';
 import { invalidateAttendeeSessionCache } from './attendeeSessionCache.ts';
 import { dispatchAuthChanged } from './authEvents.ts';
-import { invalidateCustomerProfileCache } from './storeApi.ts';
+import { invalidateCustomerProfileCache, invalidateMyTicketsCache } from './storeApi.ts';
 import { clearAllSessionTokens } from './sessionTokens.ts';
 
 const ATTENDEE_SESSION_KEY = 'yme_attendee_session';
@@ -34,6 +34,7 @@ export async function logoutAllSessions(): Promise<void> {
   const generation = beginSessionLogout();
   invalidateAttendeeSessionCache();
   invalidateCustomerProfileCache();
+  invalidateMyTicketsCache();
   clearLocalSessions();
 
   if (!AMPEX.USE_MOCK_DATA) {

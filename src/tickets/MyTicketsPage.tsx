@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from 'react';
 import { CalendarDays, Loader2, Ticket } from 'lucide-react';
-import { attendeeDisplayName, loadAttendeeSession, ticketsPickHref } from '../lib/attendeeAuth.ts';
+import { attendeeDisplayName, ticketsPickHref } from '../lib/attendeeAuth.ts';
+import { useAttendeeSession } from '../hooks/useAttendeeSession.ts';
 import { fetchAttendeeTickets } from '../lib/dataSource.ts';
 import { VENUE_ADDRESS_ONE_LINE } from '../lib/venue.ts';
 import { ticketPartFromType } from '../lib/ticketVisuals.ts';
@@ -47,7 +48,8 @@ function groupTickets(tickets: UserTicketView[]): TicketGroup[] {
 }
 
 export default function MyTicketsPage() {
-  const session = loadAttendeeSession();
+  const session = useAttendeeSession();
+  const sessionEmail = session?.email ?? '';
   const [tickets, setTickets] = useState<UserTicketView[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
@@ -55,15 +57,30 @@ export default function MyTicketsPage() {
   const [expandedRef, setExpandedRef] = useState<string | null>(null);
 
   useEffect(() => {
-    if (!session) return;
-    fetchAttendeeTickets(session.email)
+    if (!sessionEmail) return;
+
+    let cancelled = false;
+    setLoading(true);
+    setError('');
+
+    fetchAttendeeTickets(sessionEmail)
       .then((list) => {
+        if (cancelled) return;
         setTickets(list);
         setExpandedRef(list[0]?.orderReference ?? null);
       })
-      .catch((e: Error) => setError(e.message || 'Could not load tickets'))
-      .finally(() => setLoading(false));
-  }, [session]);
+      .catch((e: Error) => {
+        if (cancelled) return;
+        setError(e.message || 'Could not load tickets');
+      })
+      .finally(() => {
+        if (!cancelled) setLoading(false);
+      });
+
+    return () => {
+      cancelled = true;
+    };
+  }, [sessionEmail]);
 
   if (!session) return null;
 

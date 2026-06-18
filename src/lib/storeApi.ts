@@ -102,6 +102,7 @@ export async function customerLogin(
   if (token) {
     setAttendeeToken(token);
     invalidateCustomerProfileCache();
+    invalidateMyTicketsCache();
   }
   if (!data.user?.email) {
     throw new Error('Login failed');
@@ -351,14 +352,23 @@ export type UserTicketView = {
   orderReference: string;
 };
 
-export async function getMyTickets(eventId?: string): Promise<UserTicketView[]> {
-  const params = new URLSearchParams();
-  if (eventId) params.set('event_id', eventId);
-  const qs = params.toString();
-  const data = await fetchStoreJson<{
-    tickets?: Record<string, unknown>[];
-  }>(`/store/tickets/my-tickets${qs ? `?${qs}` : ''}`);
-  return (data.tickets ?? []).map((t) => {
+const MY_TICKETS_CACHE_MS = 15_000;
+
+let myTicketsCache: {
+  key: string;
+  data: UserTicketView[];
+  fetchedAt: number;
+} | null = null;
+let myTicketsInFlight: Promise<UserTicketView[]> | null = null;
+
+export function invalidateMyTicketsCache(): void {
+  myTicketsCache = null;
+}
+
+function mapMyTicketsResponse(
+  tickets: Record<string, unknown>[] | undefined,
+): UserTicketView[] {
+  return (tickets ?? []).map((t) => {
     const event = (t.event ?? {}) as Record<string, unknown>;
     return {
       id: String(t.id ?? ''),
@@ -371,4 +381,38 @@ export async function getMyTickets(eventId?: string): Promise<UserTicketView[]> 
       orderReference: String(t.order_id ?? t.reference ?? t.id ?? ''),
     };
   });
+}
+
+export async function getMyTickets(eventId?: string): Promise<UserTicketView[]> {
+  const cacheKey = eventId ?? '';
+  const now = Date.now();
+  if (
+    myTicketsCache &&
+    myTicketsCache.key === cacheKey &&
+    now - myTicketsCache.fetchedAt < MY_TICKETS_CACHE_MS
+  ) {
+    return myTicketsCache.data;
+  }
+
+  if (myTicketsInFlight) {
+    return myTicketsInFlight;
+  }
+
+  myTicketsInFlight = (async () => {
+    try {
+      const params = new URLSearchParams();
+      if (eventId) params.set('event_id', eventId);
+      const qs = params.toString();
+      const data = await fetchStoreJson<{
+        tickets?: Record<string, unknown>[];
+      }>(`/store/tickets/my-tickets${qs ? `?${qs}` : ''}`);
+      const mapped = mapMyTicketsResponse(data.tickets);
+      myTicketsCache = { key: cacheKey, data: mapped, fetchedAt: Date.now() };
+      return mapped;
+    } finally {
+      myTicketsInFlight = null;
+    }
+  })();
+
+  return myTicketsInFlight;
 }
