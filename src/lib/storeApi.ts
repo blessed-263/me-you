@@ -245,7 +245,11 @@ export async function startPaystackCheckout(
   sessionStorage.setItem(PAYMENT_COLLECTION_KEY, collectionId);
 
   const session = await fetchStoreJson<{
-    payment_session?: { data?: Record<string, unknown> };
+    payment_session?: { id?: string; provider_id?: string; data?: Record<string, unknown> };
+    payment_sessions?: { id?: string; provider_id?: string; data?: Record<string, unknown> }[];
+    payment_collection?: {
+      payment_sessions?: { id?: string; provider_id?: string; data?: Record<string, unknown> }[];
+    };
   }>(`/store/payment-collections/${collectionId}/payment-sessions`, {
     method: 'POST',
     body: JSON.stringify({
@@ -258,17 +262,47 @@ export async function startPaystackCheckout(
     }),
   });
 
-  const sessionData = session.payment_session?.data ?? {};
-  const paymentUrl = String(
-    sessionData.paystackTxAuthorizationUrl ??
-      sessionData.authorization_url ??
-      sessionData.url ??
-      '',
+  const isRecord = (value: unknown): value is Record<string, unknown> =>
+    typeof value === 'object' && value !== null && !Array.isArray(value);
+  const pickString = (...values: unknown[]): string =>
+    values.find((v) => typeof v === 'string' && v.trim().length > 0) as string || '';
+
+  const sessions = [
+    ...(session.payment_session ? [session.payment_session] : []),
+    ...(session.payment_sessions ?? []),
+    ...(session.payment_collection?.payment_sessions ?? []),
+  ];
+  const paystackSession =
+    sessions.find((s) => s.provider_id === 'pp_paystack' || s.provider_id === 'paystack') ??
+    sessions[0];
+
+  const sessionData = isRecord(paystackSession?.data) ? paystackSession.data : {};
+  const nestedData = isRecord(sessionData.data) ? sessionData.data : {};
+  const paymentUrl = pickString(
+    sessionData.paystackTxAuthorizationUrl,
+    nestedData.paystackTxAuthorizationUrl,
+    sessionData.authorization_url,
+    nestedData.authorization_url,
+    sessionData.authorizationUrl,
+    nestedData.authorizationUrl,
+    sessionData.paystack_authorization_url,
+    nestedData.paystack_authorization_url,
+    sessionData.url,
+    nestedData.url,
   );
-  const sessionId = String((session.payment_session as { id?: string })?.id ?? '');
+  const sessionId = String(paystackSession?.id ?? '');
   if (sessionId) sessionStorage.setItem(PAYMENT_SESSION_KEY, sessionId);
 
-  const reference = String(sessionData.reference ?? '');
+  const reference = pickString(
+    sessionData.reference,
+    nestedData.reference,
+    sessionData.paystackTxRef,
+    nestedData.paystackTxRef,
+    sessionData.paystackReference,
+    nestedData.paystackReference,
+    sessionData.tx_ref,
+    nestedData.tx_ref,
+  );
   if (reference) sessionStorage.setItem('payment_reference', reference);
 
   if (!paymentUrl) throw new Error('Paystack payment URL not returned');
