@@ -20,6 +20,14 @@
   ],
   "rewrites": [
     {
+      "source": "/store/:path*",
+      "destination": "https://ampex-backend-production.up.railway.app/store/:path*"
+    },
+    {
+      "source": "/get-publishable-key",
+      "destination": "https://ampex-backend-production.up.railway.app/get-publishable-key"
+    },
+    {
       "source": "/((?!.*\\..*).*)",
       "destination": "/index.html"
     }

@@ -20,9 +20,13 @@ const STORE_REQUEST_TIMEOUT_MS = 20_000;
 
 export function storeUrl(path: string): string {
   const normalized = path.startsWith('/') ? path : `/${path}`;
-  // In dev, always use same-origin paths so Vite proxies /store → Medusa (no CORS).
-  if (import.meta.env.DEV) return normalized;
-  return AMPEX.API_URL ? `${AMPEX.API_URL}${normalized}` : normalized;
+  // Same-origin /store is proxied in dev (Vite) and production (Vercel rewrite / Express).
+  // Direct cross-origin calls to Railway often surface as intermittent CORS errors when the
+  // upstream times out or returns 502 without Access-Control-Allow-Origin.
+  if (import.meta.env.VITE_STORE_DIRECT_API === 'true' && AMPEX.API_URL) {
+    return `${AMPEX.API_URL}${normalized}`;
+  }
+  return normalized;
 }
 
 export async function fetchStore(path: string, init: RequestInit = {}): Promise<Response> {

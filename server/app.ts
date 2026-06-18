@@ -17,6 +17,7 @@ import { getAllowedOrigins, isOriginAllowedForCors } from './middleware/allowedO
 import { requireAllowedOrigin } from './middleware/requireAllowedOrigin.js';
 import { createRsvpRateLimit } from './middleware/rateLimit.js';
 import { securityHeadersMiddleware } from './middleware/securityHeaders.js';
+import { createStoreProxy } from './storeProxy.js';
 
 
 
@@ -118,7 +119,7 @@ export function createApp(options: CreateAppOptions = {}): express.Express {
 
   app.use(express.json({ limit: '32kb' }));
 
-
+  app.use(createStoreProxy());
 
   app.get('/api/health', healthHandler);
 
