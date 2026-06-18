@@ -1,11 +1,11 @@
 import { useEffect, useMemo, useState } from 'react';
-import { CalendarDays, Loader2, Ticket } from 'lucide-react';
+import { CalendarDays, Download, Loader2, Ticket } from 'lucide-react';
 import { attendeeDisplayName, ticketsPickHref } from '../lib/attendeeAuth.ts';
 import { useAttendeeSession } from '../hooks/useAttendeeSession.ts';
 import { fetchAttendeeTickets } from '../lib/dataSource.ts';
 import { VENUE_ADDRESS_ONE_LINE } from '../lib/venue.ts';
 import { ticketPartFromType } from '../lib/ticketVisuals.ts';
-import type { UserTicketView } from '../lib/storeApi.ts';
+import { downloadTicketReceipts, type UserTicketView } from '../lib/storeApi.ts';
 import { TICKETS_BASE } from '../lib/mockCheckout.ts';
 import TicketsLayout from './TicketsLayout.tsx';
 
@@ -55,6 +55,32 @@ export default function MyTicketsPage() {
   const [error, setError] = useState('');
   const groups = useMemo(() => groupTickets(tickets), [tickets]);
   const [expandedRef, setExpandedRef] = useState<string | null>(null);
+  const [downloadingRef, setDownloadingRef] = useState<string | null>(null);
+  const [downloadError, setDownloadError] = useState('');
+
+  async function handleDownloadGroup(group: TicketGroup) {
+    setDownloadError('');
+    setDownloadingRef(group.reference);
+    try {
+      await downloadTicketReceipts(group.tickets);
+    } catch (e) {
+      setDownloadError((e as Error).message || 'Could not download tickets');
+    } finally {
+      setDownloadingRef(null);
+    }
+  }
+
+  async function handleDownloadTicket(ticket: UserTicketView) {
+    setDownloadError('');
+    setDownloadingRef(ticket.id);
+    try {
+      await downloadTicketReceipts([ticket]);
+    } catch (e) {
+      setDownloadError((e as Error).message || 'Could not download ticket');
+    } finally {
+      setDownloadingRef(null);
+    }
+  }
 
   useEffect(() => {
     if (!sessionEmail) return;
@@ -116,6 +142,9 @@ export default function MyTicketsPage() {
           </div>
         ) : (
           <ul className="mt-10 space-y-3">
+            {downloadError ? (
+              <p className="text-sm text-red-700/90" role="alert">{downloadError}</p>
+            ) : null}
             {groups.map((group) => {
               const open = expandedRef === group.reference;
               return (
@@ -154,6 +183,21 @@ export default function MyTicketsPage() {
                   </button>
                   {open ? (
                     <div className="border-t border-brand-border px-5 py-4 bg-brand-bg/40 space-y-4">
+                      <div className="flex justify-end">
+                        <button
+                          type="button"
+                          onClick={() => void handleDownloadGroup(group)}
+                          disabled={downloadingRef === group.reference}
+                          className="inline-flex items-center gap-1.5 text-[10px] uppercase tracking-[0.12em] font-semibold text-brand-accent hover:text-brand-text disabled:opacity-60"
+                        >
+                          {downloadingRef === group.reference ? (
+                            <Loader2 className="w-3.5 h-3.5 animate-spin" aria-hidden />
+                          ) : (
+                            <Download className="w-3.5 h-3.5" aria-hidden />
+                          )}
+                          Download all
+                        </button>
+                      </div>
                       <ul className="space-y-3">
                         {group.tickets.map((t) => (
                           <li
@@ -165,11 +209,26 @@ export default function MyTicketsPage() {
                               <p className="text-[12px] text-brand-muted">{t.ticketType}</p>
                               <p className="text-[10px] uppercase tracking-[0.12em] text-brand-accent mt-1">{ticketPartFromType(t.ticketType)}</p>
                               <p className="text-[11px] text-brand-muted">{group.venueLabel}</p>
-                              <p className="font-mono text-[10px] text-brand-muted mt-1">{t.id}</p>
+                              <p className="font-mono text-[10px] text-brand-muted mt-1">{t.ticketCode || t.id}</p>
                             </div>
-                            <span className="text-[10px] uppercase tracking-[0.12em] font-semibold text-brand-accent">
-                              {STATUS_LABEL[t.status] ?? t.status}
-                            </span>
+                            <div className="flex flex-col items-end gap-2">
+                              <span className="text-[10px] uppercase tracking-[0.12em] font-semibold text-brand-accent">
+                                {STATUS_LABEL[t.status] ?? t.status}
+                              </span>
+                              <button
+                                type="button"
+                                onClick={() => void handleDownloadTicket(t)}
+                                disabled={downloadingRef === t.id}
+                                className="inline-flex items-center gap-1 text-[10px] uppercase tracking-[0.12em] font-semibold text-brand-text hover:text-brand-accent disabled:opacity-60"
+                              >
+                                {downloadingRef === t.id ? (
+                                  <Loader2 className="w-3 h-3 animate-spin" aria-hidden />
+                                ) : (
+                                  <Download className="w-3 h-3" aria-hidden />
+                                )}
+                                PDF
+                              </button>
+                            </div>
                           </li>
                         ))}
                       </ul>

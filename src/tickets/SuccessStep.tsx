@@ -7,6 +7,7 @@ import { resolvePublicEventStatus } from '../lib/eventLifecycle.ts';
 import { ticketPartFromType } from '../lib/ticketVisuals.ts';
 import { VENUE_ADDRESS_ONE_LINE } from '../lib/venue.ts';
 import { fetchEventById, useMockData } from '../lib/dataSource.ts';
+import { downloadTicketReceipts, getMyTickets } from '../lib/storeApi.ts';
 import {
   cartSubtotal,
   clearCheckoutSession,
@@ -34,6 +35,8 @@ export default function SuccessStep() {
   const [eventStatusLabel, setEventStatusLabel] = useState('active');
   const [eventTitle, setEventTitle] = useState('');
   const [eventEdition, setEventEdition] = useState('');
+  const [downloading, setDownloading] = useState(false);
+  const [downloadError, setDownloadError] = useState('');
 
   useEffect(() => {
     if (!order) navigate(TICKETS_BASE, { replace: true });
@@ -60,6 +63,31 @@ export default function SuccessStep() {
   const total = cartSubtotal(order.cart);
   const refDisplay = referenceFromUrl || order.reference;
   const orderIdDisplay = orderIdFromUrl || order.orderId;
+
+  async function handleDownloadTickets() {
+    if (useMockData) {
+      window.alert('Mock: PDF tickets would download here.');
+      return;
+    }
+
+    setDownloadError('');
+    setDownloading(true);
+    try {
+      const tickets = await getMyTickets();
+      const orderTickets = tickets.filter(
+        (t) => t.orderReference === orderIdDisplay || t.orderReference === refDisplay,
+      );
+      const toDownload = orderTickets.length > 0 ? orderTickets : tickets;
+      if (toDownload.length === 0) {
+        throw new Error('Tickets are still being issued. Open My tickets in a moment and try again.');
+      }
+      await downloadTicketReceipts(toDownload);
+    } catch (e) {
+      setDownloadError((e as Error).message || 'Could not download tickets');
+    } finally {
+      setDownloading(false);
+    }
+  }
 
   return (
     <TicketsLayout step="success" showSteps={false} backHref="/" backLabel="Home">
@@ -133,13 +161,12 @@ export default function SuccessStep() {
         <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
           <button
             type="button"
-            onClick={() =>
-              window.alert(useMockData ? 'Mock: PDF tickets would download here.' : 'Tickets are in your email and My tickets.')
-            }
-            className="inline-flex items-center justify-center gap-2 rounded-full px-8 py-3.5 text-[10px] font-semibold uppercase tracking-[0.14em] border border-brand-border text-brand-text hover:bg-brand-surface transition-colors"
+            onClick={() => void handleDownloadTickets()}
+            disabled={downloading}
+            className="inline-flex items-center justify-center gap-2 rounded-full px-8 py-3.5 text-[10px] font-semibold uppercase tracking-[0.14em] border border-brand-border text-brand-text hover:bg-brand-surface transition-colors disabled:opacity-60"
           >
             <Download className="w-4 h-4" aria-hidden />
-            Download tickets
+            {downloading ? 'Preparing PDFs…' : 'Download tickets'}
           </button>
           <a
             href={TICKETS_MY}
@@ -150,6 +177,10 @@ export default function SuccessStep() {
             View my tickets
           </a>
         </div>
+
+        {downloadError ? (
+          <p className="mt-4 text-sm text-red-700/90 text-center" role="alert">{downloadError}</p>
+        ) : null}
 
         <p className="mt-10 inline-flex items-center gap-2 text-[11px] text-brand-muted">
           <Mail className="w-4 h-4" aria-hidden />

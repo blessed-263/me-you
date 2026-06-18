@@ -109,6 +109,7 @@ export async function fetchAttendeeTickets(email: string): Promise<UserTicketVie
     return getAttendeeOrders(email).flatMap((v) =>
       v.tickets.map((t) => ({
         id: t.id,
+        ticketCode: t.reference || t.id,
         holderName: t.holderName,
         ticketType: t.ticketType,
         status: t.status,

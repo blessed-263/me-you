@@ -343,6 +343,7 @@ export async function finalizePaystackPayment(
 
 export type UserTicketView = {
   id: string;
+  ticketCode: string;
   holderName: string;
   ticketType: string;
   status: string;
@@ -372,6 +373,7 @@ function mapMyTicketsResponse(
     const event = (t.event ?? {}) as Record<string, unknown>;
     return {
       id: String(t.id ?? ''),
+      ticketCode: String(t.ticket_code ?? t.ticketCode ?? t.id ?? ''),
       holderName: String(t.holder_name ?? t.holderName ?? 'Guest'),
       ticketType: String(t.ticket_type ?? t.ticketType ?? 'Ticket'),
       status: String(t.status ?? 'active'),
@@ -415,4 +417,45 @@ export async function getMyTickets(eventId?: string): Promise<UserTicketView[]> 
   })();
 
   return myTicketsInFlight;
+}
+
+function triggerBrowserDownload(blob: Blob, filename: string): void {
+  const url = URL.createObjectURL(blob);
+  const anchor = document.createElement('a');
+  anchor.href = url;
+  anchor.download = filename;
+  document.body.appendChild(anchor);
+  anchor.click();
+  anchor.remove();
+  URL.revokeObjectURL(url);
+}
+
+export async function downloadTicketReceipt(
+  ticketId: string,
+  filename?: string,
+): Promise<void> {
+  const res = await fetchStore(`/store/tickets/${encodeURIComponent(ticketId)}/receipt`);
+  if (!res.ok) {
+    const data = await res.json().catch(() => ({}));
+    throw new Error((data as { message?: string }).message || 'Failed to download ticket PDF');
+  }
+  const blob = await res.blob();
+  triggerBrowserDownload(blob, filename || `ticket-${ticketId}.pdf`);
+}
+
+export async function downloadTicketReceipts(
+  tickets: Pick<UserTicketView, 'id' | 'ticketCode' | 'holderName'>[],
+): Promise<void> {
+  if (tickets.length === 0) {
+    throw new Error('No tickets to download');
+  }
+
+  for (const ticket of tickets) {
+    const safeCode = ticket.ticketCode.replace(/[^\w.-]+/g, '_');
+    const safeHolder = ticket.holderName.replace(/[^\w.-]+/g, '_');
+    await downloadTicketReceipt(
+      ticket.id,
+      `ticket-${safeCode || ticket.id}${safeHolder ? `-${safeHolder}` : ''}.pdf`,
+    );
+  }
 }
