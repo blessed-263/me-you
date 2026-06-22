@@ -3,8 +3,10 @@ import { resolveBearerTokenForStorePath } from './sessionTokens.ts';
 /** AmpEx / Medusa storefront configuration */
 
 const mockEnv = import.meta.env.VITE_USE_MOCK_DATA as string | undefined;
+const ampExEnabled = import.meta.env.VITE_AMPEX_ENABLED === 'true';
 
 export const AMPEX = {
+  ENABLED: ampExEnabled,
   API_URL: (import.meta.env.VITE_MEDUSA_API_URL as string | undefined)?.replace(/\/$/, '') ?? '',
   PUBLISHABLE_KEY: (import.meta.env.VITE_MEDUSA_PUBLISHABLE_KEY as string | undefined) ?? '',
   REGION_ID: (import.meta.env.VITE_MEDUSA_REGION_ID as string | undefined) ?? '',
@@ -12,9 +14,11 @@ export const AMPEX = {
   CURRENCY_CODE: (import.meta.env.VITE_MEDUSA_CURRENCY_CODE as string | undefined) ?? 'ZAR',
   AMPEX_FRONTEND_URL:
     (import.meta.env.VITE_AMPEX_FRONTEND_URL as string | undefined)?.replace(/\/$/, '') ?? '',
-  USE_MOCK_DATA: import.meta.env.PROD
-    ? mockEnv === 'true'
-    : (mockEnv ?? 'true') === 'true',
+  USE_MOCK_DATA: !ampExEnabled
+    ? true
+    : import.meta.env.PROD
+      ? mockEnv === 'true'
+      : (mockEnv ?? 'true') === 'true',
 } as const;
 const STORE_REQUEST_TIMEOUT_MS = 20_000;
 

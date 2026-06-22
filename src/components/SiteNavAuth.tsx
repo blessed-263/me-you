@@ -4,6 +4,11 @@ import { logoutAllSessions } from '../lib/sessionLogout.ts';
 import { ORGANIZER_ROUTES } from '../lib/mockOrganizer.ts';
 import { SIGN_IN_PATH } from '../lib/signInAuth.ts';
 import { TICKETS_MY } from '../lib/mockCheckout.ts';
+import {
+  EXTERNAL_TICKETS_URL,
+  isAmpExEnabled,
+  trackOutboundClick,
+} from '../lib/siteConfig.ts';
 import { useAttendeeSession } from '../hooks/useAttendeeSession.ts';
 import { useOrganizerSession } from '../hooks/useOrganizerSession.ts';
 
@@ -57,6 +62,20 @@ export default function SiteNavAuth({
   }
 
   if (variant === 'marketing') {
+    if (!isAmpExEnabled) {
+      return (
+        <a
+          href={EXTERNAL_TICKETS_URL}
+          target="_blank"
+          rel="noopener noreferrer"
+          onClick={() => trackOutboundClick('howler_tickets_nav')}
+          className={`text-[10px] rounded-full px-4 py-2.5 md:px-8 md:py-3 uppercase tracking-[0.14em] font-semibold bg-brand-text text-brand-bg hover:bg-brand-text/90 transition-colors whitespace-nowrap ${className}`}
+        >
+          Buy Tickets
+        </a>
+      );
+    }
+
     return (
       <a
         href={ticketsPath}
@@ -65,6 +84,10 @@ export default function SiteNavAuth({
         Buy Tickets
       </a>
     );
+  }
+
+  if (!isAmpExEnabled) {
+    return null;
   }
 
   const loginHref = ticketsLoginUrl(

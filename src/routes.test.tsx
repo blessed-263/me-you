@@ -3,6 +3,12 @@ import { describe, expect, it, vi } from 'vitest';
 import { MemoryRouter } from 'react-router-dom';
 import AppRoutes from './routes.tsx';
 
+vi.mock('./lib/siteConfig.ts', () => ({
+  isAmpExEnabled: true,
+  EXTERNAL_TICKETS_URL: 'https://howler.co.za',
+  GA_MEASUREMENT_ID: 'G-TEST',
+}));
+
 vi.mock('./App.tsx', () => ({
   default: () => <div data-testid="home-page">Home</div>,
 }));
@@ -32,6 +38,10 @@ vi.mock('./components/SeoHead.tsx', () => ({
 }));
 
 vi.mock('./components/ProjectAnalytics.tsx', () => ({
+  default: () => null,
+}));
+
+vi.mock('./components/GoogleAnalytics.tsx', () => ({
   default: () => null,
 }));
 

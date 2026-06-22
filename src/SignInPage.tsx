@@ -14,6 +14,7 @@ import {
   SIGN_IN_LABEL,
   universalSignInAsync,
 } from './lib/signInAuth.ts';
+import { isAmpExEnabled } from './lib/siteConfig.ts';
 
 type Mode = 'signin' | 'register';
 
@@ -47,6 +48,14 @@ export default function SignInPage() {
   }, [navigate]);
 
   const returnTo = resolveSignInReturnTo();
+  if (!isAmpExEnabled) {
+    if (returnTo.startsWith('/tickets')) {
+      return <Navigate to="/tickets" replace />;
+    }
+    if (returnTo.startsWith('/organizer')) {
+      return <Navigate to="/" replace />;
+    }
+  }
   if (loadOrganizerSession()) {
     return <Navigate to={ORGANIZER_ROUTES.DASHBOARD} replace />;
   }

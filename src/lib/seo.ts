@@ -1,4 +1,5 @@
 import { RSVP_SESSIONS } from './rsvpSessions.ts';
+import { EXTERNAL_TICKETS_URL, isAmpExEnabled } from './siteConfig.ts';
 import {
   VENUE_ADDRESS_LINE,
   VENUE_AREA,
@@ -107,7 +108,7 @@ function eventJsonLd(siteUrl: string) {
     },
     offers: {
       '@type': 'Offer',
-      url: absoluteUrl('/tickets'),
+      url: isAmpExEnabled ? absoluteUrl('/tickets') : EXTERNAL_TICKETS_URL,
       availability: 'https://schema.org/InStock',
       priceCurrency: 'ZAR',
     },
@@ -124,11 +125,20 @@ function ticketsJsonLd(siteUrl: string) {
     '@type': 'WebPage',
     '@id': `${siteUrl}/tickets#webpage`,
     name: 'Buy Tickets — You & Me Africa',
-    description:
-      'Purchase tickets for You & Me Africa in Sandton — The Harvest Table and The After Lunch Gathering at Primedia Rooftop.',
+    description: isAmpExEnabled
+      ? 'Purchase tickets for You & Me Africa in Sandton — The Harvest Table and The After Lunch Gathering at Primedia Rooftop.'
+      : 'Get tickets for You & Me Africa on Howler — curated food, music, and community in Sandton.',
     url: absoluteUrl('/tickets'),
     isPartOf: { '@id': `${siteUrl}/#website` },
     about: { '@id': `${siteUrl}/#event` },
+    ...(isAmpExEnabled
+      ? {}
+      : {
+          potentialAction: {
+            '@type': 'BuyAction',
+            target: EXTERNAL_TICKETS_URL,
+          },
+        }),
   };
 }
 
@@ -163,17 +173,18 @@ export function getRouteSeo(pathname: string): RouteSeo {
   }
 
   if (path === '/tickets' || path.startsWith('/tickets/') || path.startsWith('/event/')) {
-    const isPrivate =
-      path.includes('/payment/') ||
+    const isPrivate = isAmpExEnabled &&
+      (path.includes('/payment/') ||
       path === '/tickets/pick' ||
       path === '/tickets/checkout' ||
       path === '/tickets/success' ||
       path === '/tickets/my-tickets' ||
-      path.startsWith('/tickets/my-tickets/');
+      path.startsWith('/tickets/my-tickets/'));
     return {
       title: `Buy Tickets | ${SITE_NAME} — Sandton`,
-      description:
-        'Get tickets for You & Me Africa in Sandton — curated food, music, and community at Primedia Rooftop, 15 Fredman Drive.',
+      description: isAmpExEnabled
+        ? 'Get tickets for You & Me Africa in Sandton — curated food, music, and community at Primedia Rooftop, 15 Fredman Drive.'
+        : 'Get tickets for You & Me Africa on Howler — curated food, music, and community in Sandton.',
       path: path.startsWith('/event/') ? path : '/tickets',
       robots: isPrivate ? 'noindex,nofollow' : 'index,follow',
       ogType: 'website',
