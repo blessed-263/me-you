@@ -1,3 +1,4 @@
+import { CURRENT_EDITION } from './currentEdition.ts';
 import { RSVP_SESSIONS } from './rsvpSessions.ts';
 import { EXTERNAL_TICKETS_URL, isAmpExEnabled } from './siteConfig.ts';
 import {
@@ -79,7 +80,7 @@ function eventJsonLd(siteUrl: string) {
     '@id': `${siteUrl}/#event`,
     name: SITE_NAME,
     description: SITE_DESCRIPTION,
-    startDate: '2026-05-31T11:00:00+02:00',
+    startDate: CURRENT_EDITION.startIso,
     eventStatus: 'https://schema.org/EventScheduled',
     eventAttendanceMode: 'https://schema.org/OfflineEventAttendanceMode',
     image: [absoluteUrl(DEFAULT_OG_IMAGE)],

@@ -10,6 +10,7 @@ import HeroSlider from './components/HeroSlider.tsx';
 import SiteNavAuth from './components/SiteNavAuth.tsx';
 import Sponsors from './components/Sponsors.tsx';
 import { HERO_SLIDES } from './lib/heroSlides.ts';
+import { CURRENT_EDITION } from './lib/currentEdition.ts';
 import { VENUE_AREA, VENUE_MAPS_URL, VENUE_NAME, VENUE_STREET } from './lib/venue.ts';
 
 const TICKETS_URL = '/tickets';
@@ -25,15 +26,61 @@ const marqueeImages: { src: string; alt: string }[] = [
   { src: '/images/martell-bottles.png', alt: 'Martell selection' },
 ];
 
-function EditionInfinity() {
-  const slots = ['Days', 'Hours', 'Minutes', 'Seconds'] as const;
+type CountdownParts = {
+  days: number;
+  hours: number;
+  minutes: number;
+  seconds: number;
+  done: boolean;
+};
+
+function computeCountdown(targetIso: string): CountdownParts {
+  const diff = new Date(targetIso).getTime() - Date.now();
+  if (diff <= 0) {
+    return { days: 0, hours: 0, minutes: 0, seconds: 0, done: true };
+  }
+  const totalSeconds = Math.floor(diff / 1000);
+  return {
+    days: Math.floor(totalSeconds / 86_400),
+    hours: Math.floor((totalSeconds % 86_400) / 3_600),
+    minutes: Math.floor((totalSeconds % 3_600) / 60),
+    seconds: totalSeconds % 60,
+    done: false,
+  };
+}
+
+function EditionCountdown({ targetIso }: { targetIso: string }) {
+  const [remaining, setRemaining] = useState(() => computeCountdown(targetIso));
+
+  useEffect(() => {
+    const id = window.setInterval(() => setRemaining(computeCountdown(targetIso)), 1000);
+    return () => window.clearInterval(id);
+  }, [targetIso]);
+
+  if (remaining.done) {
+    return (
+      <p className="mt-12 text-sm font-light text-brand-muted">
+        The gathering is here — see you at the rooftop.
+      </p>
+    );
+  }
+
+  const slots = [
+    { label: 'Days', value: remaining.days },
+    { label: 'Hours', value: remaining.hours },
+    { label: 'Minutes', value: remaining.minutes },
+    { label: 'Seconds', value: remaining.seconds },
+  ] as const;
 
   return (
-    <div className="flex flex-wrap gap-x-4 gap-y-6 md:gap-8 justify-center items-center text-center mt-12 max-w-full px-2">
-      {slots.map((label) => (
+    <div
+      className="flex flex-wrap gap-x-4 gap-y-6 md:gap-8 justify-center items-center text-center mt-12 max-w-full px-2"
+      aria-live="polite"
+    >
+      {slots.map(({ label, value }) => (
         <div key={label} className="flex flex-col items-center min-w-[4.5rem] sm:min-w-[80px]">
-          <span className="font-serif text-4xl md:text-6xl text-brand-text leading-none" aria-hidden>
-            ∞
+          <span className="font-serif text-4xl md:text-6xl text-brand-text leading-none tabular-nums">
+            {String(value).padStart(2, '0')}
           </span>
           <span className="text-[9px] uppercase tracking-[0.2em] text-brand-muted mt-4">{label}</span>
         </div>
@@ -274,7 +321,10 @@ export default function App() {
             <div className="flex flex-col gap-6 items-center text-center px-4">
               <Calendar className="w-5 h-5 text-brand-accent mb-4 stroke-1" />
               <h5 className="text-[9px] uppercase tracking-[0.16em] font-semibold text-brand-muted">The Date</h5>
-              <p className="font-serif text-3xl lg:text-4xl font-medium text-brand-text">31 May <span className="italic text-brand-muted">2026</span></p>
+              <p className="font-serif text-3xl lg:text-4xl font-medium text-brand-text">
+                {CURRENT_EDITION.dateShort}{' '}
+                <span className="italic text-brand-muted">2026</span>
+              </p>
             </div>
             <div className="flex flex-col gap-6 items-center text-center px-4">
               <Clock className="w-5 h-5 text-brand-accent mb-4 stroke-1" />
@@ -304,7 +354,7 @@ export default function App() {
         </div>
       </section>
 
-      {/* Second edition — next gathering */}
+      {/* Third edition — countdown */}
       <section id="countdown" className="py-20 md:py-32 px-6 relative bg-brand-surface border-y border-brand-border">
         <div className="max-w-3xl mx-auto relative z-10">
           <div className="text-center mb-16">
@@ -314,16 +364,17 @@ export default function App() {
               viewport={{ once: true }}
               className="font-serif text-3xl md:text-5xl font-semibold tracking-tight mb-6 text-brand-text text-balance"
             >
-              The Second edition has come and gone.
+              The Third edition returns {CURRENT_EDITION.dateShort}.
             </motion.h2>
             <p className="text-sm md:text-base font-light text-brand-muted leading-relaxed max-w-xl mx-auto">
-              Thank you for showing up. The next gathering is already on its way — details coming soon.
+              YOU &amp; ME AFRICA with Martell — The Harvest Table and The Gathering at Primedia Rooftop,
+              Sandton.
             </p>
             <p className="mt-6 text-[10px] uppercase tracking-[0.16em] font-semibold text-brand-accent">
               Until then
             </p>
           </div>
-          <EditionInfinity />
+          <EditionCountdown targetIso={CURRENT_EDITION.startIso} />
         </div>
       </section>
 

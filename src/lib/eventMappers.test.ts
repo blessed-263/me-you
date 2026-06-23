@@ -6,15 +6,15 @@ describe('mapBackendEventToMockEvent', () => {
     const mapped = mapBackendEventToMockEvent({
       id: 'evt_1',
       title: 'You & Me',
-      subtitle: 'Second edition',
-      date: '2026-05-31T11:00:00.000Z',
+      subtitle: 'Third edition',
+      date: '2026-08-30T11:00:00+02:00',
       venue: 'Primedia Rooftop',
       ticket_types: [{ id: 'tt_1', name: 'General', price: 500 }],
     });
 
     expect(mapped.id).toBe('evt_1');
     expect(mapped.title).toBe('You & Me');
-    expect(mapped.subtitle).toBe('Second edition');
+    expect(mapped.subtitle).toBe('Third edition');
     expect(mapped.ticketTypes[0].id).toBe('tt_1');
     expect(mapped.ticketTypes[0].price).toBe(500);
   });

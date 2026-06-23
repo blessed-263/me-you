@@ -40,8 +40,8 @@ export type MockEvent = {
 export const MOCK_EVENT: MockEvent = {
   id: '01KQVZ98HQX52PJ15TACANTR2X',
   title: 'You & Me — The Gathering',
-  subtitle: 'Second edition',
-  date: '2026-05-31T11:00:00+02:00',
+  subtitle: 'Third edition',
+  date: '2026-08-30T11:00:00+02:00',
   timeLabel: '11:00 AM to late',
   venue: VENUE_ADDRESS_LINE,
   venueMapsUrl: VENUE_MAPS_URL,
