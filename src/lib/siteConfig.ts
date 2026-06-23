@@ -8,8 +8,11 @@ const env = viteEnv();
 
 export const GA_MEASUREMENT_ID = env.VITE_GA_MEASUREMENT_ID || 'G-94B8TN0YS1';
 
+export const HOWLER_EVENT_URL =
+  'https://www.howler.co.za/events/you-me-africa-with-martell-7685';
+
 export const EXTERNAL_TICKETS_URL =
-  env.VITE_TICKETS_URL?.replace(/\/$/, '') || 'https://howler.co.za';
+  env.VITE_TICKETS_URL?.replace(/\/$/, '') || HOWLER_EVENT_URL;
 
 /** AmpEx / Medusa ticket checkout and organizer dashboard. Off by default — tickets sold on Howler. */
 export const isAmpExEnabled = env.VITE_AMPEX_ENABLED === 'true';
