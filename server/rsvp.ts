@@ -2,17 +2,13 @@ import type { Request, Response } from 'express';
 import { Resend } from 'resend';
 import type { Pool } from 'pg';
 import {
-  notifyDetailRow,
   renderRsvpConfirmationEmail,
-  renderRsvpNotifyEmail,
 } from './emailTemplates.js';
 import {
   RSVP_SESSION_IDS,
-  RSVP_SESSION_META,
   isRsvpSessionFull,
   normalizeRsvpSessionId,
   rsvpConfirmationSubject,
-  rsvpNotifySubject,
   type RsvpSessionId,
 } from './rsvpSessions.js';
 
@@ -154,42 +150,14 @@ async function sendRsvpEmails(payload: {
 }): Promise<void> {
   const apiKey = process.env.RESEND_API_KEY?.trim();
   const from = process.env.RESEND_FROM_EMAIL?.trim();
-  const notifyTo = (process.env.RSVP_NOTIFY_EMAIL ?? '')
-    .split(',')
-    .map((e) => e.trim())
-    .filter((e) => EMAIL_RE.test(e));
 
   if (!apiKey || !from) {
     console.warn('[rsvp] RESEND_API_KEY or RESEND_FROM_EMAIL not set; skipping email.');
     return;
   }
 
-  const session = RSVP_SESSION_META[payload.sessionId];
   const resend = new Resend(apiKey);
   const safeName = escapeHtml(payload.fullName);
-
-  const notifyFields: { label: string; value: string }[] = [];
-  if (payload.phone) {
-    notifyFields.push({ label: 'Phone', value: escapeHtml(payload.phone) });
-  }
-  const notifyRows = notifyFields
-    .map((field, i) =>
-      notifyDetailRow(
-        field.label,
-        field.value,
-        i === notifyFields.length - 1,
-      ),
-    )
-    .join('');
-
-  const emailPayload = {
-    fullName: payload.fullName,
-    email: payload.email,
-    phone: payload.phone,
-    sessionId: payload.sessionId,
-    sessionTitle: session.title,
-    sessionTime: session.time,
-  };
 
   await resend.emails.send({
     from,
@@ -197,15 +165,6 @@ async function sendRsvpEmails(payload: {
     subject: rsvpConfirmationSubject(payload.sessionId),
     html: renderRsvpConfirmationEmail(safeName, payload.sessionId),
   });
-
-  if (notifyTo.length > 0) {
-    await resend.emails.send({
-      from,
-      to: notifyTo,
-      subject: rsvpNotifySubject(payload.sessionId, payload.fullName),
-      html: renderRsvpNotifyEmail(safeName, emailPayload, notifyRows),
-    });
-  }
 }
 
 export function createRsvpHandler(deps: RsvpDeps) {

@@ -17,7 +17,7 @@ Copy [.env.example](.env.example) to `.env` (or edit the included `.env`) and se
 | `API_PORT` | Dev only | API listen port; default `3001`. Vite proxies `/api` here. |
 | `RESEND_API_KEY` | For RSVP emails | From [Resend](https://resend.com/api-keys). |
 | `RESEND_FROM_EMAIL` | For RSVP emails | Verified sender, e.g. `You & Me <hello@yourdomain.com>`. |
-| `RSVP_NOTIFY_EMAIL` | Optional | Inbox that receives a copy of each new RSVP. |
+| `RSVP_NOTIFY_EMAIL` | Optional | Used by some email test/send scripts as a default recipient. |
 
 On **Railway**, add the same `DATABASE_URL` to your **web/API** service (reference the variable from your Postgres plugin if offered). On every deploy/restart the API runs an **idempotent migration** that:
 
@@ -85,7 +85,7 @@ Use **Vercel** for the React site and **Railway** for the API, Postgres, and Res
 | `FRONTEND_URL` | `https://www.youandmeafrica.com` (email image URLs) |
 | `RESEND_API_KEY` | From Resend |
 | `RESEND_FROM_EMAIL` | `You & Me <rsvp@events.youandmeafrica.com>` |
-| `RSVP_NOTIFY_EMAIL` | Your inbox |
+| `RSVP_NOTIFY_EMAIL` | Optional (test scripts) |
 
 5. Copy the Railway public URL (e.g. `https://me-you-production.up.railway.app`).
 6. Health check: `GET /api/health` → `{ "ok": true, "database": "connected" }`.
@@ -112,7 +112,7 @@ Use **Vercel** for the React site and **Railway** for the API, Postgres, and Res
 
 - Open `https://<railway-url>/api/health` → `"database": "connected"` (if `"not_configured"`, fix `DATABASE_URL` on the API service)
 - Open each RSVP URL and submit a test (one guest per email; duplicate email returns already registered)
-- Check Postgres / Resend / notify inbox
+- Check Postgres / Resend (guest confirmation email)
 
 ### All-in-one Railway (optional)
 
@@ -146,7 +146,7 @@ The RSVP forms are **not linked** on the public site. Send each URL only to gues
 Rules: **one guest per RSVP** (no plus-ones), **no notes field**, **one RSVP per email** (cannot register twice, including across both links).
 
 1. Set `RESEND_API_KEY` and `RESEND_FROM_EMAIL` in `.env` (and Railway variables in production).
-2. Submissions are stored in Postgres (`rsvp_submissions`). Guests receive a session-specific confirmation email; `RSVP_NOTIFY_EMAIL` gets an admin copy if set.
+2. Submissions are stored in Postgres (`rsvp_submissions`). Guests receive a session-specific confirmation email.
 
 ### Export all RSVPs (Excel)
 
