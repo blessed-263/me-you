@@ -236,6 +236,15 @@ export function getRouteSeo(pathname: string): RouteSeo {
     };
   }
 
+  if (path === '/rsvp') {
+    return {
+      title: `RSVP | ${SITE_NAME} — Third edition, Sandton`,
+      description: `RSVP for You & Me Africa on ${CURRENT_EDITION.dateLabel} at Primedia Rooftop, Sandton — The Harvest Table Experience and The After Lunch Gathering.`,
+      path: '/rsvp',
+      robots: 'noindex,nofollow',
+    };
+  }
+
   return {
     title: SITE_NAME,
     description: SITE_DESCRIPTION,

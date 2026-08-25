@@ -118,4 +118,23 @@ describe('API integration', () => {
     expect(res.status).toBe(429);
     expect(res.body.error).toBe('Too many requests');
   });
+
+  it('POST /api/rsvp/third rejects missing body fields', async () => {
+    const app = await loadApp();
+    const res = await request(app).post('/api/rsvp/third').send({});
+    expect(res.status).toBe(400);
+    expect(res.body.error).toBe('Full name is required');
+  });
+
+  it('POST /api/rsvp/third returns 503 when database is not configured', async () => {
+    const app = await loadApp();
+    const res = await request(app)
+      .post('/api/rsvp/third')
+      .send({
+        fullName: 'Test Guest',
+        email: 'guest@example.com',
+      });
+    expect(res.status).toBe(503);
+    expect(res.body.error).toBe('Database not configured');
+  });
 });

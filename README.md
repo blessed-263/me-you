@@ -148,6 +148,26 @@ Rules: **one guest per RSVP** (no plus-ones), **no notes field**, **one RSVP per
 1. Set `RESEND_API_KEY` and `RESEND_FROM_EMAIL` in `.env` (and Railway variables in production).
 2. Submissions are stored in Postgres (`rsvp_submissions`). Guests receive a session-specific confirmation email; `RSVP_NOTIFY_EMAIL` gets an admin copy if set.
 
+### Export all RSVPs (Excel)
+
+One workbook with an **Analysis** sheet plus separate tabs for each guest list:
+
+```bash
+npm run export:rsvps-excel
+```
+
+Writes `you-and-me-all-rsvps.xlsx` in the project root:
+
+| Sheet | Contents |
+| ----- | -------- |
+| **Analysis** | Edition/session counts, totals, ticket summary |
+| **Harvest Table** | Full guest list (Session 1) |
+| **After Lunch Party** | Full guest list (Session 2) |
+| **June Gathering** | June RSVP list |
+| **All RSVPs** | Combined list with event + session columns |
+
+Requires `DATABASE_URL`. First-edition (April) names are not in Postgres — Analysis includes archived counts only.
+
 ## Ticket storefront & organizer (mock or AmpEx)
 
 Set `VITE_USE_MOCK_DATA` in `.env`:

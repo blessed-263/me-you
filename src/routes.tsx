@@ -6,6 +6,7 @@ import OrganizerPage from './OrganizerPage.tsx';
 import RsvpPage from './RsvpPage.tsx';
 import SignInPage from './SignInPage.tsx';
 import TicketPage from './TicketPage.tsx';
+import ThirdEditionRsvpPage from './ThirdEditionRsvpPage.tsx';
 import GoogleAnalytics from './components/GoogleAnalytics.tsx';
 import ProjectAnalytics from './components/ProjectAnalytics.tsx';
 import SeoHead from './components/SeoHead.tsx';
@@ -20,6 +21,7 @@ export default function AppRoutes() {
       <Routes>
         <Route path="/" element={<App />} />
         <Route path="/login" element={<SignInPage />} />
+        <Route path="/rsvp" element={<ThirdEditionRsvpPage />} />
         {isAmpExEnabled ? (
           <>
             <Route

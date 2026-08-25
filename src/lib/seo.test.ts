@@ -13,4 +13,9 @@ describe('getRouteSeo', () => {
     expect(getRouteSeo('/tickets/my-tickets').robots).toBe('noindex,nofollow');
     expect(getRouteSeo('/tickets').robots).toBe('index,follow');
   });
+
+  it('marks the third edition RSVP page as noindex', () => {
+    expect(getRouteSeo('/rsvp').robots).toBe('noindex,nofollow');
+    expect(getRouteSeo('/rsvp').title).toContain('RSVP');
+  });
 });

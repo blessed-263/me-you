@@ -7,6 +7,13 @@ test.describe('client-side routing', () => {
     await expect(page.locator('body')).not.toBeEmpty();
   });
 
+  test('third edition RSVP route renders the form', async ({ page }) => {
+    await page.goto('/rsvp');
+    await expect(page).toHaveURL(/\/rsvp$/);
+    await expect(page.getByRole('heading', { name: 'RSVP' })).toBeVisible();
+    await expect(page.getByRole('button', { name: 'Confirm RSVP' })).toBeVisible();
+  });
+
   test('login route renders sign-in UI', async ({ page }) => {
     await page.goto('/login');
     await expect(page).toHaveURL(/\/login$/);

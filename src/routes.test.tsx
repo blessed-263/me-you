@@ -33,6 +33,10 @@ vi.mock('./JuneRsvpPage.tsx', () => ({
   default: () => <div data-testid="june-rsvp-page">June RSVP</div>,
 }));
 
+vi.mock('./ThirdEditionRsvpPage.tsx', () => ({
+  default: () => <div data-testid="third-edition-rsvp-page">Third edition RSVP</div>,
+}));
+
 vi.mock('./components/SeoHead.tsx', () => ({
   default: () => null,
 }));
@@ -77,5 +81,10 @@ describe('AppRoutes', () => {
   it('renders organizer at /organizer/dashboard', () => {
     renderAt('/organizer/dashboard');
     expect(screen.getByTestId('organizer-page')).toBeTruthy();
+  });
+
+  it('renders third edition RSVP at /rsvp', () => {
+    renderAt('/rsvp');
+    expect(screen.getByTestId('third-edition-rsvp-page')).toBeTruthy();
   });
 });

@@ -11,6 +11,7 @@ import { checkDatabase, getPool } from './db.js';
 import { createJuneRsvpHandler } from './juneRsvp.js';
 
 import { createRsvpHandler } from './rsvp.js';
+import { createThirdEditionRsvpHandler } from './thirdEditionRsvp.js';
 
 import { getAllowedOrigins, isOriginAllowedForCors } from './middleware/allowedOrigins.js';
 
@@ -151,6 +152,18 @@ export function createApp(options: CreateAppOptions = {}): express.Express {
 
   );
 
+  app.post(
+
+    '/api/rsvp/third',
+
+    requireAllowedOrigin,
+
+    rsvpRateLimit,
+
+    createThirdEditionRsvpHandler({ getPool: poolFn }),
+
+  );
+
 
 
   if (options.serveStatic) {
@@ -178,6 +191,8 @@ export function createApp(options: CreateAppOptions = {}): express.Express {
         rsvp: 'POST /api/rsvp',
 
         juneRsvp: 'POST /api/rsvp/june',
+
+        thirdEditionRsvp: 'POST /api/rsvp/third',
 
       });
 

@@ -24,6 +24,7 @@
     "test:email": "npx tsx scripts/test-resend-email.ts",
     "db:migrate": "npx tsx scripts/migrate-db.ts",
     "export:rsvps": "npx tsx scripts/export-rsvps.ts",
+    "export:rsvps-excel": "npx tsx scripts/export-all-rsvps-excel.ts",
     "export:event-summary": "npx tsx scripts/generate-event-summary-csv.ts",
     "export:june-rsvps": "npx tsx scripts/export-june-rsvps.ts",
     "export:after-party-tickets": "npx tsx scripts/export-after-party-tickets.ts",
@@ -84,6 +85,7 @@
     "typescript": "~5.8.2",
     "typescript-eslint": "^8.61.0",
     "vite": "^6.2.3",
-    "vitest": "^3.2.4"
+    "vitest": "^3.2.4",
+    "xlsx": "^0.18.5"
   }
 }

@@ -4,6 +4,7 @@ import { createApp } from './app.js';
 import { getAllowedOrigins } from './middleware/allowedOrigins.js';
 import { ensureJuneRsvpTable } from './juneRsvp.js';
 import { ensureRsvpTable } from './rsvp.js';
+import { ensureThirdEditionRsvpTable } from './thirdEditionRsvp.js';
 
 const isProd =
   process.env.NODE_ENV === 'production' ||
@@ -55,6 +56,7 @@ async function main() {
   try {
     await ensureRsvpTable(getPool);
     await ensureJuneRsvpTable(getPool);
+    await ensureThirdEditionRsvpTable(getPool);
   } catch (err) {
     console.error('[server] Database setup failed (API stays up):', err);
   }

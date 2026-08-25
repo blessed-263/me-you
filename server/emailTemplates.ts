@@ -5,6 +5,10 @@ import {
   RSVP_SESSION_META,
 } from './rsvpSessions.js';
 import {
+  THIRD_EDITION_DATE_LABEL,
+  THIRD_EDITION_DATE_SHORT,
+} from './thirdEditionMeta.js';
+import {
   VENUE_AREA,
   VENUE_MAPS_URL,
   VENUE_NAME,
@@ -422,6 +426,136 @@ export function renderJuneRsvpNotifyEmail(
       <td style="padding:0 0 16px;">
         <p style="margin:0;${type.label}color:${colors.accent};">
           New September RSVP · ${eventTitleHtml()}
+        </p>
+        <h1 style="margin:10px 0 0;${type.headingSection}font-size:32px;color:${colors.text};">
+          ${safeName}
+        </h1>
+      </td>
+    </tr>
+    <tr>
+      <td style="background-color:#ffffff;border:1px solid ${colors.border};padding:24px 22px;">
+        <p style="margin:0 0 16px;${type.labelSm}color:${colors.accent};">
+          Guest details
+        </p>
+        <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="${type.body}color:${colors.text};">
+          <tr>
+            <td style="padding:10px 0;border-bottom:1px solid ${colors.border};${type.labelSm}color:${colors.muted};width:32%;vertical-align:top;">Email</td>
+            <td style="padding:10px 0;border-bottom:1px solid ${colors.border};font-family:${sans};font-size:15px;font-weight:400;vertical-align:top;">${escapeHtml(email)}</td>
+          </tr>
+          ${detailRows}
+        </table>
+      </td>
+    </tr>
+  `,
+    pageTitle,
+  );
+}
+
+function thirdEditionEventCard(): string {
+  return `
+    <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="background-color:${colors.surface};border:1px solid ${colors.border};">
+      <tr>
+        <td style="padding:24px 22px 20px;">
+          <p style="margin:0 0 10px;${type.label}color:${colors.accent};">
+            Third edition
+          </p>
+          <p style="margin:0 0 8px;${type.sessionTitle}color:${colors.text};">
+            YOU&amp;ME with Martell
+          </p>
+          <p style="margin:0 0 20px;${type.bodySm}color:${colors.muted};">
+            A cultural gathering centered around music, food, conversation and community.
+          </p>
+          <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="border-top:1px solid ${colors.border};">
+            <tr>
+              <td style="padding:18px 0 0;width:50%;vertical-align:top;">
+                <p style="margin:0 0 6px;${type.labelSm}color:${colors.muted};">Date</p>
+                <p style="margin:0;${type.detailValue}color:${colors.text};">${THIRD_EDITION_DATE_SHORT}</p>
+              </td>
+              <td style="padding:18px 0 0;width:50%;vertical-align:top;">
+                <p style="margin:0 0 6px;${type.labelSm}color:${colors.muted};">Time</p>
+                <p style="margin:0;${type.bodySm}color:${colors.text};font-weight:500;">11:00 AM to Late</p>
+              </td>
+            </tr>
+          </table>
+        </td>
+      </tr>
+    </table>
+  `;
+}
+
+export function renderThirdEditionRsvpConfirmationEmail(safeName: string): string {
+  const pageTitle = 'Third edition — RSVP confirmed';
+
+  return emailShell(
+    `
+    <tr>
+      <td style="padding:0 0 24px;text-align:center;">
+        <img src="${LOGO_URL}" alt="${eventTitleHtml()}" width="48" height="48" style="display:inline-block;border-radius:50%;border:1px solid ${colors.border};padding:2px;" />
+        <p style="margin:16px 0 0;${type.label}color:${colors.muted};">
+          ${eventTitleHtml()}
+        </p>
+      </td>
+    </tr>
+    <tr>
+      <td style="background-color:#ffffff;border:1px solid ${colors.border};padding:0;">
+        <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0">
+          <tr>
+            <td style="height:3px;background-color:${colors.accent};font-size:0;line-height:0;">&nbsp;</td>
+          </tr>
+          <tr>
+            <td style="padding:36px 28px 24px;text-align:center;">
+              <p style="margin:0 0 12px;${type.label}color:${colors.accent};">
+                Third edition · RSVP confirmed
+              </p>
+              <h1 style="margin:0 0 20px;${type.headingHero}font-size:40px;color:${colors.text};">
+                Thank you, ${safeName}
+              </h1>
+              <p style="margin:0;${type.bodyLight}color:${colors.muted};max-width:400px;margin-left:auto;margin-right:auto;">
+                Your place is reserved. We look forward to seeing you.
+              </p>
+            </td>
+          </tr>
+          <tr>
+            <td style="padding:0 28px 28px;">
+              ${thirdEditionEventCard()}
+              ${locationBlock()}
+            </td>
+          </tr>
+          <tr>
+            <td style="padding:0 28px 36px;text-align:center;">
+              <a href="${VENUE_MAPS_URL}" style="display:inline-block;background-color:${colors.text};color:${colors.bg};${type.button}padding:16px 40px;">
+                Get directions
+              </a>
+            </td>
+          </tr>
+        </table>
+      </td>
+    </tr>
+    <tr>
+      <td style="padding:24px 12px 0;text-align:center;">
+        <p style="margin:0;${type.bodySm}color:${colors.muted};">
+          ${eventTitleHtml()} · ${THIRD_EDITION_DATE_LABEL}
+        </p>
+      </td>
+    </tr>
+  `,
+    pageTitle,
+  );
+}
+
+export function renderThirdEditionRsvpNotifyEmail(
+  safeName: string,
+  email: string,
+  detailRows: string,
+): string {
+  const pageTitle = `New third edition RSVP — ${safeName}`;
+
+  return emailShell(
+    `
+    <tr>
+      <td style="padding:0 0 16px;">
+        <p style="margin:0;${type.label}color:${colors.accent};">
+          New third edition RSVP · ${eventTitleHtml()}
         </p>
         <h1 style="margin:10px 0 0;${type.headingSection}font-size:32px;color:${colors.text};">
           ${safeName}
