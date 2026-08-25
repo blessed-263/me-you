@@ -98,7 +98,7 @@ async function sendThirdEditionRsvpEmails(payload: {
   await resend.emails.send({
     from,
     to: payload.email,
-    subject: `YOU&ME — Third edition RSVP confirmed`,
+    subject: 'YOU&ME — The After Lunch Gathering RSVP confirmed',
     html: renderThirdEditionRsvpConfirmationEmail(safeName),
   });
 }
@@ -141,8 +141,8 @@ export function createThirdEditionRsvpHandler(deps: ThirdEditionRsvpDeps) {
       }
 
       const result = await p.query(
-        `INSERT INTO ${THIRD_EDITION_RSVP_TABLE} (full_name, email, phone, guest_count)
-         VALUES ($1, $2, $3, 1)
+        `INSERT INTO ${THIRD_EDITION_RSVP_TABLE} (full_name, email, phone, session, guest_count)
+         VALUES ($1, $2, $3, 'after-party-lunch', 1)
          ON CONFLICT ((lower(email))) DO NOTHING
          RETURNING id`,
         [fullName, email, phone],

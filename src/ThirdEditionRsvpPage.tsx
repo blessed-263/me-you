@@ -5,6 +5,10 @@ import SiteNavAuth from './components/SiteNavAuth.tsx';
 import Sponsors from './components/Sponsors.tsx';
 import { apiUrl } from './lib/api.ts';
 import { CURRENT_EDITION } from './lib/currentEdition.ts';
+import {
+  THIRD_EDITION_DOORS_OPEN,
+  THIRD_EDITION_SESSION_TITLE,
+} from './lib/thirdEditionRsvp.ts';
 import { VENUE_AREA, VENUE_MAPS_URL, VENUE_NAME, VENUE_STREET } from './lib/venue.ts';
 
 const TICKETS_URL = '/tickets';
@@ -108,6 +112,12 @@ export default function ThirdEditionRsvpPage() {
             <h1 className="font-serif text-5xl md:text-7xl font-semibold text-brand-text leading-tight">
               RSVP
             </h1>
+            <p className="mt-6 font-serif text-2xl md:text-3xl font-medium text-brand-text leading-tight">
+              {THIRD_EDITION_SESSION_TITLE}
+            </p>
+            <p className="mt-4 text-sm font-light text-brand-muted">
+              Doors open at {THIRD_EDITION_DOORS_OPEN}
+            </p>
           </motion.div>
         </div>
       </section>
@@ -127,7 +137,8 @@ export default function ThirdEditionRsvpPage() {
                 You&apos;re on the list.
               </h2>
               <p className="mt-5 text-[15px] font-light leading-[1.7] text-brand-muted max-w-md mx-auto">
-                A confirmation has been sent to your email.
+                Reserved for {THIRD_EDITION_SESSION_TITLE}. Doors open at{' '}
+                {THIRD_EDITION_DOORS_OPEN}. A confirmation has been sent to your email.
               </p>
               <a
                 href="/"
@@ -224,9 +235,10 @@ export default function ThirdEditionRsvpPage() {
             </div>
             <div className="flex flex-col gap-6 items-center text-center px-4">
               <Clock className="w-5 h-5 text-brand-accent mb-4 stroke-1" />
-              <h5 className="text-[9px] uppercase tracking-[0.16em] font-semibold text-brand-muted">The Time</h5>
+              <h5 className="text-[9px] uppercase tracking-[0.16em] font-semibold text-brand-muted">Doors Open</h5>
               <p className="font-serif text-3xl lg:text-4xl font-medium text-brand-text">
-                11:00 AM <span className="italic text-brand-muted">to Late</span>
+                {THIRD_EDITION_DOORS_OPEN}{' '}
+                <span className="italic text-brand-muted">to Late</span>
               </p>
             </div>
             <div className="flex flex-col gap-6 items-center text-center px-4">

@@ -238,8 +238,8 @@ export function getRouteSeo(pathname: string): RouteSeo {
 
   if (path === '/rsvp') {
     return {
-      title: `RSVP | ${SITE_NAME} — Third edition, Sandton`,
-      description: `RSVP for You & Me Africa on ${CURRENT_EDITION.dateLabel} at Primedia Rooftop, Sandton — The Harvest Table Experience and The After Lunch Gathering.`,
+      title: `RSVP | ${SITE_NAME} — The After Lunch Gathering`,
+      description: `RSVP for The After Lunch Gathering at You & Me Africa on ${CURRENT_EDITION.dateLabel}. Doors open at 1:45 PM at Primedia Rooftop, Sandton.`,
       path: '/rsvp',
       robots: 'noindex,nofollow',
     };

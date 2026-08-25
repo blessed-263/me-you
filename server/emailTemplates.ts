@@ -6,7 +6,8 @@ import {
 } from './rsvpSessions.js';
 import {
   THIRD_EDITION_DATE_LABEL,
-  THIRD_EDITION_DATE_SHORT,
+  THIRD_EDITION_DOORS_OPEN,
+  THIRD_EDITION_SESSION_TITLE,
 } from './thirdEditionMeta.js';
 import {
   VENUE_AREA,
@@ -49,7 +50,11 @@ const type = {
 const FONTS_URL =
   'https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,500;0,600;1,300;1,400;1,500&family=Montserrat:wght@300;400;500;600&display=swap';
 
-const SITE_ORIGIN = (process.env.FRONTEND_URL ?? process.env.SITE_URL ?? '')
+const SITE_ORIGIN = (
+  process.env.FRONTEND_URL ??
+  process.env.SITE_URL ??
+  'https://www.youandmeafrica.com'
+)
   .trim()
   .replace(/\/$/, '');
 const LOGO_URL = `${SITE_ORIGIN}/favicon.png`;
@@ -451,79 +456,120 @@ export function renderJuneRsvpNotifyEmail(
   );
 }
 
-function thirdEditionEventCard(): string {
-  return `
-    <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="background-color:${colors.surface};border:1px solid ${colors.border};">
-      <tr>
-        <td style="padding:24px 22px 20px;">
-          <p style="margin:0 0 10px;${type.label}color:${colors.accent};">
-            Third edition
-          </p>
-          <p style="margin:0 0 8px;${type.sessionTitle}color:${colors.text};">
-            YOU&amp;ME with Martell
-          </p>
-          <p style="margin:0 0 20px;${type.bodySm}color:${colors.muted};">
-            A cultural gathering centered around music, food, conversation and community.
-          </p>
-          <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="border-top:1px solid ${colors.border};">
-            <tr>
-              <td style="padding:18px 0 0;width:50%;vertical-align:top;">
-                <p style="margin:0 0 6px;${type.labelSm}color:${colors.muted};">Date</p>
-                <p style="margin:0;${type.detailValue}color:${colors.text};">${THIRD_EDITION_DATE_SHORT}</p>
-              </td>
-              <td style="padding:18px 0 0;width:50%;vertical-align:top;">
-                <p style="margin:0 0 6px;${type.labelSm}color:${colors.muted};">Time</p>
-                <p style="margin:0;${type.bodySm}color:${colors.text};font-weight:500;">11:00 AM to Late</p>
-              </td>
-            </tr>
-          </table>
-        </td>
-      </tr>
-    </table>
-  `;
-}
-
 export function renderThirdEditionRsvpConfirmationEmail(safeName: string): string {
-  const pageTitle = 'Third edition — RSVP confirmed';
+  const pageTitle = `${THIRD_EDITION_SESSION_TITLE} — RSVP confirmed`;
+  const heroUrl = escapeHtml(GUEST_EMAIL_HERO_IMAGES.afterParty);
+  const heroW = EMAIL_HERO_AFTER_PARTY_DISPLAY.width;
+  const guestFirst = safeName.split(/\s+/)[0] || safeName;
 
   return emailShell(
     `
     <tr>
-      <td style="padding:0 0 24px;text-align:center;">
-        <img src="${LOGO_URL}" alt="${eventTitleHtml()}" width="48" height="48" style="display:inline-block;border-radius:50%;border:1px solid ${colors.border};padding:2px;" />
-        <p style="margin:16px 0 0;${type.label}color:${colors.muted};">
+      <td style="padding:0 0 20px;text-align:center;">
+        <img
+          src="${LOGO_URL}"
+          alt="${eventTitleHtml()}"
+          width="56"
+          height="56"
+          style="display:inline-block;border-radius:50%;border:1px solid ${colors.border};padding:3px;background-color:#ffffff;"
+        />
+        <p style="margin:14px 0 0;${type.label}color:${colors.muted};letter-spacing:0.2em;">
           ${eventTitleHtml()}
         </p>
       </td>
     </tr>
     <tr>
-      <td style="background-color:#ffffff;border:1px solid ${colors.border};padding:0;">
+      <td style="background-color:#ffffff;border:1px solid ${colors.border};padding:0;overflow:hidden;">
         <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0">
           <tr>
-            <td style="height:3px;background-color:${colors.accent};font-size:0;line-height:0;">&nbsp;</td>
+            <td align="center" style="padding:0;background-color:${colors.text};line-height:0;font-size:0;">
+              <img
+                src="${heroUrl}"
+                alt="${escapeHtml(THIRD_EDITION_SESSION_TITLE)}"
+                width="${heroW}"
+                border="0"
+                style="display:block;width:100%;max-width:${heroW}px;height:auto;border:0;outline:none;text-decoration:none;-ms-interpolation-mode:bicubic;line-height:100%;"
+              />
+            </td>
           </tr>
           <tr>
-            <td style="padding:36px 28px 24px;text-align:center;">
-              <p style="margin:0 0 12px;${type.label}color:${colors.accent};">
+            <td style="padding:32px 28px 36px;text-align:center;background-color:${colors.text};">
+              <p style="margin:0 0 10px;${type.label}color:${colors.bg};opacity:0.85;">
                 Third edition · RSVP confirmed
               </p>
-              <h1 style="margin:0 0 20px;${type.headingHero}font-size:40px;color:${colors.text};">
-                Thank you, ${safeName}
+              <h1 style="margin:0;${type.headingHero}font-size:40px;font-weight:500;color:${colors.bg};letter-spacing:-0.02em;">
+                Thank you, ${guestFirst}
               </h1>
-              <p style="margin:0;${type.bodyLight}color:${colors.muted};max-width:400px;margin-left:auto;margin-right:auto;">
-                Your place is reserved. We look forward to seeing you.
+            </td>
+          </tr>
+          <tr>
+            <td style="padding:36px 32px 12px;text-align:center;background-color:#ffffff;">
+              <p style="margin:0 0 18px;${type.bodyLight}color:${colors.muted};">
+                Your place is reserved for <strong style="font-weight:600;color:${colors.text};">${escapeHtml(THIRD_EDITION_SESSION_TITLE)}</strong>.
+              </p>
+              <p style="margin:0 0 28px;${type.bodyLight}color:${colors.muted};">
+                Doors open at <strong style="font-weight:600;color:${colors.text};">${THIRD_EDITION_DOORS_OPEN}</strong>. We look forward to seeing you on the rooftop.
+              </p>
+              <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="margin:12px 0 28px;background-color:#ffffff;border:1px solid ${colors.border};text-align:left;">
+                <tr>
+                  <td style="height:2px;background-color:${colors.accent};font-size:0;line-height:0;">&nbsp;</td>
+                </tr>
+                <tr>
+                  <td style="padding:26px 24px 28px;">
+                    <p style="margin:0 0 20px;${type.label}color:${colors.accent};">
+                      Your experience
+                    </p>
+                    <p style="margin:0 0 8px;${type.sessionTitle}color:${colors.text};">
+                      ${escapeHtml(THIRD_EDITION_SESSION_TITLE)}
+                    </p>
+                    <p style="margin:0 0 20px;${type.bodySm}color:${colors.muted};">
+                      A sonic experience as the day shifts into night — music, movement, and community.
+                    </p>
+                    <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0">
+                      <tr>
+                        <td style="padding:12px 0;border-bottom:1px solid ${colors.border};${type.labelSm}color:${colors.muted};width:34%;vertical-align:top;">
+                          Date
+                        </td>
+                        <td style="padding:12px 0;border-bottom:1px solid ${colors.border};${type.bodyLight}color:${colors.text};vertical-align:top;">
+                          ${THIRD_EDITION_DATE_LABEL}
+                        </td>
+                      </tr>
+                      <tr>
+                        <td style="padding:12px 0;border-bottom:1px solid ${colors.border};${type.labelSm}color:${colors.muted};width:34%;vertical-align:top;">
+                          Doors open
+                        </td>
+                        <td style="padding:12px 0;border-bottom:1px solid ${colors.border};${type.bodyLight}color:${colors.text};vertical-align:top;">
+                          ${THIRD_EDITION_DOORS_OPEN}
+                        </td>
+                      </tr>
+                      <tr>
+                        <td style="padding:12px 0;border-bottom:1px solid ${colors.border};${type.labelSm}color:${colors.muted};width:34%;vertical-align:top;">
+                          Until
+                        </td>
+                        <td style="padding:12px 0;border-bottom:1px solid ${colors.border};${type.bodyLight}color:${colors.text};vertical-align:top;">
+                          Late
+                        </td>
+                      </tr>
+                      <tr>
+                        <td style="padding:12px 0;${type.labelSm}color:${colors.muted};width:34%;vertical-align:top;">
+                          Location
+                        </td>
+                        <td style="padding:12px 0;${type.bodyLight}color:${colors.text};vertical-align:top;">
+                          ${VENUE_NAME}<br />${VENUE_STREET}, ${VENUE_AREA}
+                        </td>
+                      </tr>
+                    </table>
+                  </td>
+                </tr>
+              </table>
+              <p style="margin:28px 0 0;${type.bodyLight}color:${colors.muted};text-align:center;">
+                <span style="${type.signoffName}color:${colors.text};">YOU &amp; ME</span>
               </p>
             </td>
           </tr>
           <tr>
-            <td style="padding:0 28px 28px;">
-              ${thirdEditionEventCard()}
-              ${locationBlock()}
-            </td>
-          </tr>
-          <tr>
-            <td style="padding:0 28px 36px;text-align:center;">
-              <a href="${VENUE_MAPS_URL}" style="display:inline-block;background-color:${colors.text};color:${colors.bg};${type.button}padding:16px 40px;">
+            <td style="padding:4px 32px 36px;text-align:center;background-color:#ffffff;">
+              <a href="${VENUE_MAPS_URL}" style="display:inline-block;background-color:${colors.text};color:${colors.bg};${type.button}padding:16px 32px;margin:6px 4px;">
                 Get directions
               </a>
             </td>
@@ -531,10 +577,17 @@ export function renderThirdEditionRsvpConfirmationEmail(safeName: string): strin
         </table>
       </td>
     </tr>
+    ${emailSponsorsFooter()}
     <tr>
-      <td style="padding:24px 12px 0;text-align:center;">
-        <p style="margin:0;${type.bodySm}color:${colors.muted};">
-          ${eventTitleHtml()} · ${THIRD_EDITION_DATE_LABEL}
+      <td style="padding:20px 16px 8px;text-align:center;">
+        <p style="margin:0 0 6px;${type.labelSm}color:${colors.muted};">
+          ${eventTitleHtml()}
+        </p>
+        <p style="margin:0 0 10px;${type.bodySm}color:${colors.muted};">
+          ${THIRD_EDITION_DATE_LABEL}
+        </p>
+        <p style="margin:0;${type.labelSm}color:${colors.muted};">
+          <a href="https://www.instagram.com/youandmeafrica/" style="color:${colors.accent};text-decoration:none;font-weight:600;">@youandmeafrica</a>
         </p>
       </td>
     </tr>
