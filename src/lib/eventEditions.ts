@@ -50,8 +50,8 @@ export const EVENT_EDITIONS: EventEdition[] = [
   {
     id: '01KQVZ98DRAFTWINTER2026',
     title: 'You & Me — Winter Room',
-    editionLabel: 'Third edition · preview',
-    date: '2026-08-30T11:00:00+02:00',
+    editionLabel: 'Fourth edition · preview',
+    date: '2026-12-06T11:00:00+02:00',
     venue: VENUE_NAME,
     status: 'draft',
   },

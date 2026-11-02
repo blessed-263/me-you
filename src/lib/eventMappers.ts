@@ -87,7 +87,7 @@ export function mapBackendEventToEdition(raw: Record<string, unknown>): EventEdi
     title: String(raw.title ?? raw.name ?? 'Event'),
     editionLabel: String(raw.subtitle ?? raw.edition ?? raw.category ?? 'Edition'),
     date: String(raw.date ?? raw.event_date ?? new Date().toISOString()),
-    venue: String(raw.venue ?? 'Primedia Rooftop'),
+    venue: String(raw.venue ?? 'Kromdraai Impact Hub'),
     status,
   };
 }

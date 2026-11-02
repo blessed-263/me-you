@@ -107,7 +107,7 @@ export default function ThirdEditionRsvpPage() {
             transition={{ duration: 1.1, ease: [0.16, 1, 0.3, 1] }}
           >
             <p className="text-[10px] uppercase tracking-[0.16em] font-semibold text-brand-accent mb-6">
-              Third edition · {CURRENT_EDITION.dateShort}
+              Fourth edition · {CURRENT_EDITION.dateShort}
             </p>
             <h1 className="font-serif text-5xl md:text-7xl font-semibold text-brand-text leading-tight">
               RSVP
@@ -153,7 +153,7 @@ export default function ThirdEditionRsvpPage() {
                 Already registered.
               </h2>
               <p className="mt-5 text-[15px] font-light leading-[1.7] text-brand-muted max-w-md mx-auto">
-                This email already has an RSVP for the third edition. Each guest may register once only.
+                This email already has an RSVP for the fourth edition. Each guest may register once only.
               </p>
             </div>
           ) : (

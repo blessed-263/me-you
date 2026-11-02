@@ -40,8 +40,8 @@ export type MockEvent = {
 export const MOCK_EVENT: MockEvent = {
   id: '01KQVZ98HQX52PJ15TACANTR2X',
   title: 'You & Me — The Gathering',
-  subtitle: 'Third edition',
-  date: '2026-08-30T11:00:00+02:00',
+  subtitle: 'Fourth edition',
+  date: '2026-12-06T11:00:00+02:00',
   timeLabel: '11:00 AM to late',
   venue: VENUE_ADDRESS_LINE,
   venueMapsUrl: VENUE_MAPS_URL,
@@ -52,7 +52,7 @@ export const MOCK_EVENT: MockEvent = {
   highlights: [
     'Harvest Table by Nela\'s Kitchen — curated meal and welcome drinks',
     'The After Lunch Gathering — music, movement, and a carefully assembled room',
-    'Martell bar and rooftop setting at Primedia Sandton',
+    'Martell bar and setting at Kromdraai Impact Hub',
   ],
   inclusions: [
     {
@@ -71,7 +71,7 @@ export const MOCK_EVENT: MockEvent = {
       id: 'setting',
       part: 'The setting',
       title: 'Martell bar & rooftop',
-      subtitle: 'Primedia Sandton — cocktails, views, and the full-day atmosphere',
+      subtitle: 'Kromdraai Impact Hub — cocktails, views, and the full-day atmosphere',
     },
   ],
   ticketTypes: [

@@ -49,7 +49,7 @@ function FullBookedMessage({ session }: { session: RsvpSession }) {
         href="/rsvp"
         className="mt-8 inline-block bg-brand-text px-10 py-4 text-[11px] font-semibold uppercase tracking-[0.14em] text-brand-bg transition-colors hover:bg-brand-text/90 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand-accent"
       >
-        RSVP for 30 August
+        RSVP for 6 December
       </a>
       <a
         href="/"

@@ -60,7 +60,7 @@ export default function SeoHead() {
     upsertMeta('robots', seo.robots ?? 'index,follow');
     upsertMeta('author', SITE_NAME);
     upsertMeta('geo.region', 'ZA-GP');
-    upsertMeta('geo.placename', 'Sandton');
+    upsertMeta('geo.placename', 'Muldersdrift');
 
     upsertLink('canonical', canonical);
 
@@ -71,7 +71,7 @@ export default function SeoHead() {
     upsertMeta('og:type', seo.ogType ?? 'website', true);
     upsertMeta('og:locale', 'en_ZA', true);
     upsertMeta('og:image', image, true);
-    upsertMeta('og:image:alt', `${SITE_NAME} cultural gathering in Sandton`, true);
+    upsertMeta('og:image:alt', `${SITE_NAME} cultural gathering in Muldersdrift`, true);
 
     upsertMeta('twitter:card', 'summary_large_image');
     upsertMeta('twitter:title', seo.title);

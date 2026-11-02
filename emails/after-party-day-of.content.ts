@@ -52,12 +52,12 @@ The kind of sound that keeps good people together a little longer.`,
       },
       {
         label: 'Location',
-        value: 'Primedia Rooftop\n15 Fredman Drive, Sandown, Sandton',
+        value: 'Kromdraai Impact Hub\nKromdraai Road, Muldersdrift',
       },
       {
         label: 'Parking',
         value:
-          'Please make use of 15 Fredman Drive, Sandown for entry to the basement parking.',
+          'Parking available on site.',
       },
       {
         label: 'Dress code',

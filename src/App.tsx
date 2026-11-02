@@ -12,7 +12,6 @@ import Sponsors from './components/Sponsors.tsx';
 import { HERO_SLIDES } from './lib/heroSlides.ts';
 import { CURRENT_EDITION } from './lib/currentEdition.ts';
 import { VENUE_AREA, VENUE_MAPS_URL, VENUE_NAME, VENUE_STREET } from './lib/venue.ts';
-
 const TICKETS_URL = '/tickets';
 
 const marqueeImages: { src: string; alt: string }[] = [
@@ -60,7 +59,7 @@ function EditionCountdown({ targetIso }: { targetIso: string }) {
   if (remaining.done) {
     return (
       <p className="mt-12 text-sm font-light text-brand-muted">
-        The gathering is here — see you at the rooftop.
+        The gathering is here — see you there.
       </p>
     );
   }
@@ -354,7 +353,7 @@ export default function App() {
         </div>
       </section>
 
-      {/* Third edition — countdown */}
+      {/* Fourth edition — countdown */}
       <section id="countdown" className="py-20 md:py-32 px-6 relative bg-brand-surface border-y border-brand-border">
         <div className="max-w-3xl mx-auto relative z-10">
           <div className="text-center mb-16">
@@ -364,11 +363,11 @@ export default function App() {
               viewport={{ once: true }}
               className="font-serif text-3xl md:text-5xl font-semibold tracking-tight mb-6 text-brand-text text-balance"
             >
-              The Third edition returns {CURRENT_EDITION.dateShort}.
+              The Fourth edition returns {CURRENT_EDITION.dateShort}.
             </motion.h2>
             <p className="text-sm md:text-base font-light text-brand-muted leading-relaxed max-w-xl mx-auto">
-              YOU &amp; ME AFRICA with Martell — The Harvest Table and The Gathering at Primedia Rooftop,
-              Sandton.
+              YOU &amp; ME AFRICA with Martell — The Harvest Table and The Gathering at {VENUE_NAME},
+              {VENUE_AREA}.
             </p>
             <p className="mt-6 text-[10px] uppercase tracking-[0.16em] font-semibold text-brand-accent">
               Until then

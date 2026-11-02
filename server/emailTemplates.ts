@@ -495,7 +495,7 @@ export function renderThirdEditionRsvpConfirmationEmail(safeName: string): strin
           <tr>
             <td style="padding:32px 28px 36px;text-align:center;background-color:${colors.text};">
               <p style="margin:0 0 10px;${type.label}color:${colors.bg};opacity:0.85;">
-                Third edition · RSVP confirmed
+                Fourth edition · RSVP confirmed
               </p>
               <h1 style="margin:0;${type.headingHero}font-size:40px;font-weight:500;color:${colors.bg};letter-spacing:-0.02em;">
                 Thank you, ${guestFirst}
@@ -508,7 +508,7 @@ export function renderThirdEditionRsvpConfirmationEmail(safeName: string): strin
                 Your place is reserved for <strong style="font-weight:600;color:${colors.text};">${escapeHtml(THIRD_EDITION_SESSION_TITLE)}</strong>.
               </p>
               <p style="margin:0 0 28px;${type.bodyLight}color:${colors.muted};">
-                Doors open at <strong style="font-weight:600;color:${colors.text};">${THIRD_EDITION_DOORS_OPEN}</strong>. We look forward to seeing you on the rooftop.
+                Doors open at <strong style="font-weight:600;color:${colors.text};">${THIRD_EDITION_DOORS_OPEN}</strong>. We look forward to seeing you there.
               </p>
               <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="margin:12px 0 28px;background-color:#ffffff;border:1px solid ${colors.border};text-align:left;">
                 <tr>
@@ -601,14 +601,14 @@ export function renderThirdEditionRsvpNotifyEmail(
   email: string,
   detailRows: string,
 ): string {
-  const pageTitle = `New third edition RSVP — ${safeName}`;
+  const pageTitle = `New fourth edition RSVP — ${safeName}`;
 
   return emailShell(
     `
     <tr>
       <td style="padding:0 0 16px;">
         <p style="margin:0;${type.label}color:${colors.accent};">
-          New third edition RSVP · ${eventTitleHtml()}
+          New fourth edition RSVP · ${eventTitleHtml()}
         </p>
         <h1 style="margin:10px 0 0;${type.headingSection}font-size:32px;color:${colors.text};">
           ${safeName}

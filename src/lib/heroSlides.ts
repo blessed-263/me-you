@@ -10,7 +10,7 @@ export type HeroSlide = {
 export const HERO_SLIDES: HeroSlide[] = [
   {
     src: '/images/hero/slide-01.jpg',
-    alt: 'You & Me Africa gathering at Primedia Rooftop',
+    alt: 'You & Me Africa gathering at Kromdraai Impact Hub',
     mobileOnly: true,
   },
   {

@@ -14,7 +14,7 @@ export const afterPartyLunchGuestEmail: GuestBroadcastContent = {
   subject: 'And then we dance.',
 
   preheader:
-    'After the table — soulful house, amapiano & Afro tech. 15:00–20:00, Primedia Rooftop.',
+    'After the table — soulful house, amapiano & Afro tech. 15:00–20:00, Kromdraai Impact Hub.',
 
   eyebrow: 'The After Lunch Party',
 
@@ -63,7 +63,7 @@ We're looking forward to sharing the afternoon with you.`,
       },
       {
         label: 'Location',
-        value: 'Primedia Rooftop, 15 Fredman Drive, Sandown, Sandton',
+        value: 'Kromdraai Impact Hub, Kromdraai Road, Muldersdrift',
       },
       {
         label: 'Dress code',
@@ -72,7 +72,7 @@ We're looking forward to sharing the afternoon with you.`,
       {
         label: 'Parking',
         value:
-          'Secure basement & open parking available. Access on 24 Central Parking on the corner of Gwen Lane & Fredman Drive. Venue is wheelchair accessible.',
+          'Parking available on site. Venue is wheelchair accessible.',
       },
       {
         label: 'Need assistance?',

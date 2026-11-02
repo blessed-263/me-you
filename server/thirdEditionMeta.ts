@@ -1,5 +1,5 @@
-export const THIRD_EDITION_DATE_LABEL = 'Sunday, 30 August 2026';
-export const THIRD_EDITION_DATE_SHORT = '30 August 2026';
+export const THIRD_EDITION_DATE_LABEL = 'Sunday, 6 December 2026';
+export const THIRD_EDITION_DATE_SHORT = '6 December 2026';
 
 /** Third edition RSVP is for The After Lunch Gathering only. */
 export const THIRD_EDITION_SESSION_TITLE = 'The After Lunch Gathering';

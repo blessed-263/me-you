@@ -14,7 +14,7 @@ export const harvestTableGuestEmail: GuestBroadcastContent = {
   subject: 'A few things before Sunday.',
 
   preheader:
-    'Harvest Table — arrival 11:00–11:30, Nela\'s Kitchen, Primedia Rooftop.',
+    'Harvest Table — arrival 11:00–11:30, Nela\'s Kitchen, Kromdraai Impact Hub.',
 
   eyebrow: 'Harvest Table',
 
@@ -55,7 +55,7 @@ We're really looking forward to having you at the table.`,
       },
       {
         label: 'Location',
-        value: 'Primedia Rooftop, 15 Fredman Drive, Sandown, Sandton',
+        value: 'Kromdraai Impact Hub, Kromdraai Road, Muldersdrift',
       },
       {
         label: 'Dress code',
@@ -64,7 +64,7 @@ We're really looking forward to having you at the table.`,
       {
         label: 'Parking',
         value:
-          'Secure basement & open parking available. Access on 24 Central Parking on the corner of Gwen Lane & Fredman Drive. Venue is wheelchair accessible.',
+          'Parking available on site. Venue is wheelchair accessible.',
       },
       {
         label: 'Need assistance?',

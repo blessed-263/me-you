@@ -13,12 +13,12 @@ const DEFAULT_SITE_URL = 'https://www.youandmeafrica.com';
 
 export const SITE_NAME = 'You & Me Africa';
 export const SITE_TAGLINE =
-  'A cultural gathering in Sandton centered around music, food, conversation and community.';
+  'A cultural gathering in Muldersdrift centered around music, food, conversation and community.';
 export const SITE_DESCRIPTION =
-  'You & Me Africa is a curated cultural gathering in Sandton, Johannesburg — The Harvest Table experience and The After Lunch Gathering at Primedia Rooftop, 15 Fredman Drive.';
+  'You & Me Africa is a curated cultural gathering in Muldersdrift, Johannesburg — The Harvest Table experience and The After Lunch Gathering at Kromdraai Impact Hub, Kromdraai Road.';
 export const SITE_KEYWORDS =
-  'You and Me Africa, cultural event Sandton, Johannesburg events, Harvest Table, After Lunch Party, Primedia Rooftop, Sandton tickets, music food community';
-export const SITE_LOCALITY = 'Sandton';
+  'You and Me Africa, cultural event Muldersdrift, Johannesburg events, Harvest Table, After Lunch Party, Kromdraai Impact Hub, ticket sales, music food community';
+export const SITE_LOCALITY = 'Muldersdrift';
 export const SITE_REGION = 'Gauteng';
 export const SITE_COUNTRY = 'ZA';
 export const INSTAGRAM_URL = 'https://www.instagram.com/youandmeafrica/';
@@ -102,8 +102,8 @@ function eventJsonLd(siteUrl: string) {
       },
       geo: {
         '@type': 'GeoCoordinates',
-        latitude: -26.1076,
-        longitude: 28.0567,
+        latitude: -25.9978,
+        longitude: 27.7827,
       },
       hasMap: VENUE_MAPS_URL,
     },
@@ -127,8 +127,8 @@ function ticketsJsonLd(siteUrl: string) {
     '@id': `${siteUrl}/tickets#webpage`,
     name: 'Buy Tickets — You & Me Africa',
     description: isAmpExEnabled
-      ? 'Purchase tickets for You & Me Africa in Sandton — The Harvest Table and The After Lunch Gathering at Primedia Rooftop.'
-      : 'Get tickets for You & Me Africa on Howler — curated food, music, and community in Sandton.',
+      ? 'Purchase tickets for You & Me Africa in Muldersdrift — The Harvest Table and The After Lunch Gathering at Kromdraai Impact Hub.'
+      : 'Get tickets for You & Me Africa on Howler — curated food, music, and community in Muldersdrift.',
     url: absoluteUrl('/tickets'),
     isPartOf: { '@id': `${siteUrl}/#website` },
     about: { '@id': `${siteUrl}/#event` },
@@ -165,7 +165,7 @@ export function getRouteSeo(pathname: string): RouteSeo {
 
   if (path === '/') {
     return {
-      title: `${SITE_NAME} | Cultural Gathering in Sandton, Johannesburg`,
+      title: `${SITE_NAME} | Cultural Gathering in Muldersdrift, Johannesburg`,
       description: SITE_DESCRIPTION,
       path: '/',
       ogType: 'website',
@@ -182,10 +182,10 @@ export function getRouteSeo(pathname: string): RouteSeo {
       path === '/tickets/my-tickets' ||
       path.startsWith('/tickets/my-tickets/'));
     return {
-      title: `Buy Tickets | ${SITE_NAME} — Sandton`,
+      title: `Buy Tickets | ${SITE_NAME} — Muldersdrift`,
       description: isAmpExEnabled
-        ? 'Get tickets for You & Me Africa in Sandton — curated food, music, and community at Primedia Rooftop, 15 Fredman Drive.'
-        : 'Get tickets for You & Me Africa on Howler — curated food, music, and community in Sandton.',
+        ? 'Get tickets for You & Me Africa in Muldersdrift — curated food, music, and community at Kromdraai Impact Hub, Kromdraai Road.'
+        : 'Get tickets for You & Me Africa on Howler — curated food, music, and community in Muldersdrift.',
       path: path.startsWith('/event/') ? path : '/tickets',
       robots: isPrivate ? 'noindex,nofollow' : 'index,follow',
       ogType: 'website',
@@ -196,8 +196,8 @@ export function getRouteSeo(pathname: string): RouteSeo {
   if (path === '/harvest-table') {
     const session = RSVP_SESSIONS['harvest-table'];
     return {
-      title: `${session.title} | ${SITE_NAME} — Sandton`,
-      description: `${session.description} ${VENUE_AREA}. Long-table lunch curated by Nela's Kitchen at Primedia Rooftop, Sandton.`,
+      title: `${session.title} | ${SITE_NAME} — Muldersdrift`,
+      description: `${session.description} ${VENUE_AREA}. Long-table lunch curated by Nela's Kitchen at Kromdraai Impact Hub, Muldersdrift.`,
       path,
       jsonLd: rsvpJsonLd(siteUrl, 'harvest-table'),
     };
@@ -206,8 +206,8 @@ export function getRouteSeo(pathname: string): RouteSeo {
   if (path === '/after-party-lunch' || path === '/the-after-party') {
     const session = RSVP_SESSIONS['after-party-lunch'];
     return {
-      title: `${session.title} | ${SITE_NAME} — Sandton`,
-      description: `${session.description} ${VENUE_AREA}. Music and community at Primedia Rooftop, Sandton.`,
+      title: `${session.title} | ${SITE_NAME} — Muldersdrift`,
+      description: `${session.description} ${VENUE_AREA}. Music and community at Kromdraai Impact Hub, Muldersdrift.`,
       path: '/after-party-lunch',
       jsonLd: rsvpJsonLd(siteUrl, 'after-party-lunch'),
     };
@@ -230,7 +230,7 @@ export function getRouteSeo(pathname: string): RouteSeo {
 
   if (path === '/june' || path === '/september') {
     return {
-      title: `${SITE_NAME} | Upcoming Gathering — Sandton`,
+      title: `${SITE_NAME} | Upcoming Gathering — Muldersdrift`,
       description: SITE_DESCRIPTION,
       path,
     };
@@ -239,7 +239,7 @@ export function getRouteSeo(pathname: string): RouteSeo {
   if (path === '/rsvp') {
     return {
       title: `RSVP | ${SITE_NAME} — The After Lunch Gathering`,
-      description: `RSVP for The After Lunch Gathering at You & Me Africa on ${CURRENT_EDITION.dateLabel}. Doors open at 1:45 PM at Primedia Rooftop, Sandton.`,
+      description: `RSVP for The After Lunch Gathering at You & Me Africa on ${CURRENT_EDITION.dateLabel}. Doors open at 1:45 PM at Kromdraai Impact Hub, Muldersdrift.`,
       path: '/rsvp',
       robots: 'noindex,nofollow',
     };
