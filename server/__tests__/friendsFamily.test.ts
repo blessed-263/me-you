@@ -245,6 +245,19 @@ describe('Friends & Family API', () => {
     expect(undo.body.rsvp).toMatchObject({ arrived: false, checkedInAt: null });
   });
 
+  it('built-in passcode fallback: rejects wrong passcodes, locked without a database URL', async () => {
+    delete process.env.FF_ORGANISER_PASSCODE;
+    process.env.DATABASE_URL = 'postgresql://example.invalid/db';
+    let app = await loadApp(fakePool().pool);
+    expect((await request(app).post('/api/ff/organiser/login').send({ passcode: 'yamguest' })).status).toBe(401);
+    expect((await request(app).post('/api/ff/organiser/list').send({ session: '9999999999999.forged' })).status).toBe(401);
+
+    vi.resetModules();
+    delete process.env.DATABASE_URL;
+    app = await loadApp(fakePool().pool);
+    expect((await request(app).post('/api/ff/organiser/login').send({ passcode: 'anything' })).status).toBe(503);
+  });
+
   it('changing the passcode ends existing sessions', async () => {
     const app = await loadApp(fakePool().pool);
     const { session } = (await request(app).post('/api/ff/organiser/login').send({ passcode: PASSCODE })).body;
