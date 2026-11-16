@@ -1,4 +1,5 @@
-import { Navigate, Route, Routes } from 'react-router-dom';
+import { lazy, Suspense } from 'react';
+import { Navigate, Route, Routes, useLocation } from 'react-router-dom';
 import App from './App.tsx';
 import ExternalTicketsPage from './ExternalTicketsPage.tsx';
 import JuneRsvpPage from './JuneRsvpPage.tsx';
@@ -13,11 +14,22 @@ import SeoHead from './components/SeoHead.tsx';
 import { isAmpExEnabled } from './lib/siteConfig.ts';
 import { RSVP_SESSIONS } from './lib/rsvpSessions.ts';
 
+// Friends & Family invite (secret-link only). Lazy so its fonts/CSS load only on /ff.
+const FfInvitePage = lazy(() => import('./friendsFamily/FfInvitePage.tsx'));
+const FfOrganiserPage = lazy(() => import('./friendsFamily/FfOrganiserPage.tsx'));
+
+/** /ff/<secret token> must never reach analytics. */
+function isPrivateInvitePath(pathname: string): boolean {
+  return pathname === '/ff' || pathname.startsWith('/ff/');
+}
+
 export default function AppRoutes() {
+  const { pathname } = useLocation();
+  const privateInvite = isPrivateInvitePath(pathname);
   return (
     <>
       <SeoHead />
-      <GoogleAnalytics />
+      {!privateInvite && <GoogleAnalytics />}
       <Routes>
         <Route path="/" element={<App />} />
         <Route path="/login" element={<SignInPage />} />
@@ -69,9 +81,15 @@ export default function AppRoutes() {
         ) : (
           <Route path="/organizer/*" element={<Navigate to="/" replace />} />
         )}
+        <Route path="/ff" element={<Suspense fallback={null}><FfInvitePage /></Suspense>} />
+        <Route
+          path="/ff/organiser"
+          element={<Suspense fallback={null}><FfOrganiserPage /></Suspense>}
+        />
+        <Route path="/ff/:token" element={<Suspense fallback={null}><FfInvitePage /></Suspense>} />
         <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>
-      <ProjectAnalytics />
+      {!privateInvite && <ProjectAnalytics />}
     </>
   );
 }

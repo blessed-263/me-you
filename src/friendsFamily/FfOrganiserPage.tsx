@@ -1,0 +1,427 @@
+import { useCallback, useEffect, useMemo, useState, type FormEvent } from 'react';
+import { Link } from 'react-router-dom';
+import { apiUrl } from '../lib/api.ts';
+import { FF_BASE_PATH, FF_COPY, FF_IMAGES } from './content.ts';
+import {
+  filterRows,
+  formatSast,
+  formatSastTime,
+  toCsv,
+  totals,
+  type FfRsvp,
+  type FfStatus,
+  type ResponseFilter,
+  type StatusFilter,
+} from './organiserData.ts';
+import './ff.css';
+
+const SESSION_KEY = 'yme-ff-organiser-session';
+const o = FF_COPY.organiser;
+
+function loadSession(): string | null {
+  try {
+    const raw = window.sessionStorage.getItem(SESSION_KEY);
+    if (!raw) return null;
+    const { session, expiresAt } = JSON.parse(raw) as { session: string; expiresAt: number };
+    return expiresAt > Date.now() ? session : null;
+  } catch {
+    return null;
+  }
+}
+
+function storeSession(value: { session: string; expiresAt: number } | null): void {
+  try {
+    if (value) window.sessionStorage.setItem(SESSION_KEY, JSON.stringify(value));
+    else window.sessionStorage.removeItem(SESSION_KEY);
+  } catch {
+    /* memory-only session */
+  }
+}
+
+async function post<T>(path: string, body: Record<string, unknown>): Promise<{ status: number; data: T | null }> {
+  const res = await fetch(apiUrl(path), {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(body),
+  });
+  const data = (await res.json().catch(() => null)) as T | null;
+  return { status: res.status, data };
+}
+
+function Login({ onSignedIn, notice }: { onSignedIn: (s: string) => void; notice: string }) {
+  const [passcode, setPasscode] = useState('');
+  const [error, setError] = useState(notice);
+  const [busy, setBusy] = useState(false);
+
+  async function submit(e: FormEvent) {
+    e.preventDefault();
+    if (!passcode.trim()) {
+      setError(o.emptyPasscode);
+      return;
+    }
+    setBusy(true);
+    setError('');
+    try {
+      const { status, data } = await post<{ session: string; expiresAt: number }>(
+        '/api/ff/organiser/login',
+        { passcode },
+      );
+      if (status === 200 && data?.session) {
+        storeSession(data);
+        onSignedIn(data.session);
+        return;
+      }
+      setError(status === 401 ? o.wrongPasscode : status === 429 ? o.tooMany : o.unreachable);
+    } catch {
+      setError(o.unreachable);
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  return (
+    <div className="ffo-login">
+      <img
+        src={FF_IMAGES.wordmark.src}
+        width={FF_IMAGES.wordmark.width}
+        height={FF_IMAGES.wordmark.height}
+        alt="You&Me"
+      />
+      <h1 className="ffo-h1">{o.loginHeading}</h1>
+      <p className="ffo-sub">{o.loginSub}</p>
+      <form onSubmit={submit} noValidate>
+        <label className="ffo-label" htmlFor="ffo-passcode">
+          {o.passcode}
+        </label>
+        <input
+          id="ffo-passcode"
+          className="ffo-input"
+          type="password"
+          autoComplete="current-password"
+          value={passcode}
+          onChange={(e) => setPasscode(e.target.value)}
+          aria-invalid={error ? 'true' : undefined}
+          aria-describedby={error ? 'ffo-passcode-error' : undefined}
+        />
+        {error && (
+          <p id="ffo-passcode-error" className="ff-error" role="alert">
+            {error}
+          </p>
+        )}
+        <button className="ffo-btn ffo-btn-solid" type="submit" disabled={busy}>
+          {o.enter}
+        </button>
+      </form>
+    </div>
+  );
+}
+
+function StatusBadge({ status }: { status: FfStatus }) {
+  return <span className={`ffo-badge ffo-badge-${status}`}>{status.toUpperCase()}</span>;
+}
+
+export default function FfOrganiserPage() {
+  const [session, setSession] = useState<string | null>(() => loadSession());
+  const [rows, setRows] = useState<FfRsvp[] | null>(null);
+  const [notice, setNotice] = useState('');
+  const [message, setMessage] = useState<{ text: string; error?: boolean } | null>(null);
+  const [csvFallback, setCsvFallback] = useState('');
+  const [response, setResponse] = useState<ResponseFilter>('all');
+  const [status, setStatus] = useState<StatusFilter>('all');
+  const [search, setSearch] = useState('');
+  const [busyId, setBusyId] = useState<string | null>(null);
+  const [loading, setLoading] = useState(false);
+
+  const signOut = useCallback((reason = '') => {
+    storeSession(null);
+    setSession(null);
+    setRows(null);
+    setNotice(reason);
+  }, []);
+
+  const load = useCallback(
+    async (s: string, manual = false) => {
+      setLoading(true);
+      try {
+        const { status: code, data } = await post<{ rsvps: FfRsvp[] }>('/api/ff/organiser/list', {
+          session: s,
+        });
+        if (code === 401) {
+          signOut(o.sessionEnded);
+          return;
+        }
+        if (code !== 200 || !data) throw new Error(String(code));
+        setRows(data.rsvps);
+        if (manual) setMessage(null);
+      } catch {
+        setMessage({ text: manual ? o.refreshFailed : o.unreachable, error: true });
+      } finally {
+        setLoading(false);
+      }
+    },
+    [signOut],
+  );
+
+  useEffect(() => {
+    if (session) void load(session);
+  }, [session, load]);
+
+  const shown = useMemo(
+    () => (rows ? filterRows(rows, response, status, search) : []),
+    [rows, response, status, search],
+  );
+  const t = useMemo(() => totals(rows ?? []), [rows]);
+
+  async function update(id: string, path: string, body: Record<string, unknown>) {
+    if (!session) return;
+    setBusyId(id);
+    try {
+      const { status: code, data } = await post<{ rsvp: FfRsvp }>(path, { session, id, ...body });
+      if (code === 401) {
+        signOut(o.sessionEnded);
+        return;
+      }
+      if (code !== 200 || !data?.rsvp) throw new Error(String(code));
+      setRows((prev) => prev?.map((r) => (r.id === id ? data.rsvp : r)) ?? prev);
+      setMessage(null);
+    } catch {
+      setMessage({ text: o.saveFailed, error: true });
+    } finally {
+      setBusyId(null);
+    }
+  }
+
+  async function copyCsv() {
+    const csv = toCsv(shown);
+    try {
+      await navigator.clipboard.writeText(csv);
+      setCsvFallback('');
+      setMessage({ text: o.copied(shown.length) });
+    } catch {
+      setCsvFallback(csv);
+      setMessage({ text: o.copyBlocked });
+    }
+  }
+
+  function downloadCsv() {
+    const blob = new Blob(['﻿', toCsv(shown)], { type: 'text/csv;charset=utf-8' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = 'friends-and-family-rsvps.csv';
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+    setTimeout(() => URL.revokeObjectURL(url), 1000);
+  }
+
+  if (!session) {
+    return (
+      <div className="ffo-root" lang="en-ZA">
+        <Login
+          notice={notice}
+          onSignedIn={(s) => {
+            setNotice('');
+            setSession(s);
+          }}
+        />
+        <p style={{ textAlign: 'center', margin: 0 }}>
+          <Link className="ffo-back" to={FF_BASE_PATH}>
+            {/* Guests reach the invite through their own token link; this goes to the gate. */}
+            Back to the RSVP page
+          </Link>
+        </p>
+      </div>
+    );
+  }
+
+  const responseOptions: [ResponseFilter, string][] = [
+    ['all', 'All'],
+    ['yes', 'Attending'],
+    ['no', 'Not attending'],
+  ];
+  const statusOptions: [StatusFilter, string][] = [
+    ['all', 'All'],
+    ['pending', 'Pending'],
+    ['approved', 'Approved'],
+    ['declined', 'Declined'],
+    ['arrived', 'Arrived'],
+  ];
+  const stats = [t.responses, t.attending, t.notAttending, t.pending, t.arrived];
+
+  return (
+    <div className="ffo-root" lang="en-ZA">
+      <header className="ffo-header">
+        <div>
+          <h1>{o.title}</h1>
+          <p className="ffo-sub">{o.sub}</p>
+        </div>
+        <div className="ffo-actions">
+          <button className="ffo-btn" type="button" onClick={() => void load(session, true)} disabled={loading}>
+            {o.refresh}
+          </button>
+          <button className="ffo-btn" type="button" onClick={() => void copyCsv()} disabled={!rows}>
+            {o.copyCsv}
+          </button>
+          <button className="ffo-btn" type="button" onClick={downloadCsv} disabled={!rows}>
+            {o.downloadCsv}
+          </button>
+          <button className="ffo-btn" type="button" onClick={() => signOut()}>
+            {o.signOut}
+          </button>
+        </div>
+      </header>
+
+      <main className="ffo-body">
+        <div className="ffo-search">
+          <label className="ffo-label" htmlFor="ffo-search">
+            {o.search}
+          </label>
+          <input
+            id="ffo-search"
+            className="ffo-input"
+            type="search"
+            placeholder={o.searchPlaceholder}
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+            autoComplete="off"
+          />
+        </div>
+
+        <div className="ffo-stats">
+          {o.totals.map((label, idx) => (
+            <div className="ffo-stat" key={label}>
+              <div className="ffo-stat-n">{stats[idx]}</div>
+              <div className="ffo-stat-l">{label}</div>
+            </div>
+          ))}
+        </div>
+
+        <div className="ffo-filters">
+          <fieldset className="ffo-filter-group">
+            <legend className="ffo-label">{o.response}</legend>
+            {responseOptions.map(([value, label]) => (
+              <button
+                key={value}
+                type="button"
+                className="ffo-btn"
+                aria-pressed={response === value}
+                onClick={() => setResponse(value)}
+              >
+                {label}
+              </button>
+            ))}
+          </fieldset>
+          <fieldset className="ffo-filter-group">
+            <legend className="ffo-label">{o.status}</legend>
+            {statusOptions.map(([value, label]) => (
+              <button
+                key={value}
+                type="button"
+                className="ffo-btn"
+                aria-pressed={status === value}
+                onClick={() => setStatus(value)}
+              >
+                {label}
+              </button>
+            ))}
+          </fieldset>
+        </div>
+
+        {message && (
+          <p className={`ffo-msg ${message.error ? 'ffo-msg-error' : ''}`} role={message.error ? 'alert' : 'status'}>
+            {message.text}
+          </p>
+        )}
+        {csvFallback && (
+          <textarea className="ffo-csv" readOnly value={csvFallback} aria-label="CSV" onFocus={(e) => e.target.select()} />
+        )}
+
+        <div className="ffo-table-wrap">
+          <table className="ffo-table">
+            <thead>
+              <tr>
+                {o.headings.map((h) => (
+                  <th key={h} scope="col">
+                    {h}
+                  </th>
+                ))}
+              </tr>
+            </thead>
+            <tbody>
+              {shown.map((r) => (
+                <tr key={r.id}>
+                  <td className="ffo-name">
+                    {r.firstName} {r.surname}
+                  </td>
+                  <td data-label={o.headings[1]}>
+                    <a href={`tel:${r.mobile}`} style={{ color: 'inherit' }}>
+                      {r.mobile}
+                    </a>
+                  </td>
+                  <td data-label={o.headings[2]} style={{ wordBreak: 'break-all' }}>
+                    {r.email}
+                  </td>
+                  <td data-label={o.headings[3]}>{r.attending ? o.attending : o.notAttending}</td>
+                  <td data-label={o.headings[4]} className="ffo-small">
+                    {formatSast(r.createdAt)}
+                  </td>
+                  <td data-label={o.headings[5]}>
+                    <StatusBadge status={r.status} />
+                  </td>
+                  <td>
+                    <div className="ffo-rowbtns">
+                      <button
+                        type="button"
+                        className="ffo-btn"
+                        aria-pressed={r.status === 'approved'}
+                        disabled={busyId === r.id}
+                        onClick={() =>
+                          void update(r.id, '/api/ff/organiser/status', {
+                            status: r.status === 'approved' ? 'pending' : 'approved',
+                          })
+                        }
+                      >
+                        {o.approve}
+                      </button>
+                      <button
+                        type="button"
+                        className="ffo-btn"
+                        aria-pressed={r.status === 'declined'}
+                        disabled={busyId === r.id}
+                        onClick={() =>
+                          void update(r.id, '/api/ff/organiser/status', {
+                            status: r.status === 'declined' ? 'pending' : 'declined',
+                          })
+                        }
+                      >
+                        {o.decline}
+                      </button>
+                    </div>
+                  </td>
+                  <td>
+                    <div className="ffo-rowbtns">
+                      <button
+                        type="button"
+                        className={`ffo-btn ${r.arrived ? '' : 'ffo-btn-solid'}`}
+                        disabled={busyId === r.id}
+                        onClick={() => void update(r.id, '/api/ff/organiser/checkin', { arrived: !r.arrived })}
+                      >
+                        {r.arrived ? o.undoCheckIn : o.checkIn}
+                      </button>
+                    </div>
+                    {r.arrived && <div className="ffo-small">{o.arrivedAt(formatSastTime(r.checkedInAt))}</div>}
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+          {rows && shown.length === 0 && (
+            <p className="ffo-empty">{rows.length === 0 ? o.noneYet : o.noneMatch}</p>
+          )}
+        </div>
+        {rows && <p className="ffo-footer">{o.footer(shown.length, rows.length)}</p>}
+      </main>
+    </div>
+  );
+}

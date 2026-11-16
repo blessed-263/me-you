@@ -11,6 +11,8 @@ Disallow: /tickets/success
 Disallow: /tickets/payment/
 Disallow: /tickets/my-tickets
 Disallow: /api/
+Disallow: /ff
+Disallow: /ff/
 
 Sitemap: https://www.youandmeafrica.com/sitemap.xml
 Sitemap: https://youandmeafrica.com/sitemap.xml
