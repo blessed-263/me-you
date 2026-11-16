@@ -68,7 +68,7 @@ export async function ensureFriendsFamilyTable(getPool: () => Pool | null): Prom
     ON ${FF_TABLE} (lower(email));
   `);
   if (!getInviteToken()) {
-    console.warn('[ff-rsvp] FF_INVITE_TOKEN is not set (or shorter than 16 characters); the invite link will show "By invitation only".');
+    console.log('[ff-rsvp] FF_INVITE_TOKEN not set; using the built-in invite token fingerprint.');
   }
   if (!isOrganiserConfigured()) {
     console.warn('[ff-rsvp] FF_ORGANISER_PASSCODE is not set; the organiser guest list is locked.');
@@ -204,7 +204,8 @@ export function registerFriendsFamilyRoutes(app: Express, deps: FriendsFamilyDep
     }
 
     if (created || answerChanged) {
-      const token = getInviteToken() ?? '';
+      // The guest's own (already validated) link token, so it works with or without FF_INVITE_TOKEN.
+      const token = String(req.body.token);
       const jobs: Promise<void>[] = [
         sendEmail(g.email, renderFfGuestEmail(g.firstName, g.attending, ffInviteUrl(token))),
       ];
