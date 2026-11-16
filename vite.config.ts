@@ -17,6 +17,15 @@ export default defineConfig(({ mode }) => {
 
   return {
     plugins: [react(), tailwindcss()],
+    build: {
+      rollupOptions: {
+        // ff.html = same app, own link preview for the private /ff invite (see vercel.json).
+        input: {
+          main: path.resolve(__dirname, 'index.html'),
+          ff: path.resolve(__dirname, 'ff.html'),
+        },
+      },
+    },
     resolve: {
       alias: {
         '@': path.resolve(__dirname, '.'),

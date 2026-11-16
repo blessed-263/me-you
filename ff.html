@@ -1,0 +1,39 @@
+<!doctype html>
+<html lang="en-ZA">
+  <head>
+    <!--
+      Entry page for /ff/* (Friends & Family invite). Same React app as index.html,
+      but with its own link preview for WhatsApp / iMessage / social apps, no
+      analytics, and noindex. Served via the /ff rewrite in vercel.json.
+      Keep event date and venue OUT of these tags: any /ff/ address returns this
+      HTML, including wrong tokens.
+    -->
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="theme-color" content="#e7c9ab" />
+    <meta name="robots" content="noindex,nofollow" />
+    <meta name="referrer" content="strict-origin" />
+    <link rel="icon" type="image/png" href="/favicon.png" />
+    <link rel="apple-touch-icon" href="/favicon.png" />
+    <title>Friends &amp; Family · You&amp;Me with Martell × Kaya 959</title>
+    <meta name="description" content="You are invited. An afternoon of good food, good music &amp; even better company. By invitation only." />
+    <meta property="og:type" content="website" />
+    <meta property="og:site_name" content="You &amp; Me Africa" />
+    <meta property="og:locale" content="en_ZA" />
+    <meta property="og:title" content="Friends &amp; Family · You&amp;Me with Martell × Kaya 959" />
+    <meta property="og:description" content="You are invited. An afternoon of good food, good music &amp; even better company. Kindly RSVP." />
+    <meta property="og:url" content="https://www.youandmeafrica.com/ff" />
+    <meta property="og:image" content="https://www.youandmeafrica.com/images/friends-family/og-friends-family.jpg" />
+    <meta property="og:image:width" content="1200" />
+    <meta property="og:image:height" content="1200" />
+    <meta property="og:image:alt" content="You&amp;Me with Martell present Friends &amp; Family" />
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:title" content="Friends &amp; Family · You&amp;Me with Martell × Kaya 959" />
+    <meta name="twitter:description" content="You are invited. Kindly RSVP." />
+    <meta name="twitter:image" content="https://www.youandmeafrica.com/images/friends-family/og-friends-family.jpg" />
+  </head>
+  <body>
+    <div id="root"></div>
+    <script type="module" src="/src/main.tsx"></script>
+  </body>
+</html>
