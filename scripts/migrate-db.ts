@@ -7,6 +7,7 @@ import { getPool, logDatabaseConfig } from '../server/db.js';
 import { ensureJuneRsvpTable } from '../server/juneRsvp.js';
 import { ensureRsvpTable } from '../server/rsvp.js';
 import { ensureThirdEditionRsvpTable } from '../server/thirdEditionRsvp.js';
+import { ensureFriendsFamilyTable } from '../server/friendsFamily.js';
 
 logDatabaseConfig();
 
@@ -22,6 +23,7 @@ try {
   await ensureRsvpTable(() => pool);
   await ensureJuneRsvpTable(() => pool);
   await ensureThirdEditionRsvpTable(() => pool);
+  await ensureFriendsFamilyTable(() => pool);
   console.log('[db] Migration finished.');
 } catch (err) {
   console.error('[db] Migration failed:', err);

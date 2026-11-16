@@ -12,6 +12,7 @@ import { createJuneRsvpHandler } from './juneRsvp.js';
 
 import { createRsvpHandler } from './rsvp.js';
 import { createThirdEditionRsvpHandler } from './thirdEditionRsvp.js';
+import { registerFriendsFamilyRoutes, type SendEmail } from './friendsFamily.js';
 
 import { getAllowedOrigins, isOriginAllowedForCors } from './middleware/allowedOrigins.js';
 
@@ -31,6 +32,9 @@ export type CreateAppOptions = {
   getPoolFn?: () => Pool | null;
 
   serveStatic?: boolean;
+
+  /** Test hook: replaces Resend for Friends & Family emails. */
+  ffSendEmail?: SendEmail;
 
 };
 
@@ -163,6 +167,8 @@ export function createApp(options: CreateAppOptions = {}): express.Express {
     createThirdEditionRsvpHandler({ getPool: poolFn }),
 
   );
+
+  registerFriendsFamilyRoutes(app, { getPool: poolFn, sendEmail: options.ffSendEmail });
 
 
 

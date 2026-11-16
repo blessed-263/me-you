@@ -236,6 +236,16 @@ export function getRouteSeo(pathname: string): RouteSeo {
     };
   }
 
+  if (path === '/ff' || path.startsWith('/ff/')) {
+    // Private invite: never put the secret token in canonical / og:url.
+    return {
+      title: path === '/ff/organiser' ? 'Guest list · Friends & Family' : 'Friends & Family · You&Me',
+      description: 'By invitation only.',
+      path: '/ff',
+      robots: 'noindex,nofollow',
+    };
+  }
+
   if (path === '/rsvp') {
     return {
       title: `RSVP | ${SITE_NAME} — The After Lunch Gathering`,
