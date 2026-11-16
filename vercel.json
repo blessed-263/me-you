@@ -28,6 +28,14 @@
       "destination": "https://ampex-backend-production.up.railway.app/get-publishable-key"
     },
     {
+      "source": "/ff",
+      "destination": "/ff.html"
+    },
+    {
+      "source": "/ff/:path*",
+      "destination": "/ff.html"
+    },
+    {
       "source": "/((?!.*\\..*).*)",
       "destination": "/index.html"
     }
