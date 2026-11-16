@@ -24,12 +24,21 @@ export function getInviteToken(): string | null {
   return t && t.length >= 16 ? t : null;
 }
 
-export function isValidInviteToken(candidate: unknown): boolean {
-  const expected = getInviteToken();
-  if (!expected || typeof candidate !== 'string' || !candidate) return false;
-  return safeEqual(candidate, expected);
-}
+/**
+ * Fallback when FF_INVITE_TOKEN is not set on Railway: SHA-256 fingerprint of the
+ * invite token sent to guests for 22 November 2026. The token is 24 random
+ * characters (144 bits), so this hash cannot be reversed into the link.
+ * FF_INVITE_TOKEN, when set, always takes precedence.
+ */
+export const FF_INVITE_TOKEN_SHA256 =
+  '3094ba41f920b58b75f7010be254d20dcc67720d2aab8eaae555b707e9bd3f7e';
 
+export function isValidInviteToken(candidate: unknown): boolean {
+  if (typeof candidate !== 'string' || !candidate || candidate.length > 200) return false;
+  const expected = getInviteToken();
+  if (expected) return safeEqual(candidate, expected);
+  return timingSafeEqual(digest(candidate), Buffer.from(FF_INVITE_TOKEN_SHA256, 'hex'));
+}
 function getPasscode(): string | null {
   const p = process.env.FF_ORGANISER_PASSCODE?.trim();
   return p ? p : null;
