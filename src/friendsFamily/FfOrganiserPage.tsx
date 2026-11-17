@@ -1,14 +1,16 @@
 import { useCallback, useEffect, useMemo, useState, type FormEvent } from 'react';
 import { Link } from 'react-router-dom';
 import { apiUrl } from '../lib/api.ts';
-import { FF_BASE_PATH, FF_COPY, FF_IMAGES } from './content.ts';
+import { FF_BASE_PATH, FF_COPY, FF_IMAGES, FF_LABELS } from './content.ts';
 import {
   filterRows,
   formatSast,
   formatSastTime,
+  labelCounts,
   toCsv,
   totals,
   type FfRsvp,
+  type LabelFilter,
   type FfStatus,
   type ResponseFilter,
   type StatusFilter,
@@ -22,6 +24,83 @@ type Decision = 'approved' | 'declined';
 
 function sentAt(r: FfRsvp, d: Decision): string | null | undefined {
   return d === 'approved' ? r.approvedEmailSentAt : r.declinedEmailSentAt;
+}
+
+/** Pop-up to set a guest's internal labels (no email, no status change). */
+function LabelEditor({
+  row,
+  onSave,
+  onCancel,
+}: {
+  row: FfRsvp;
+  onSave: (tags: string[], guestOf: string | null) => void;
+  onCancel: () => void;
+}) {
+  const [tags, setTags] = useState<string[]>(row.tags ?? []);
+  const [guestOf, setGuestOf] = useState<string | null>(row.guestOf ?? null);
+  const toggle = (t: string) => setTags((cur) => (cur.includes(t) ? cur.filter((x) => x !== t) : [...cur, t]));
+  return (
+    <div className="ffo-modal-backdrop" onClick={onCancel}>
+      <div
+        className="ffo-modal ffo-modal-wide"
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="ffo-labels-title"
+        onClick={(e) => e.stopPropagation()}
+        onKeyDown={(e) => {
+          if (e.key === 'Escape') onCancel();
+        }}
+      >
+        <h2 id="ffo-labels-title" className="ffo-modal-title">
+          {o.labelsTitle(`${row.firstName} ${row.surname}`)}
+        </h2>
+        <fieldset className="ffo-labelset">
+          <legend className="ffo-label">{o.labelsType}</legend>
+          {FF_LABELS.types.map((t) => (
+            <button
+              key={t}
+              type="button"
+              className="ffo-chip ffo-chip-btn ffo-chip-lg"
+              aria-pressed={tags.includes(t)}
+              onClick={() => toggle(t)}
+            >
+              {t}
+            </button>
+          ))}
+        </fieldset>
+        <fieldset className="ffo-labelset">
+          <legend className="ffo-label">{o.labelsGuestOf}</legend>
+          <p className="ffo-small" style={{ margin: '0 0 8px', width: '100%' }}>
+            {o.labelsGuestOfHint}
+          </p>
+          {FF_LABELS.guestOf.map((g) => (
+            <button
+              key={g}
+              type="button"
+              className="ffo-chip ffo-chip-btn ffo-chip-lg"
+              aria-pressed={guestOf === g}
+              onClick={() => setGuestOf(guestOf === g ? null : g)}
+            >
+              {g}
+            </button>
+          ))}
+        </fieldset>
+        <p className="ffo-small">{o.labelsNote}</p>
+        <div className="ffo-modal-actions">
+          <button type="button" className="ffo-btn" onClick={onCancel}>
+            {o.cancel}
+          </button>
+          <button
+            type="button"
+            className="ffo-btn ffo-btn-solid"
+            onClick={() => onSave(FF_LABELS.types.filter((t) => tags.includes(t)), guestOf)}
+          >
+            {o.save}
+          </button>
+        </div>
+      </div>
+    </div>
+  );
 }
 
 /** Confirmation pop-up before Approve / Decline (which may email the guest). */
@@ -188,6 +267,8 @@ export default function FfOrganiserPage() {
   const [search, setSearch] = useState('');
   const [busyId, setBusyId] = useState<string | null>(null);
   const [confirm, setConfirm] = useState<{ row: FfRsvp; decision: Decision } | null>(null);
+  const [labelFilter, setLabelFilter] = useState<LabelFilter>('all');
+  const [labelEdit, setLabelEdit] = useState<FfRsvp | null>(null);
   const [loading, setLoading] = useState(false);
 
   const signOut = useCallback((reason = '') => {
@@ -225,12 +306,13 @@ export default function FfOrganiserPage() {
   }, [session, load]);
 
   const shown = useMemo(
-    () => (rows ? filterRows(rows, response, status, search) : []),
-    [rows, response, status, search],
+    () => (rows ? filterRows(rows, response, status, search, labelFilter) : []),
+    [rows, response, status, search, labelFilter],
   );
   const t = useMemo(() => totals(rows ?? []), [rows]);
+  const counts = useMemo(() => labelCounts(rows ?? [], FF_LABELS.types, FF_LABELS.guestOf), [rows]);
 
-  async function update(id: string, path: string, body: Record<string, unknown>) {
+  async function update(id: string, path: string, body: Record<string, unknown>, savedText?: string) {
     if (!session) return;
     setBusyId(id);
     try {
@@ -251,7 +333,7 @@ export default function FfOrganiserPage() {
       else if (email === 'failed') setMessage({ text: o.emailFailed(name), error: true });
       else if (email === 'already-sent') setMessage({ text: o.emailAlready(name) });
       else if (email === 'not-attending') setMessage({ text: o.emailNotAttending(name) });
-      else setMessage(null);
+      else setMessage(savedText ? { text: savedText } : null);
     } catch {
       setMessage({ text: o.saveFailed, error: true });
     } finally {
@@ -365,6 +447,25 @@ export default function FfOrganiserPage() {
           ))}
         </div>
 
+        <div className="ffo-labelcounts" aria-label={o.labelCountsHeading}>
+          <span className="ffo-label">{o.labelCountsHeading}</span>
+          {counts.length === 0 ? (
+            <span className="ffo-small">{o.noLabelsYet}</span>
+          ) : (
+            counts.map((c) => (
+              <button
+                key={c.key}
+                type="button"
+                className="ffo-chip ffo-chip-btn"
+                aria-pressed={labelFilter === c.key}
+                onClick={() => setLabelFilter(labelFilter === c.key ? 'all' : c.key)}
+              >
+                {c.label} <strong>{c.n}</strong>
+              </button>
+            ))
+          )}
+        </div>
+
         <div className="ffo-filters">
           <fieldset className="ffo-filter-group">
             <legend className="ffo-label">{o.response}</legend>
@@ -394,6 +495,29 @@ export default function FfOrganiserPage() {
               </button>
             ))}
           </fieldset>
+          <div className="ffo-filter-group">
+            <label className="ffo-label" htmlFor="ffo-labelfilter">
+              {o.labelFilter}
+            </label>
+            <select
+              id="ffo-labelfilter"
+              className="ffo-select ffo-select-inline"
+              value={labelFilter}
+              onChange={(e) => setLabelFilter(e.target.value)}
+            >
+              <option value="all">{o.allLabels}</option>
+              {FF_LABELS.types.map((l) => (
+                <option key={l} value={l}>
+                  {l}
+                </option>
+              ))}
+              {FF_LABELS.guestOf.map((g) => (
+                <option key={g} value={`guestof:${g}`}>
+                  {o.guestOfLabel(g)}
+                </option>
+              ))}
+            </select>
+          </div>
         </div>
 
         {message && (
@@ -419,8 +543,27 @@ export default function FfOrganiserPage() {
             <tbody>
               {shown.map((r) => (
                 <tr key={r.id}>
-                  <td className="ffo-name">
-                    {r.firstName} {r.surname}
+                  <td>
+                    <div className="ffo-name">
+                      {r.firstName} {r.surname}
+                    </div>
+                    <div className="ffo-chips">
+                      {(r.tags ?? []).map((tag) => (
+                        <span key={tag} className={`ffo-chip ${tag === 'Important' ? 'ffo-chip-strong' : ''}`}>
+                          {tag}
+                        </span>
+                      ))}
+                      {r.guestOf && <span className="ffo-chip ffo-chip-guestof">{o.guestOfLabel(r.guestOf)}</span>}
+                      <button
+                        type="button"
+                        className="ffo-chip ffo-chip-btn ffo-chip-edit"
+                        disabled={busyId === r.id}
+                        onClick={() => setLabelEdit(r)}
+                        aria-label={`${o.labels}: ${r.firstName} ${r.surname}`}
+                      >
+                        + {o.labels}
+                      </button>
+                    </div>
                   </td>
                   <td data-label={o.headings[1]}>
                     <a href={`tel:${r.mobile}`} style={{ color: 'inherit' }}>
@@ -504,6 +647,22 @@ export default function FfOrganiserPage() {
         </div>
         {rows && <p className="ffo-footer">{o.footer(shown.length, rows.length)}</p>}
       </main>
+      {labelEdit && (
+        <LabelEditor
+          row={labelEdit}
+          onCancel={() => setLabelEdit(null)}
+          onSave={(tags, guestOf) => {
+            const row = labelEdit;
+            setLabelEdit(null);
+            void update(
+              row.id,
+              '/api/ff/organiser/labels',
+              { tags, guestOf },
+              o.labelsSaved(`${row.firstName} ${row.surname}`),
+            );
+          }}
+        />
+      )}
       {confirm && (
         <ConfirmDecision
           row={confirm.row}

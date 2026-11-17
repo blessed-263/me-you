@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { EMPTY_FORM, normaliseSaMobile, validateForm } from './content.ts';
-import { filterRows, toCsv, totals, type FfRsvp } from './organiserData.ts';
+import { filterRows, labelCounts, toCsv, totals, type FfRsvp } from './organiserData.ts';
 import { getRouteSeo } from '../lib/seo.ts';
 
 describe('Friends & Family form validation', () => {
@@ -69,11 +69,30 @@ describe('Friends & Family organiser data', () => {
     const csv = toCsv([row({ firstName: '=HYPERLINK("x")', checkedInAt: null })]);
     const [header, line] = csv.split('\r\n');
     expect(header).toBe(
-      '"First name","Surname","Mobile","Email","Attending","Status","First received (SAST)","Last updated (SAST)","Checked in (SAST)"',
+      '"First name","Surname","Mobile","Email","Attending","Status","First received (SAST)","Last updated (SAST)","Checked in (SAST)","Labels","Guest of"',
     );
     expect(line).toBe(
-      `"'=HYPERLINK(""x"")","Delete-Me","+27600000001","test1@example.com","Yes","Pending","2026-11-16 12:00","2026-11-16 12:00",""`,
+      `"'=HYPERLINK(""x"")","Delete-Me","+27600000001","test1@example.com","Yes","Pending","2026-11-16 12:00","2026-11-16 12:00","","",""`,
     );
+    const labelled = toCsv([row({ tags: ['Media', 'Important'], guestOf: 'Wez' })]).split('\r\n')[1];
+    expect(labelled.endsWith('"Media; Important","Wez"')).toBe(true);
+  });
+
+  it('label filter and counts', () => {
+    const lrows = [
+      row({ id: 'a', tags: ['Media'], guestOf: 'Wez' }),
+      row({ id: 'b', tags: ['Media', 'Important'] }),
+      row({ id: 'c', guestOf: 'Wez', attending: false }),
+      row({ id: 'd' }),
+    ];
+    expect(filterRows(lrows, 'all', 'all', '', 'Media').map((r) => r.id)).toEqual(['a', 'b']);
+    expect(filterRows(lrows, 'all', 'all', '', 'guestof:Wez').map((r) => r.id)).toEqual(['a', 'c']);
+    expect(filterRows(lrows, 'yes', 'all', '', 'guestof:Wez').map((r) => r.id)).toEqual(['a']);
+    expect(labelCounts(lrows, ['Media', 'Influencer', 'Important'], ['Wez', 'Robby'])).toEqual([
+      { key: 'Media', label: 'Media', n: 2 },
+      { key: 'Important', label: 'Important', n: 1 },
+      { key: 'guestof:Wez', label: 'Guest of Wez', n: 2 },
+    ]);
   });
 });
 
