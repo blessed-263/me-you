@@ -376,6 +376,111 @@ export function registerFriendsFamilyRoutes(app: Express, deps: FriendsFamilyDep
     }
   });
 
+  // Organiser edit / add / delete. Never emails anyone.
+  const ROW_COLS = `id, first_name, surname, mobile, email, attending, status, arrived,
+    checked_in_at, created_at, updated_at, approved_email_sent_at, declined_email_sent_at, tags, guest_of`;
+  const DUPLICATE_EMAIL = 'Another guest already uses this email address.';
+  const isUniqueViolation = (err: unknown) =>
+    typeof err === 'object' && err !== null && (err as { code?: string }).code === '23505';
+
+  app.post('/api/ff/organiser/edit', organiserLimit, async (req, res) => {
+    if (!requireSession(req, res)) return;
+    const id = req.body?.id;
+    if (typeof id !== 'string' || !UUID_RE.test(id)) {
+      res.status(400).json({ error: 'Invalid request' });
+      return;
+    }
+    const parsed = validateFfRsvp(req.body);
+    if ('fields' in parsed) {
+      res.status(400).json({ error: 'Please check the highlighted fields', fields: parsed.fields });
+      return;
+    }
+    const p = deps.getPool();
+    if (!p) {
+      res.status(503).json({ error: 'Database not configured' });
+      return;
+    }
+    const g = parsed.value;
+    try {
+      // Status, labels, check-in and decision-email records are left untouched.
+      const result = await p.query<RsvpRow>(
+        `UPDATE ${FF_TABLE}
+         SET first_name = $2, surname = $3, mobile = $4, email = $5, attending = $6, updated_at = now()
+         WHERE id = $1
+         RETURNING ${ROW_COLS}`,
+        [id, g.firstName, g.surname, g.mobile, g.email, g.attending],
+      );
+      if (!result.rows[0]) {
+        res.status(404).json({ error: 'Not found' });
+        return;
+      }
+      res.json({ rsvp: toApi(result.rows[0]) });
+    } catch (err) {
+      if (isUniqueViolation(err)) {
+        res.status(409).json({ error: DUPLICATE_EMAIL, fields: { email: DUPLICATE_EMAIL } });
+        return;
+      }
+      console.error('[ff-rsvp] organiser edit failed', err);
+      res.status(500).json({ error: 'Could not save that change' });
+    }
+  });
+
+  app.post('/api/ff/organiser/create', organiserLimit, async (req, res) => {
+    if (!requireSession(req, res)) return;
+    const parsed = validateFfRsvp(req.body);
+    if ('fields' in parsed) {
+      res.status(400).json({ error: 'Please check the highlighted fields', fields: parsed.fields });
+      return;
+    }
+    const p = deps.getPool();
+    if (!p) {
+      res.status(503).json({ error: 'Database not configured' });
+      return;
+    }
+    const g = parsed.value;
+    try {
+      const result = await p.query<RsvpRow>(
+        `INSERT INTO ${FF_TABLE} (first_name, surname, mobile, email, attending)
+         VALUES ($1, $2, $3, $4, $5)
+         RETURNING ${ROW_COLS}`,
+        [g.firstName, g.surname, g.mobile, g.email, g.attending],
+      );
+      res.status(201).json({ rsvp: toApi(result.rows[0]) });
+    } catch (err) {
+      if (isUniqueViolation(err)) {
+        res.status(409).json({ error: DUPLICATE_EMAIL, fields: { email: DUPLICATE_EMAIL } });
+        return;
+      }
+      console.error('[ff-rsvp] organiser create failed', err);
+      res.status(500).json({ error: 'Could not save that change' });
+    }
+  });
+
+  app.post('/api/ff/organiser/delete', organiserLimit, async (req, res) => {
+    if (!requireSession(req, res)) return;
+    const id = req.body?.id;
+    if (typeof id !== 'string' || !UUID_RE.test(id)) {
+      res.status(400).json({ error: 'Invalid request' });
+      return;
+    }
+    const p = deps.getPool();
+    if (!p) {
+      res.status(503).json({ error: 'Database not configured' });
+      return;
+    }
+    try {
+      const result = await p.query<{ id: string }>(`DELETE FROM ${FF_TABLE} WHERE id = $1 RETURNING id`, [id]);
+      if (!result.rows[0]) {
+        res.status(404).json({ error: 'Not found' });
+        return;
+      }
+      res.json({ ok: true, id });
+    } catch (err) {
+      console.error('[ff-rsvp] organiser delete failed', err);
+      res.status(500).json({ error: 'Could not delete that RSVP' });
+    }
+  });
+
   // Labels: internal only. No email, no status change.
   app.post('/api/ff/organiser/labels', organiserLimit, async (req, res) => {
     if (!requireSession(req, res)) return;
