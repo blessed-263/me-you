@@ -18,7 +18,7 @@ export const FF_EVENT = {
 /** Next You&Me gathering, offered to guests who did not make the final list. */
 export const FF_NEXT_EVENT = {
   dateLong: 'Sunday, 6 December 2026',
-  ticketsUrl: 'https://www.howler.co.za/events/you-me-africa-with-martell-7685',
+  ticketsUrl: 'https://www.howler.co.za/events/you-me-with-martell-18dc',
 } as const;
 
 /**
