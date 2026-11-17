@@ -2,7 +2,16 @@ import { useEffect, useRef, useState } from 'react';
 import { useParams } from 'react-router-dom';
 import { apiUrl } from '../lib/api.ts';
 import FfRsvpForm from './FfRsvpForm.tsx';
-import { EMPTY_FORM, FF_COPY, FF_IMAGES, FF_STORAGE_KEY, normaliseSaMobile, type FfForm } from './content.ts';
+import { HOWLER_EVENT_URL } from '../lib/siteConfig.ts';
+import {
+  EMPTY_FORM,
+  FF_COPY,
+  FF_IMAGES,
+  FF_RSVP_CLOSED,
+  FF_STORAGE_KEY,
+  normaliseSaMobile,
+  type FfForm,
+} from './content.ts';
 import { prefersReducedMotion, useFfReveal } from './useFfReveal.ts';
 import './ff.css';
 
@@ -246,7 +255,27 @@ export default function FfInvitePage() {
             <span className="ff-ornament-line" />
           </div>
 
-          {view === 'form' && (
+          {FF_RSVP_CLOSED && (
+            <div className="ff-thanks ff-closed">
+              <p className="ff-tracked">{FF_COPY.closed.label}</p>
+              <h2 className="ff-thanks-h" id="ff-rsvp-heading">
+                {FF_COPY.closed.heading}
+              </h2>
+              <p className="ff-thanks-lead">{FF_COPY.closed.lead}</p>
+              <p className="ff-thanks-body">{FF_COPY.closed.body}</p>
+              <a
+                className="ff-btn ff-btn-link"
+                href={HOWLER_EVENT_URL}
+                target="_blank"
+                rel="noopener noreferrer"
+                aria-label={FF_COPY.closed.buttonLabel}
+              >
+                {FF_COPY.closed.button}
+              </a>
+            </div>
+          )}
+
+          {!FF_RSVP_CLOSED && view === 'form' && (
             <div key="form" className={panelClass}>
               <h2 className="ff-h2" id="ff-rsvp-heading">
                 {FF_COPY.form.heading}
@@ -256,7 +285,7 @@ export default function FfInvitePage() {
             </div>
           )}
 
-          {view === 'yes' && (
+          {!FF_RSVP_CLOSED && view === 'yes' && (
             <div key="yes" className={`ff-thanks ${panelClass ?? ''}`} role="status">
               <p className="ff-tracked">{FF_COPY.thanksYes.label}</p>
               <h2 className="ff-thanks-h" id="ff-rsvp-heading">
@@ -282,7 +311,7 @@ export default function FfInvitePage() {
             </div>
           )}
 
-          {view === 'no' && (
+          {!FF_RSVP_CLOSED && view === 'no' && (
             <div key="no" className={`ff-thanks ${panelClass ?? ''}`} role="status">
               <p className="ff-tracked">{FF_COPY.thanksNo.label}</p>
               <h2 className="ff-thanks-h" id="ff-rsvp-heading">

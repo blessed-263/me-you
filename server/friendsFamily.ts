@@ -37,7 +37,16 @@ export type FriendsFamilyDeps = {
   sendEmail?: SendEmail;
 };
 
-const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+/**
+ * RSVPs closed on 17 November 2026: new submissions are refused (410).
+ * Existing RSVPs and the organiser guest list are unaffected.
+ * Set FF_RSVP_OPEN=true on the server to accept RSVPs again.
+ */
+export function isFfRsvpClosed(): boolean {
+  return process.env.FF_RSVP_OPEN !== 'true';
+}
+
+const UUID_RE =/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
 export async function ensureFriendsFamilyTable(getPool: () => Pool | null): Promise<void> {
   const p = getPool();
@@ -163,6 +172,10 @@ export function registerFriendsFamilyRoutes(app: Express, deps: FriendsFamilyDep
   app.post('/api/ff/rsvp', requireAllowedOrigin, rsvpLimit, async (req, res) => {
     if (!isValidInviteToken(req.body?.token)) {
       res.status(404).json({ error: 'Invitation not found' });
+      return;
+    }
+    if (isFfRsvpClosed()) {
+      res.status(410).json({ error: 'RSVPs are closed' });
       return;
     }
     const parsed = validateFfRsvp(req.body);

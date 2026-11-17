@@ -4,6 +4,13 @@
  * server/friendsFamilyMeta.ts + server/friendsFamilyEmails.ts — keep them in step.
  */
 
+/**
+ * RSVPs closed (17 November 2026). The invite page shows the closed message and
+ * a link to tickets for the next gathering instead of the form. The server also
+ * refuses new RSVPs (server/friendsFamily.ts, unless FF_RSVP_OPEN=true).
+ */
+export const FF_RSVP_CLOSED = true;
+
 export const FF_BASE_PATH = '/ff';
 export const FF_ORGANISER_PATH = '/ff/organiser';
 export const FF_STORAGE_KEY = 'yme-ff-rsvp-2026-11-22';
@@ -75,6 +82,14 @@ export const FF_COPY = {
     lead: 'You will be missed. We hope to share good food, good music and even better company with you soon.',
     body: 'If your plans change, you can update your response here at any time.',
     link: 'CHANGE MY RESPONSE',
+  },
+  closed: {
+    label: 'RSVP',
+    heading: 'RSVPs are now closed.',
+    lead: 'Thank you to everyone who responded.',
+    body: 'Join us for the next You&Me gathering on Sunday, 6 December 2026. Tickets are on sale now.',
+    button: 'BUY TICKETS',
+    buttonLabel: 'Buy tickets for Sunday, 6 December 2026 on Howler (opens in a new tab)',
   },
   footer: {
     lineA: 'YOU&ME · MARTELL · KAYA 959',

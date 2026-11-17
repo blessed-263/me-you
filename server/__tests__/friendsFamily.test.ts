@@ -89,7 +89,8 @@ describe('Friends & Family API', () => {
 
   beforeEach(() => {
     vi.resetModules();
-    process.env = { ...originalEnv, FF_INVITE_TOKEN: TOKEN, FF_ORGANISER_PASSCODE: PASSCODE };
+    // RSVPs are closed by default; these tests exercise the open flow.
+    process.env = { ...originalEnv, FF_INVITE_TOKEN: TOKEN, FF_ORGANISER_PASSCODE: PASSCODE, FF_RSVP_OPEN: 'true' };
     process.env.RSVP_NOTIFY_EMAIL = 'hosts@example.com';
     delete process.env.NODE_ENV;
     delete process.env.RAILWAY_ENVIRONMENT;
@@ -123,6 +124,21 @@ describe('Friends & Family API', () => {
     delete process.env.FF_INVITE_TOKEN;
     const app = await loadApp(null);
     expect((await request(app).post('/api/ff/invite').send({ token: TOKEN })).status).toBe(404);
+  });
+
+  it('rsvp is closed by default: refuses new RSVPs, guest list still works', async () => {
+    delete process.env.FF_RSVP_OPEN;
+    const { pool, rows } = fakePool();
+    const app = await loadApp(pool);
+    const res = await request(app).post('/api/ff/rsvp').send(guest);
+    expect(res.status).toBe(410);
+    expect(rows).toHaveLength(0);
+    expect(sent).toHaveLength(0);
+    const wrongToken = await request(app).post('/api/ff/rsvp').send({ ...guest, token: 'wrong-wrong-wrong-wrong' });
+    expect(wrongToken.status).toBe(404);
+    const login = await request(app).post('/api/ff/organiser/login').send({ passcode: PASSCODE });
+    const list = await request(app).post('/api/ff/organiser/list').send({ session: login.body.session });
+    expect(list.status).toBe(200);
   });
 
   it('rsvp rejects a missing or wrong token before anything else', async () => {
