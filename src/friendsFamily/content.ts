@@ -137,6 +137,28 @@ export const FF_COPY = {
     saveFailed: 'Could not save that change. Try again.',
     refreshFailed: 'Could not refresh the list.',
     sessionEnded: 'Your session has ended. Enter the passcode again.',
+    // Approve / Decline decision emails
+    confirmTitleApprove: 'Approve guest',
+    confirmTitleDecline: 'Decline guest',
+    confirmSend: (name: string, email: string, d: 'approved' | 'declined') =>
+      d === 'approved'
+        ? `Send the "You are on the final guest list" email to ${name} (${email})?`
+        : `Send the "not on the final guest list" email (with the 6 December ticket link) to ${name} (${email})?`,
+    confirmNoEmailAlready: (name: string, d: 'approved' | 'declined', when: string) =>
+      `${d === 'approved' ? 'Approve' : 'Decline'} ${name}? They were already emailed on ${when}, so no new email will be sent.`,
+    confirmNoEmailNotAttending: (name: string, d: 'approved' | 'declined') =>
+      `${d === 'approved' ? 'Approve' : 'Decline'} ${name}? They said they can't attend, so no email will be sent.`,
+    send: 'SEND',
+    cancel: 'CANCEL',
+    retryEmail: 'Retry email',
+    emailSent: (name: string, email: string) => `Saved. Email sent to ${name} (${email}).`,
+    emailFailed: (name: string) =>
+      `Status saved, but the email to ${name} was not sent. Press "Retry email" to try again.`,
+    emailAlready: (name: string) => `Saved. ${name} was already emailed, so no new email was sent.`,
+    emailNotAttending: (name: string) => `Saved. No email sent: ${name} said they can't attend.`,
+    emailedAt: (when: string) => `Emailed ${when}`,
+    emailNotSent: 'Email not sent',
+    noEmailNotAttending: 'No email (not attending)',
   },
 } as const;
 

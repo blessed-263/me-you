@@ -22,6 +22,8 @@ type Row = {
   status: string;
   arrived: boolean;
   checked_in_at: Date | null;
+  approved_email_sent_at?: Date | null;
+  declined_email_sent_at?: Date | null;
   created_at: Date;
   updated_at: Date;
 };
@@ -51,6 +53,19 @@ function fakePool() {
         updated_at: new Date(),
       });
       return { rows: [{ inserted: true, prev_attending: null }], rowCount: 1 };
+    }
+    const claim = sql.match(/SET (approved|declined)_email_sent_at = (now\(\)|NULL)/);
+    if (claim) {
+      const key = `${claim[1]}_email_sent_at` as 'approved_email_sent_at' | 'declined_email_sent_at';
+      const r = rows.find((x) => x.id === params[0]);
+      if (!r) return { rows: [], rowCount: 0 };
+      if (claim[2] === 'NULL') {
+        r[key] = null;
+        return { rows: [r], rowCount: 1 };
+      }
+      if (r[key]) return { rows: [], rowCount: 0 };
+      r[key] = new Date();
+      return { rows: [r], rowCount: 1 };
     }
     if (sql.includes('SET status')) {
       const r = rows.find((x) => x.id === params[0]);
@@ -272,6 +287,63 @@ describe('Friends & Family API', () => {
     delete process.env.DATABASE_URL;
     app = await loadApp(fakePool().pool);
     expect((await request(app).post('/api/ff/organiser/login').send({ passcode: 'anything' })).status).toBe(503);
+  });
+
+  describe('Approve / Decline emails', () => {
+    async function setup(attending = true) {
+      const { pool, rows } = fakePool();
+      const app = await loadApp(pool);
+      await request(app).post('/api/ff/rsvp').send({ ...guest, attending });
+      const { session } = (await request(app).post('/api/ff/organiser/login').send({ passcode: PASSCODE })).body;
+      const id = rows[0].id;
+      sent = [];
+      const set = (status: string) => request(app).post('/api/ff/organiser/status').send({ session, id, status });
+      return { rows, set };
+    }
+
+    it('Approve emails once; pressing again never re-sends', async () => {
+      const { rows, set } = await setup();
+      const first = await set('approved');
+      expect(first.body.email).toBe('sent');
+      expect(first.body.rsvp.approvedEmailSentAt).toBeTruthy();
+      expect(sent).toEqual([{ to: 'test.delete-me@example.com', subject: 'You are on the final guest list · Friends & Family' }]);
+      await set('pending');
+      const again = await set('approved');
+      expect(again.body.email).toBe('already-sent');
+      expect(sent).toHaveLength(1);
+      expect(rows[0].status).toBe('approved');
+    });
+
+    it('Decline sends the warm not-on-the-list email once', async () => {
+      const { set } = await setup();
+      const res = await set('declined');
+      expect(res.body.email).toBe('sent');
+      expect(sent[0].subject).toBe('An update on your Friends & Family RSVP');
+      expect((await set('declined')).body.email).toBe('already-sent');
+      expect(sent).toHaveLength(1);
+    });
+
+    it('guests who said they cannot attend get no decision email', async () => {
+      const { rows, set } = await setup(false);
+      const res = await set('approved');
+      expect(res.body.email).toBe('not-attending');
+      expect(rows[0].status).toBe('approved');
+      expect(sent).toHaveLength(0);
+    });
+
+    it('a failed email keeps the status and can be retried', async () => {
+      const { rows, set } = await setup();
+      failEmail = true;
+      const res = await set('approved');
+      expect(res.status).toBe(200);
+      expect(res.body.email).toBe('failed');
+      expect(rows[0].status).toBe('approved');
+      expect(res.body.rsvp.approvedEmailSentAt).toBeNull();
+      failEmail = false;
+      const retry = await set('approved');
+      expect(retry.body.email).toBe('sent');
+      expect(sent).toHaveLength(1);
+    });
   });
 
   it('changing the passcode ends existing sessions', async () => {

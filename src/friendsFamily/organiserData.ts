@@ -10,6 +10,8 @@ export type FfRsvp = {
   status: FfStatus;
   arrived: boolean;
   checkedInAt: string | null;
+  approvedEmailSentAt?: string | null;
+  declinedEmailSentAt?: string | null;
   createdAt: string;
   updatedAt: string;
 };

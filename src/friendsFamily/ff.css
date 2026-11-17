@@ -1010,6 +1010,50 @@
   color: var(--ff-ink-soft);
 }
 
+.ffo-modal-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 50;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 16px;
+  background: rgba(59, 36, 24, 0.45);
+}
+
+.ffo-modal {
+  width: 100%;
+  max-width: 440px;
+  padding: 24px;
+  background: var(--ff-paper);
+  border: 1px solid var(--ff-ink);
+  color: var(--ff-ink);
+}
+
+.ffo-modal p {
+  margin: 0 0 22px;
+  font-size: 16px;
+  line-height: 1.55;
+}
+
+.ffo-modal-title {
+  margin: 0 0 12px;
+  font-family: var(--ff-display);
+  font-weight: 400;
+  font-size: 26px;
+}
+
+.ffo-modal-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
+}
+
+.ffo-modal-actions .ffo-btn {
+  min-height: 48px;
+  min-width: 110px;
+}
+
 /* Door-friendly cards on phones */
 @media (max-width: 760px) {
   .ffo-header {
