@@ -543,6 +543,15 @@
   line-height: 1.8;
 }
 
+/* "BUY TICKETS" link styled as the main outlined button */
+.ff-btn-link {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  margin-top: 30px;
+  text-decoration: none;
+}
+
 .ff-link {
   margin-top: 26px;
   min-height: 44px;
