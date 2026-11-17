@@ -20,7 +20,15 @@ import {
 
 /** What happened to the Approve / Decline email for this status change. */
 export type DecisionEmailResult = 'none' | 'sent' | 'already-sent' | 'not-attending' | 'failed';
-import { FF_STATUSES, FF_TABLE, ffInviteUrl, validateFfRsvp, type FfStatus } from './friendsFamilyMeta.js';
+import {
+  FF_GUEST_OF,
+  FF_STATUSES,
+  FF_TABLE,
+  FF_TYPE_LABELS,
+  ffInviteUrl,
+  validateFfRsvp,
+  type FfStatus,
+} from './friendsFamilyMeta.js';
 import { requireAllowedOrigin } from './middleware/requireAllowedOrigin.js';
 
 /**
@@ -84,6 +92,9 @@ export async function ensureFriendsFamilyTable(getPool: () => Pool | null): Prom
   // When the organiser's Approve / Decline decision email was sent (once each).
   await p.query(`ALTER TABLE ${FF_TABLE} ADD COLUMN IF NOT EXISTS approved_email_sent_at timestamptz;`);
   await p.query(`ALTER TABLE ${FF_TABLE} ADD COLUMN IF NOT EXISTS declined_email_sent_at timestamptz;`);
+  // Internal organiser labels (never shown to guests).
+  await p.query(`ALTER TABLE ${FF_TABLE} ADD COLUMN IF NOT EXISTS tags text[] NOT NULL DEFAULT '{}';`);
+  await p.query(`ALTER TABLE ${FF_TABLE} ADD COLUMN IF NOT EXISTS guest_of text;`);
   await p.query(`
     CREATE UNIQUE INDEX IF NOT EXISTS friends_family_rsvps_email_lower_idx
     ON ${FF_TABLE} (lower(email));
@@ -140,6 +151,8 @@ type RsvpRow = {
   checked_in_at: Date | null;
   approved_email_sent_at?: Date | null;
   declined_email_sent_at?: Date | null;
+  tags?: string[] | null;
+  guest_of?: string | null;
   created_at: Date;
   updated_at: Date;
 };
@@ -157,6 +170,8 @@ function toApi(row: RsvpRow) {
     checkedInAt: row.checked_in_at ? new Date(row.checked_in_at).toISOString() : null,
     approvedEmailSentAt: row.approved_email_sent_at ? new Date(row.approved_email_sent_at).toISOString() : null,
     declinedEmailSentAt: row.declined_email_sent_at ? new Date(row.declined_email_sent_at).toISOString() : null,
+    tags: row.tags ?? [],
+    guestOf: row.guest_of ?? null,
     createdAt: new Date(row.created_at).toISOString(),
     updatedAt: new Date(row.updated_at).toISOString(),
   };
@@ -278,7 +293,7 @@ export function registerFriendsFamilyRoutes(app: Express, deps: FriendsFamilyDep
     try {
       const result = await p.query<RsvpRow>(
         `SELECT id, first_name, surname, mobile, email, attending, status, arrived,
-                checked_in_at, created_at, updated_at, approved_email_sent_at, declined_email_sent_at
+                checked_in_at, created_at, updated_at, approved_email_sent_at, declined_email_sent_at, tags, guest_of
          FROM ${FF_TABLE} ORDER BY created_at DESC`,
       );
       res.json({ rsvps: result.rows.map(toApi) });
@@ -304,7 +319,7 @@ export function registerFriendsFamilyRoutes(app: Express, deps: FriendsFamilyDep
       const result = await p.query<RsvpRow>(
         `UPDATE ${FF_TABLE} SET status = $2, updated_at = now() WHERE id = $1
          RETURNING id, first_name, surname, mobile, email, attending, status, arrived,
-                   checked_in_at, created_at, updated_at, approved_email_sent_at, declined_email_sent_at`,
+                   checked_in_at, created_at, updated_at, approved_email_sent_at, declined_email_sent_at, tags, guest_of`,
         [id, status],
       );
       let row = result.rows[0];
@@ -326,7 +341,7 @@ export function registerFriendsFamilyRoutes(app: Express, deps: FriendsFamilyDep
           const claim = await p.query<RsvpRow>(
             `UPDATE ${FF_TABLE} SET ${col} = now() WHERE id = $1 AND ${col} IS NULL
              RETURNING id, first_name, surname, mobile, email, attending, status, arrived,
-                       checked_in_at, created_at, updated_at, approved_email_sent_at, declined_email_sent_at`,
+                       checked_in_at, created_at, updated_at, approved_email_sent_at, declined_email_sent_at, tags, guest_of`,
             [id],
           );
           if (!claim.rows[0]) {
@@ -345,7 +360,7 @@ export function registerFriendsFamilyRoutes(app: Express, deps: FriendsFamilyDep
               const undo = await p.query<RsvpRow>(
                 `UPDATE ${FF_TABLE} SET ${col} = NULL WHERE id = $1
                  RETURNING id, first_name, surname, mobile, email, attending, status, arrived,
-                           checked_in_at, created_at, updated_at, approved_email_sent_at, declined_email_sent_at`,
+                           checked_in_at, created_at, updated_at, approved_email_sent_at, declined_email_sent_at, tags, guest_of`,
                 [id],
               );
               row = undo.rows[0] ?? row;
@@ -357,6 +372,45 @@ export function registerFriendsFamilyRoutes(app: Express, deps: FriendsFamilyDep
       res.json({ rsvp: toApi(row), email });
     } catch (err) {
       console.error('[ff-rsvp] status update failed', err);
+      res.status(500).json({ error: 'Could not save that change' });
+    }
+  });
+
+  // Labels: internal only. No email, no status change.
+  app.post('/api/ff/organiser/labels', organiserLimit, async (req, res) => {
+    if (!requireSession(req, res)) return;
+    const { id, tags, guestOf } = req.body ?? {};
+    const validTags =
+      Array.isArray(tags) &&
+      tags.length <= FF_TYPE_LABELS.length &&
+      tags.every((t: unknown) => typeof t === 'string' && (FF_TYPE_LABELS as readonly string[]).includes(t));
+    const validGuestOf =
+      guestOf === null || (typeof guestOf === 'string' && (FF_GUEST_OF as readonly string[]).includes(guestOf));
+    if (typeof id !== 'string' || !UUID_RE.test(id) || !validTags || !validGuestOf) {
+      res.status(400).json({ error: 'Invalid request' });
+      return;
+    }
+    const p = deps.getPool();
+    if (!p) {
+      res.status(503).json({ error: 'Database not configured' });
+      return;
+    }
+    // Store in the fixed list order, without duplicates.
+    const ordered = FF_TYPE_LABELS.filter((t: string) => (tags as string[]).includes(t));
+    try {
+      const result = await p.query<RsvpRow>(
+        `UPDATE ${FF_TABLE} SET tags = $2, guest_of = $3 WHERE id = $1
+         RETURNING id, first_name, surname, mobile, email, attending, status, arrived,
+                   checked_in_at, created_at, updated_at, approved_email_sent_at, declined_email_sent_at, tags, guest_of`,
+        [id, ordered, guestOf],
+      );
+      if (!result.rows[0]) {
+        res.status(404).json({ error: 'Not found' });
+        return;
+      }
+      res.json({ rsvp: toApi(result.rows[0]) });
+    } catch (err) {
+      console.error('[ff-rsvp] labels update failed', err);
       res.status(500).json({ error: 'Could not save that change' });
     }
   });
@@ -381,7 +435,7 @@ export function registerFriendsFamilyRoutes(app: Express, deps: FriendsFamilyDep
              updated_at = now()
          WHERE id = $1
          RETURNING id, first_name, surname, mobile, email, attending, status, arrived,
-                   checked_in_at, created_at, updated_at, approved_email_sent_at, declined_email_sent_at`,
+                   checked_in_at, created_at, updated_at, approved_email_sent_at, declined_email_sent_at, tags, guest_of`,
         [id, arrived],
       );
       if (!result.rows[0]) {

@@ -24,6 +24,8 @@ type Row = {
   checked_in_at: Date | null;
   approved_email_sent_at?: Date | null;
   declined_email_sent_at?: Date | null;
+  tags?: string[];
+  guest_of?: string | null;
   created_at: Date;
   updated_at: Date;
 };
@@ -53,6 +55,11 @@ function fakePool() {
         updated_at: new Date(),
       });
       return { rows: [{ inserted: true, prev_attending: null }], rowCount: 1 };
+    }
+    if (sql.includes('SET tags')) {
+      const r = rows.find((x) => x.id === params[0]);
+      if (r) Object.assign(r, { tags: params[1], guest_of: params[2] });
+      return { rows: r ? [r] : [], rowCount: r ? 1 : 0 };
     }
     const claim = sql.match(/SET (approved|declined)_email_sent_at = (now\(\)|NULL)/);
     if (claim) {
@@ -344,6 +351,32 @@ describe('Friends & Family API', () => {
       expect(retry.body.email).toBe('sent');
       expect(sent).toHaveLength(1);
     });
+  });
+
+  it('labels: save, no email, no status change; unknown labels rejected', async () => {
+    const { pool, rows } = fakePool();
+    const app = await loadApp(pool);
+    await request(app).post('/api/ff/rsvp').send(guest);
+    const { session } = (await request(app).post('/api/ff/organiser/login').send({ passcode: PASSCODE })).body;
+    const id = rows[0].id;
+    sent = [];
+    const save = (body: Record<string, unknown>) =>
+      request(app).post('/api/ff/organiser/labels').send({ session, id, ...body });
+
+    const ok = await save({ tags: ['Important', 'Media', 'Media'], guestOf: 'Wez' });
+    expect(ok.status).toBe(200);
+    expect(ok.body.rsvp.tags).toEqual(['Media', 'Important']); // fixed order, no duplicates
+    expect(ok.body.rsvp.guestOf).toBe('Wez');
+    expect(ok.body.rsvp.status).toBe('pending');
+    expect(sent).toHaveLength(0);
+
+    expect((await save({ tags: ['VIP'], guestOf: null })).status).toBe(400);
+    expect((await save({ tags: [], guestOf: 'Somebody' })).status).toBe(400);
+    expect((await save({ tags: 'Media', guestOf: null })).status).toBe(400);
+
+    const cleared = await save({ tags: [], guestOf: null });
+    expect(cleared.body.rsvp).toMatchObject({ tags: [], guestOf: null });
+    expect((await request(app).post('/api/ff/organiser/labels').send({ id, tags: [], guestOf: null })).status).toBe(401);
   });
 
   it('changing the passcode ends existing sessions', async () => {

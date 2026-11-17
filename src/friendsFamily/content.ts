@@ -11,6 +11,15 @@
  */
 export const FF_RSVP_CLOSED = true;
 
+/**
+ * Internal guest-list labels (organiser dashboard only). Must match
+ * FF_TYPE_LABELS / FF_GUEST_OF in server/friendsFamilyMeta.ts.
+ */
+export const FF_LABELS = {
+  types: ['Media', 'Influencer', 'You&Me Day 1', 'New Guest', 'Important', 'Sponsor Martell', 'Sponsor Kaya'],
+  guestOf: ['Tshepo', 'Wez', 'Robby', 'Palesa', 'Robert', 'Itumeleng', 'Hanyane', 'Thomas', 'Yonela', 'Leigh', 'Eunicey'],
+} as const;
+
 export const FF_BASE_PATH = '/ff';
 export const FF_ORGANISER_PATH = '/ff/organiser';
 export const FF_STORAGE_KEY = 'yme-ff-rsvp-2026-11-22';
@@ -159,6 +168,20 @@ export const FF_COPY = {
     emailedAt: (when: string) => `Emailed ${when}`,
     emailNotSent: 'Email not sent',
     noEmailNotAttending: 'No email (not attending)',
+    // Labels
+    labels: 'Labels',
+    labelsTitle: (name: string) => `Labels · ${name}`,
+    labelsType: 'TYPE',
+    labelsGuestOf: 'GUEST OF',
+    labelsGuestOfHint: 'Pick one, or tap again to clear.',
+    labelsNote: 'Internal only. Guests never see labels, and saving sends no email.',
+    save: 'SAVE',
+    labelFilter: 'LABEL',
+    allLabels: 'All labels',
+    noLabelsYet: 'No labels yet.',
+    labelCountsHeading: 'LABELS',
+    guestOfLabel: (name: string) => `Guest of ${name}`,
+    labelsSaved: (name: string) => `Labels saved for ${name}.`,
   },
 } as const;
 

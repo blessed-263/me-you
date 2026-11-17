@@ -21,7 +21,36 @@ export const FF_NEXT_EVENT = {
   ticketsUrl: 'https://www.howler.co.za/events/you-me-africa-with-martell-7685',
 } as const;
 
-export const FF_TABLE ='friends_family_rsvps';
+/**
+ * Internal guest-list labels (organisers only; never shown to guests or emailed).
+ * Keep in step with FF_LABELS in src/friendsFamily/content.ts.
+ */
+export const FF_TYPE_LABELS = [
+  'Media',
+  'Influencer',
+  'You&Me Day 1',
+  'New Guest',
+  'Important',
+  'Sponsor Martell',
+  'Sponsor Kaya',
+] as const;
+
+/** "Guest of …": special invites from the main team (at most one per guest). */
+export const FF_GUEST_OF = [
+  'Tshepo',
+  'Wez',
+  'Robby',
+  'Palesa',
+  'Robert',
+  'Itumeleng',
+  'Hanyane',
+  'Thomas',
+  'Yonela',
+  'Leigh',
+  'Eunicey',
+] as const;
+
+export const FF_TABLE = 'friends_family_rsvps';
 
 /** Unlisted organiser path on the website (also hidden from search engines). */
 export const FF_ORGANISER_PATH = '/ff/organiser';

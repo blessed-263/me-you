@@ -12,6 +12,8 @@ export type FfRsvp = {
   checkedInAt: string | null;
   approvedEmailSentAt?: string | null;
   declinedEmailSentAt?: string | null;
+  tags?: string[];
+  guestOf?: string | null;
   createdAt: string;
   updatedAt: string;
 };
@@ -57,15 +59,44 @@ export function totals(rows: FfRsvp[]) {
   };
 }
 
+/** Label filter value: 'all', a type label, or `guestof:<Name>`. */
+export type LabelFilter = string;
+
+export function hasLabel(r: FfRsvp, label: LabelFilter): boolean {
+  if (label === 'all') return true;
+  if (label.startsWith('guestof:')) return r.guestOf === label.slice('guestof:'.length);
+  return (r.tags ?? []).includes(label);
+}
+
+/** Non-zero counts per label across all guests, in the fixed list order. */
+export function labelCounts(
+  rows: FfRsvp[],
+  types: readonly string[],
+  guestOf: readonly string[],
+): { key: LabelFilter; label: string; n: number }[] {
+  const out: { key: LabelFilter; label: string; n: number }[] = [];
+  for (const t of types) {
+    const n = rows.filter((r) => (r.tags ?? []).includes(t)).length;
+    if (n) out.push({ key: t, label: t, n });
+  }
+  for (const g of guestOf) {
+    const n = rows.filter((r) => r.guestOf === g).length;
+    if (n) out.push({ key: `guestof:${g}`, label: `Guest of ${g}`, n });
+  }
+  return out;
+}
+
 export function filterRows(
   rows: FfRsvp[],
   response: ResponseFilter,
   status: StatusFilter,
   search: string,
+  label: LabelFilter = 'all',
 ): FfRsvp[] {
   const q = search.trim().toLowerCase();
   const qDigits = q.replace(/\D/g, '');
   return rows.filter((r) => {
+    if (!hasLabel(r, label)) return false;
     if (response === 'yes' && !r.attending) return false;
     if (response === 'no' && r.attending) return false;
     if (status === 'arrived' ? !r.arrived : status !== 'all' && r.status !== status) return false;
@@ -100,6 +131,8 @@ export const CSV_HEADER = [
   'First received (SAST)',
   'Last updated (SAST)',
   'Checked in (SAST)',
+  'Labels',
+  'Guest of',
 ];
 
 /** Every value quoted; caller adds the UTF-8 BOM for downloads. */
@@ -117,6 +150,8 @@ export function toCsv(rows: FfRsvp[]): string {
         formatSast(r.createdAt),
         formatSast(r.updatedAt),
         r.arrived ? formatSast(r.checkedInAt) : '',
+        (r.tags ?? []).join('; '),
+        r.guestOf ?? '',
       ]
         .map(cell)
         .join(','),
