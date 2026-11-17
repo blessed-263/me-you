@@ -56,6 +56,31 @@ function fakePool() {
       });
       return { rows: [{ inserted: true, prev_attending: null }], rowCount: 1 };
     }
+    const dup = (email: string, exceptId?: string) =>
+      rows.some((x) => x.email.toLowerCase() === email && x.id !== exceptId);
+    if (sql.includes('SET first_name = $2')) {
+      const [rid, first, surname, mobile, email, attending] = params as [string, string, string, string, string, boolean];
+      if (dup(email, rid)) throw Object.assign(new Error('duplicate'), { code: '23505' });
+      const r = rows.find((x) => x.id === rid);
+      if (r) Object.assign(r, { first_name: first, surname, mobile, email, attending, updated_at: new Date() });
+      return { rows: r ? [r] : [], rowCount: r ? 1 : 0 };
+    }
+    if (sql.trim().startsWith('INSERT INTO')) {
+      const [first, surname, mobile, email, attending] = params as [string, string, string, string, boolean];
+      if (dup(email)) throw Object.assign(new Error('duplicate'), { code: '23505' });
+      const r: Row = {
+        id: randomUUID(), first_name: first, surname, mobile, email, attending, status: 'pending', arrived: false,
+        checked_in_at: null, created_at: new Date(), updated_at: new Date(),
+      };
+      rows.push(r);
+      return { rows: [r], rowCount: 1 };
+    }
+    if (sql.trim().startsWith('DELETE FROM')) {
+      const i = rows.findIndex((x) => x.id === params[0]);
+      if (i < 0) return { rows: [], rowCount: 0 };
+      const [r] = rows.splice(i, 1);
+      return { rows: [{ id: r.id }], rowCount: 1 };
+    }
     if (sql.includes('SET tags')) {
       const r = rows.find((x) => x.id === params[0]);
       if (r) Object.assign(r, { tags: params[1], guest_of: params[2] });
@@ -377,6 +402,76 @@ describe('Friends & Family API', () => {
     const cleared = await save({ tags: [], guestOf: null });
     expect(cleared.body.rsvp).toMatchObject({ tags: [], guestOf: null });
     expect((await request(app).post('/api/ff/organiser/labels').send({ id, tags: [], guestOf: null })).status).toBe(401);
+  });
+
+  describe('organiser edit / add / delete', () => {
+    async function setup() {
+      const { pool, rows } = fakePool();
+      const app = await loadApp(pool);
+      await request(app).post('/api/ff/rsvp').send(guest);
+      await request(app).post('/api/ff/rsvp').send({ ...guest, firstName: 'Other', email: 'other@example.com' });
+      const { session } = (await request(app).post('/api/ff/organiser/login').send({ passcode: PASSCODE })).body;
+      sent = [];
+      const call = (path: string, body: Record<string, unknown>) =>
+        request(app).post(`/api/ff/organiser/${path}`).send({ session, ...body });
+      return { app, rows, call };
+    }
+    const edited = { firstName: 'Edited', surname: 'Name', mobile: '060 000 0099', email: 'NEW@Example.com', attending: false };
+
+    it('edit: validates, normalises, keeps status/labels, never emails', async () => {
+      const { rows, call } = await setup();
+      const target = rows[0];
+      Object.assign(target, { status: 'approved', tags: ['Media'], guest_of: 'Wez', approved_email_sent_at: new Date() });
+      const bad = await call('edit', { id: target.id, ...edited, mobile: '012 345 6789' });
+      expect(bad.status).toBe(400);
+      expect(bad.body.fields.mobile).toBeTruthy();
+      const res = await call('edit', { id: target.id, ...edited });
+      expect(res.status).toBe(200);
+      expect(res.body.rsvp).toMatchObject({
+        firstName: 'Edited', mobile: '+27600000099', email: 'new@example.com', attending: false,
+        status: 'approved', tags: ['Media'], guestOf: 'Wez',
+      });
+      expect(res.body.rsvp.approvedEmailSentAt).toBeTruthy();
+      expect(sent).toHaveLength(0);
+    });
+
+    it('edit: duplicate email is refused and nothing changes', async () => {
+      const { rows, call } = await setup();
+      const res = await call('edit', { id: rows[0].id, ...edited, email: 'OTHER@example.com' });
+      expect(res.status).toBe(409);
+      expect(res.body.fields.email).toBe('Another guest already uses this email address.');
+      expect(rows[0].first_name).toBe('Test');
+    });
+
+    it('add: creates a Pending guest, refuses duplicates, never emails', async () => {
+      const { rows, call } = await setup();
+      const res = await call('create', { ...edited, email: 'added@example.com', attending: true });
+      expect(res.status).toBe(201);
+      expect(res.body.rsvp).toMatchObject({ firstName: 'Edited', status: 'pending', email: 'added@example.com' });
+      expect(rows).toHaveLength(3);
+      expect((await call('create', { ...edited, email: 'other@example.com' })).status).toBe(409);
+      expect((await call('create', { firstName: 'x' })).status).toBe(400);
+      expect(sent).toHaveLength(0);
+    });
+
+    it('delete: removes the RSVP, never emails', async () => {
+      const { rows, call } = await setup();
+      const id = rows[0].id;
+      expect((await call('delete', { id })).body).toEqual({ ok: true, id });
+      expect(rows.map((r) => r.id)).not.toContain(id);
+      expect((await call('delete', { id })).status).toBe(404);
+      expect((await call('delete', { id: 'not-a-uuid' })).status).toBe(400);
+      expect(sent).toHaveLength(0);
+    });
+
+    it('all three require an organiser session', async () => {
+      const { app, rows } = await setup();
+      const id = rows[0].id;
+      for (const [path, body] of [['edit', { id, ...edited }], ['create', edited], ['delete', { id }]] as const) {
+        expect((await request(app).post(`/api/ff/organiser/${path}`).send(body)).status).toBe(401);
+      }
+      expect(rows).toHaveLength(2);
+    });
   });
 
   it('changing the passcode ends existing sessions', async () => {

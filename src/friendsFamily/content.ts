@@ -182,6 +182,22 @@ export const FF_COPY = {
     labelCountsHeading: 'LABELS',
     guestOfLabel: (name: string) => `Guest of ${name}`,
     labelsSaved: (name: string) => `Labels saved for ${name}.`,
+    // Edit / add / delete
+    newGuest: 'ADD GUEST',
+    edit: 'Edit',
+    delete: 'Delete',
+    editTitle: (name: string) => `Edit · ${name}`,
+    newTitle: 'Add guest',
+    formNote: 'Saving sends no email. Status, labels and check-in stay as they are.',
+    newNote: 'The guest is added as Pending. No email is sent.',
+    responseQuestion: 'RESPONSE',
+    guestSaved: (name: string) => `Saved changes to ${name}.`,
+    guestAdded: (name: string) => `Added ${name} as Pending.`,
+    deleteTitle: 'Delete RSVP',
+    deleteConfirm: (name: string) => `Delete ${name}'s RSVP? This can't be undone.`,
+    deleteButton: 'DELETE',
+    guestDeleted: (name: string) => `Deleted ${name}'s RSVP.`,
+    deleteFailed: 'Could not delete that RSVP. Try again.',
   },
 } as const;
 

@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useMemo, useState, type FormEvent } from 'react';
 import { Link } from 'react-router-dom';
 import { apiUrl } from '../lib/api.ts';
-import { FF_BASE_PATH, FF_COPY, FF_IMAGES, FF_LABELS } from './content.ts';
+import { FF_BASE_PATH, FF_COPY, FF_IMAGES, FF_LABELS, validateForm } from './content.ts';
 import {
   filterRows,
   formatSast,
@@ -24,6 +24,129 @@ type Decision = 'approved' | 'declined';
 
 function sentAt(r: FfRsvp, d: Decision): string | null | undefined {
   return d === 'approved' ? r.approvedEmailSentAt : r.declinedEmailSentAt;
+}
+
+type GuestValues = { firstName: string; surname: string; mobile: string; email: string; attending: boolean | null };
+type GuestErrors = Partial<Record<keyof GuestValues | 'form', string>>;
+
+/** Edit an RSVP (row given) or add a guest by hand (row null). Never emails. */
+function GuestFormModal({
+  row,
+  onSave,
+  onCancel,
+}: {
+  row: FfRsvp | null;
+  onSave: (values: GuestValues) => Promise<GuestErrors | null>;
+  onCancel: () => void;
+}) {
+  const [values, setValues] = useState<GuestValues>({
+    firstName: row?.firstName ?? '',
+    surname: row?.surname ?? '',
+    mobile: row?.mobile ?? '',
+    email: row?.email ?? '',
+    attending: row ? row.attending : null,
+  });
+  const [errors, setErrors] = useState<GuestErrors>({});
+  const [busy, setBusy] = useState(false);
+  const set = <K extends keyof GuestValues>(k: K, v: GuestValues[K]) => {
+    setValues((cur) => ({ ...cur, [k]: v }));
+    setErrors((cur) => ({ ...cur, [k]: undefined, form: undefined }));
+  };
+
+  async function submit(e: FormEvent) {
+    e.preventDefault();
+    if (busy) return;
+    const local = validateForm(values);
+    if (Object.keys(local).length) {
+      setErrors(local);
+      return;
+    }
+    setBusy(true);
+    const result = await onSave(values);
+    setBusy(false);
+    if (result) setErrors(result);
+  }
+
+  const field = (k: 'firstName' | 'surname' | 'mobile' | 'email', label: string, type: string) => (
+    <div className="ffo-formfield">
+      <label className="ffo-label" htmlFor={`ffo-g-${k}`}>
+        {label}
+      </label>
+      <input
+        id={`ffo-g-${k}`}
+        className="ffo-input"
+        type={type}
+        value={values[k]}
+        onChange={(e) => set(k, e.target.value)}
+        maxLength={k === 'email' ? 160 : k === 'mobile' ? 20 : 80}
+        aria-invalid={errors[k] ? 'true' : undefined}
+        aria-describedby={errors[k] ? `ffo-g-${k}-err` : undefined}
+        autoComplete="off"
+      />
+      {errors[k] && (
+        <p id={`ffo-g-${k}-err`} className="ff-error">
+          {errors[k]}
+        </p>
+      )}
+    </div>
+  );
+
+  return (
+    <div className="ffo-modal-backdrop" onClick={onCancel}>
+      <form
+        className="ffo-modal ffo-modal-wide"
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="ffo-guest-title"
+        noValidate
+        onSubmit={submit}
+        onClick={(e) => e.stopPropagation()}
+        onKeyDown={(e) => {
+          if (e.key === 'Escape') onCancel();
+        }}
+      >
+        <h2 id="ffo-guest-title" className="ffo-modal-title">
+          {row ? o.editTitle(`${row.firstName} ${row.surname}`) : o.newTitle}
+        </h2>
+        {field('firstName', FF_COPY.form.firstName, 'text')}
+        {field('surname', FF_COPY.form.surname, 'text')}
+        {field('mobile', FF_COPY.form.mobile, 'tel')}
+        {field('email', FF_COPY.form.email, 'email')}
+        <fieldset className="ffo-labelset">
+          <legend className="ffo-label">{o.responseQuestion}</legend>
+          {([
+            [true, o.attending],
+            [false, o.notAttending],
+          ] as const).map(([v, label]) => (
+            <button
+              key={label}
+              type="button"
+              className="ffo-chip ffo-chip-btn ffo-chip-lg"
+              aria-pressed={values.attending === v}
+              onClick={() => set('attending', v)}
+            >
+              {label}
+            </button>
+          ))}
+          {errors.attending && <p className="ff-error" style={{ width: '100%' }}>{errors.attending}</p>}
+        </fieldset>
+        <p className="ffo-small">{row ? o.formNote : o.newNote}</p>
+        {errors.form && (
+          <p className="ff-error" role="alert">
+            {errors.form}
+          </p>
+        )}
+        <div className="ffo-modal-actions">
+          <button type="button" className="ffo-btn" onClick={onCancel}>
+            {o.cancel}
+          </button>
+          <button type="submit" className="ffo-btn ffo-btn-solid" disabled={busy}>
+            {o.save}
+          </button>
+        </div>
+      </form>
+    </div>
+  );
 }
 
 /** Pop-up to set a guest's internal labels (no email, no status change). */
@@ -269,6 +392,8 @@ export default function FfOrganiserPage() {
   const [confirm, setConfirm] = useState<{ row: FfRsvp; decision: Decision } | null>(null);
   const [labelFilter, setLabelFilter] = useState<LabelFilter>('all');
   const [labelEdit, setLabelEdit] = useState<FfRsvp | null>(null);
+  const [guestForm, setGuestForm] = useState<{ row: FfRsvp | null } | null>(null);
+  const [deleteRow, setDeleteRow] = useState<FfRsvp | null>(null);
   const [loading, setLoading] = useState(false);
 
   const signOut = useCallback((reason = '') => {
@@ -336,6 +461,51 @@ export default function FfOrganiserPage() {
       else setMessage(savedText ? { text: savedText } : null);
     } catch {
       setMessage({ text: o.saveFailed, error: true });
+    } finally {
+      setBusyId(null);
+    }
+  }
+
+  /** Edit (row given) or add (row null). Returns field errors to show, or null on success. */
+  async function saveGuest(row: FfRsvp | null, values: GuestValues): Promise<GuestErrors | null> {
+    if (!session) return null;
+    try {
+      const path = row ? '/api/ff/organiser/edit' : '/api/ff/organiser/create';
+      const { status: code, data } = await post<{ rsvp?: FfRsvp; error?: string; fields?: GuestErrors }>(path, {
+        session,
+        ...(row ? { id: row.id } : {}),
+        ...values,
+      });
+      if (code === 401) {
+        signOut(o.sessionEnded);
+        return null;
+      }
+      if ((code === 400 || code === 409) && data?.fields) return data.fields;
+      if ((code !== 200 && code !== 201) || !data?.rsvp) return { form: o.saveFailed };
+      const saved = data.rsvp;
+      setRows((prev) => (row ? (prev?.map((r) => (r.id === row.id ? saved : r)) ?? prev) : [saved, ...(prev ?? [])]));
+      const name = `${saved.firstName} ${saved.surname}`;
+      setMessage({ text: row ? o.guestSaved(name) : o.guestAdded(name) });
+      return null;
+    } catch {
+      return { form: o.saveFailed };
+    }
+  }
+
+  async function deleteGuest(row: FfRsvp) {
+    if (!session) return;
+    setBusyId(row.id);
+    try {
+      const { status: code } = await post<{ ok: boolean }>('/api/ff/organiser/delete', { session, id: row.id });
+      if (code === 401) {
+        signOut(o.sessionEnded);
+        return;
+      }
+      if (code !== 200 && code !== 404) throw new Error(String(code));
+      setRows((prev) => prev?.filter((r) => r.id !== row.id) ?? prev);
+      setMessage({ text: o.guestDeleted(`${row.firstName} ${row.surname}`) });
+    } catch {
+      setMessage({ text: o.deleteFailed, error: true });
     } finally {
       setBusyId(null);
     }
@@ -415,6 +585,9 @@ export default function FfOrganiserPage() {
           </button>
           <button className="ffo-btn" type="button" onClick={downloadCsv} disabled={!rows}>
             {o.downloadCsv}
+          </button>
+          <button className="ffo-btn ffo-btn-solid" type="button" onClick={() => setGuestForm({ row: null })} disabled={!rows}>
+            {o.newGuest}
           </button>
           <button className="ffo-btn" type="button" onClick={() => signOut()}>
             {o.signOut}
@@ -563,6 +736,24 @@ export default function FfOrganiserPage() {
                       >
                         + {o.labels}
                       </button>
+                      <button
+                        type="button"
+                        className="ffo-chip ffo-chip-btn ffo-chip-edit"
+                        disabled={busyId === r.id}
+                        onClick={() => setGuestForm({ row: r })}
+                        aria-label={`${o.edit}: ${r.firstName} ${r.surname}`}
+                      >
+                        {o.edit}
+                      </button>
+                      <button
+                        type="button"
+                        className="ffo-chip ffo-chip-btn ffo-chip-edit"
+                        disabled={busyId === r.id}
+                        onClick={() => setDeleteRow(r)}
+                        aria-label={`${o.delete}: ${r.firstName} ${r.surname}`}
+                      >
+                        {o.delete}
+                      </button>
                     </div>
                   </td>
                   <td data-label={o.headings[1]}>
@@ -647,6 +838,52 @@ export default function FfOrganiserPage() {
         </div>
         {rows && <p className="ffo-footer">{o.footer(shown.length, rows.length)}</p>}
       </main>
+      {guestForm && (
+        <GuestFormModal
+          row={guestForm.row}
+          onCancel={() => setGuestForm(null)}
+          onSave={async (values) => {
+            const errors = await saveGuest(guestForm.row, values);
+            if (!errors) setGuestForm(null);
+            return errors;
+          }}
+        />
+      )}
+      {deleteRow && (
+        <div className="ffo-modal-backdrop" onClick={() => setDeleteRow(null)}>
+          <div
+            className="ffo-modal"
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="ffo-delete-title"
+            onClick={(e) => e.stopPropagation()}
+            onKeyDown={(e) => {
+              if (e.key === 'Escape') setDeleteRow(null);
+            }}
+          >
+            <h2 id="ffo-delete-title" className="ffo-modal-title">
+              {o.deleteTitle}
+            </h2>
+            <p>{o.deleteConfirm(`${deleteRow.firstName} ${deleteRow.surname}`)}</p>
+            <div className="ffo-modal-actions">
+              <button type="button" className="ffo-btn" onClick={() => setDeleteRow(null)} autoFocus>
+                {o.cancel}
+              </button>
+              <button
+                type="button"
+                className="ffo-btn ffo-btn-danger"
+                onClick={() => {
+                  const r = deleteRow;
+                  setDeleteRow(null);
+                  void deleteGuest(r);
+                }}
+              >
+                {o.deleteButton}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
       {labelEdit && (
         <LabelEditor
           row={labelEdit}

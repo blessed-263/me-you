@@ -1148,6 +1148,24 @@
   margin-bottom: 8px;
 }
 
+.ffo-formfield {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  margin-bottom: 14px;
+}
+
+.ffo-btn-danger {
+  background: var(--ff-error);
+  border-color: var(--ff-error);
+  color: #fff;
+}
+
+.ffo-btn-danger:hover {
+  background: #6d2416;
+  color: #fff;
+}
+
 /* Door-friendly cards on phones */
 @media (max-width: 760px) {
   .ffo-header {
