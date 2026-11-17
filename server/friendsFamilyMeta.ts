@@ -15,7 +15,13 @@ export const FF_EVENT = {
   legalLine: 'Not for sale to persons under the age of 18. Enjoy responsibly.',
 } as const;
 
-export const FF_TABLE = 'friends_family_rsvps';
+/** Next You&Me gathering, offered to guests who did not make the final list. */
+export const FF_NEXT_EVENT = {
+  dateLong: 'Sunday, 6 December 2026',
+  ticketsUrl: 'https://www.howler.co.za/events/you-me-africa-with-martell-7685',
+} as const;
+
+export const FF_TABLE ='friends_family_rsvps';
 
 /** Unlisted organiser path on the website (also hidden from search engines). */
 export const FF_ORGANISER_PATH = '/ff/organiser';

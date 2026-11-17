@@ -16,6 +16,63 @@ import {
 import './ff.css';
 
 const SESSION_KEY = 'yme-ff-organiser-session';
+
+type DecisionEmailResult = 'none' | 'sent' | 'already-sent' | 'not-attending' | 'failed';
+type Decision = 'approved' | 'declined';
+
+function sentAt(r: FfRsvp, d: Decision): string | null | undefined {
+  return d === 'approved' ? r.approvedEmailSentAt : r.declinedEmailSentAt;
+}
+
+/** Confirmation pop-up before Approve / Decline (which may email the guest). */
+function ConfirmDecision({
+  row,
+  decision,
+  onConfirm,
+  onCancel,
+}: {
+  row: FfRsvp;
+  decision: Decision;
+  onConfirm: () => void;
+  onCancel: () => void;
+}) {
+  const name = `${row.firstName} ${row.surname}`;
+  const already = sentAt(row, decision);
+  const willEmail = row.attending && !already;
+  const text = !row.attending
+    ? o.confirmNoEmailNotAttending(name, decision)
+    : already
+      ? o.confirmNoEmailAlready(name, decision, formatSast(already))
+      : o.confirmSend(name, row.email, decision);
+  const action = willEmail ? o.send : decision === 'approved' ? o.approve : o.decline;
+  return (
+    <div className="ffo-modal-backdrop" onClick={onCancel}>
+      <div
+        className="ffo-modal"
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="ffo-modal-title"
+        onClick={(e) => e.stopPropagation()}
+        onKeyDown={(e) => {
+          if (e.key === 'Escape') onCancel();
+        }}
+      >
+        <h2 id="ffo-modal-title" className="ffo-modal-title">
+          {decision === 'approved' ? o.confirmTitleApprove : o.confirmTitleDecline}
+        </h2>
+        <p>{text}</p>
+        <div className="ffo-modal-actions">
+          <button type="button" className="ffo-btn" onClick={onCancel}>
+            {o.cancel}
+          </button>
+          <button type="button" className="ffo-btn ffo-btn-solid" onClick={onConfirm} autoFocus>
+            {action}
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}
 const o = FF_COPY.organiser;
 
 function loadSession(): string | null {
@@ -130,6 +187,7 @@ export default function FfOrganiserPage() {
   const [status, setStatus] = useState<StatusFilter>('all');
   const [search, setSearch] = useState('');
   const [busyId, setBusyId] = useState<string | null>(null);
+  const [confirm, setConfirm] = useState<{ row: FfRsvp; decision: Decision } | null>(null);
   const [loading, setLoading] = useState(false);
 
   const signOut = useCallback((reason = '') => {
@@ -176,14 +234,24 @@ export default function FfOrganiserPage() {
     if (!session) return;
     setBusyId(id);
     try {
-      const { status: code, data } = await post<{ rsvp: FfRsvp }>(path, { session, id, ...body });
+      const { status: code, data } = await post<{ rsvp: FfRsvp; email?: DecisionEmailResult }>(path, {
+        session,
+        id,
+        ...body,
+      });
       if (code === 401) {
         signOut(o.sessionEnded);
         return;
       }
       if (code !== 200 || !data?.rsvp) throw new Error(String(code));
       setRows((prev) => prev?.map((r) => (r.id === id ? data.rsvp : r)) ?? prev);
-      setMessage(null);
+      const name = `${data.rsvp.firstName} ${data.rsvp.surname}`;
+      const email = data.email ?? 'none';
+      if (email === 'sent') setMessage({ text: o.emailSent(name, data.rsvp.email) });
+      else if (email === 'failed') setMessage({ text: o.emailFailed(name), error: true });
+      else if (email === 'already-sent') setMessage({ text: o.emailAlready(name) });
+      else if (email === 'not-attending') setMessage({ text: o.emailNotAttending(name) });
+      else setMessage(null);
     } catch {
       setMessage({ text: o.saveFailed, error: true });
     } finally {
@@ -368,35 +436,49 @@ export default function FfOrganiserPage() {
                   </td>
                   <td data-label={o.headings[5]}>
                     <StatusBadge status={r.status} />
+                    {(r.status === 'approved' || r.status === 'declined') && (
+                      <div className="ffo-small">
+                        {!r.attending
+                          ? o.noEmailNotAttending
+                          : sentAt(r, r.status)
+                            ? o.emailedAt(formatSast(sentAt(r, r.status) ?? null))
+                            : o.emailNotSent}
+                      </div>
+                    )}
                   </td>
                   <td>
                     <div className="ffo-rowbtns">
-                      <button
-                        type="button"
-                        className="ffo-btn"
-                        aria-pressed={r.status === 'approved'}
-                        disabled={busyId === r.id}
-                        onClick={() =>
-                          void update(r.id, '/api/ff/organiser/status', {
-                            status: r.status === 'approved' ? 'pending' : 'approved',
-                          })
-                        }
-                      >
-                        {o.approve}
-                      </button>
-                      <button
-                        type="button"
-                        className="ffo-btn"
-                        aria-pressed={r.status === 'declined'}
-                        disabled={busyId === r.id}
-                        onClick={() =>
-                          void update(r.id, '/api/ff/organiser/status', {
-                            status: r.status === 'declined' ? 'pending' : 'declined',
-                          })
-                        }
-                      >
-                        {o.decline}
-                      </button>
+                      {([
+                        ['approved', o.approve],
+                        ['declined', o.decline],
+                      ] as const).map(([decision, label]) => (
+                        <button
+                          key={decision}
+                          type="button"
+                          className="ffo-btn"
+                          aria-pressed={r.status === decision}
+                          disabled={busyId === r.id}
+                          onClick={() =>
+                            r.status === decision
+                              ? void update(r.id, '/api/ff/organiser/status', { status: 'pending' })
+                              : setConfirm({ row: r, decision })
+                          }
+                        >
+                          {label}
+                        </button>
+                      ))}
+                      {(r.status === 'approved' || r.status === 'declined') &&
+                        r.attending &&
+                        !sentAt(r, r.status) && (
+                          <button
+                            type="button"
+                            className="ffo-btn ffo-btn-solid"
+                            disabled={busyId === r.id}
+                            onClick={() => setConfirm({ row: r, decision: r.status as Decision })}
+                          >
+                            {o.retryEmail}
+                          </button>
+                        )}
                     </div>
                   </td>
                   <td>
@@ -422,6 +504,18 @@ export default function FfOrganiserPage() {
         </div>
         {rows && <p className="ffo-footer">{o.footer(shown.length, rows.length)}</p>}
       </main>
+      {confirm && (
+        <ConfirmDecision
+          row={confirm.row}
+          decision={confirm.decision}
+          onCancel={() => setConfirm(null)}
+          onConfirm={() => {
+            const { row, decision } = confirm;
+            setConfirm(null);
+            void update(row.id, '/api/ff/organiser/status', { status: decision });
+          }}
+        />
+      )}
     </div>
   );
 }

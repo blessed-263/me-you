@@ -1,4 +1,4 @@
-import { FF_EVENT, FF_ORGANISER_PATH, ffSiteOrigin } from './friendsFamilyMeta.js';
+import { FF_EVENT, FF_NEXT_EVENT, FF_ORGANISER_PATH, ffSiteOrigin } from './friendsFamilyMeta.js';
 
 /** Friends & Family email templates: table layout, inline styles, safe font fallbacks. */
 
@@ -166,5 +166,63 @@ export function renderFfHostNotifyEmail(guest: {
     text:
       `${kind}\n\nGuest: ${fullName}\nResponse: ${response}\nMobile: ${guest.mobile}\nEmail: ${guest.email}\n\n` +
       `Review it on the guest list: ${organiserUrl}`,
+  };
+}
+
+function buttonRow(label: string, url: string): string {
+  const safeUrl = escapeHtml(url);
+  return `<tr><td align="center" style="padding:22px 40px 6px;">
+    <table role="presentation" cellpadding="0" cellspacing="0" border="0">
+      <tr><td align="center" bgcolor="${c.ink}" style="background-color:${c.ink};">
+        <a href="${safeUrl}" target="_blank" rel="noopener noreferrer" style="display:inline-block;padding:16px 34px;font-family:${sans};font-size:13px;font-weight:600;letter-spacing:0.32em;color:#F4E9DC;text-decoration:none;">${escapeHtml(label)}</a>
+      </td></tr>
+    </table>
+  </td></tr>`;
+}
+
+/** Sent once when the organiser presses Approve (attending guests only). */
+export function renderFfApprovedEmail(firstName: string): EmailContent {
+  const name = escapeHtml(firstName);
+  const subject = 'You are on the final guest list · Friends & Family';
+  const lead = 'Your invitation is fully confirmed. You are on the final guest list for Friends & Family.';
+  const body =
+    'Your name is on the guest list at the door. We look forward to sharing good food, good music and even better company with you.';
+  return {
+    subject,
+    html: shell(
+      subject,
+      heading(`You are confirmed, ${name}.`) +
+        para(lead, { italic: true }) +
+        para(body) +
+        detailsBlock(),
+    ),
+    text:
+      `You are confirmed, ${firstName}.\n\n${lead}\n\n${body}\n\n` +
+      `${FF_EVENT.dateLong}\n${FF_EVENT.time}\n${FF_EVENT.venueName} · ${FF_EVENT.venueStreet}, ${FF_EVENT.venueArea}` +
+      TEXT_FOOTER,
+  };
+}
+
+/** Sent once when the organiser presses Decline (attending guests only). Warm, not a rejection. */
+export function renderFfDeclinedEmail(firstName: string): EmailContent {
+  const name = escapeHtml(firstName);
+  const subject = 'An update on your Friends & Family RSVP';
+  const lead = 'Thank you so much for wanting to spend the afternoon with us.';
+  const body1 =
+    'Our invitation travelled further than we expected, and with space at Kaya 959 limited to a small group, we were not able to include everyone on the final guest list. This means we cannot confirm a place for you on Sunday, 22 November, and we are truly sorry.';
+  const body2 = `We would love to see you at the next You&Me gathering on ${FF_NEXT_EVENT.dateLong}. Tickets are on sale now.`;
+  return {
+    subject,
+    html: shell(
+      subject,
+      heading(`Thank you, ${name}.`) +
+        para(lead, { italic: true }) +
+        para(body1) +
+        para(body2) +
+        buttonRow('BUY TICKETS', FF_NEXT_EVENT.ticketsUrl),
+    ),
+    text:
+      `Thank you, ${firstName}.\n\n${lead}\n\n${body1}\n\n${body2}\n\nBuy tickets: ${FF_NEXT_EVENT.ticketsUrl}` +
+      TEXT_FOOTER,
   };
 }

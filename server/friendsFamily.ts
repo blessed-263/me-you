@@ -10,7 +10,16 @@ import {
   isValidPasscode,
   issueOrganiserSession,
 } from './friendsFamilyAuth.js';
-import { renderFfGuestEmail, renderFfHostNotifyEmail, type EmailContent } from './friendsFamilyEmails.js';
+import {
+  renderFfApprovedEmail,
+  renderFfDeclinedEmail,
+  renderFfGuestEmail,
+  renderFfHostNotifyEmail,
+  type EmailContent,
+} from './friendsFamilyEmails.js';
+
+/** What happened to the Approve / Decline email for this status change. */
+export type DecisionEmailResult = 'none' | 'sent' | 'already-sent' | 'not-attending' | 'failed';
 import { FF_STATUSES, FF_TABLE, ffInviteUrl, validateFfRsvp, type FfStatus } from './friendsFamilyMeta.js';
 import { requireAllowedOrigin } from './middleware/requireAllowedOrigin.js';
 
@@ -72,6 +81,9 @@ export async function ensureFriendsFamilyTable(getPool: () => Pool | null): Prom
   `);
   await p.query(`ALTER TABLE ${FF_TABLE} ADD COLUMN IF NOT EXISTS arrived boolean NOT NULL DEFAULT false;`);
   await p.query(`ALTER TABLE ${FF_TABLE} ADD COLUMN IF NOT EXISTS checked_in_at timestamptz;`);
+  // When the organiser's Approve / Decline decision email was sent (once each).
+  await p.query(`ALTER TABLE ${FF_TABLE} ADD COLUMN IF NOT EXISTS approved_email_sent_at timestamptz;`);
+  await p.query(`ALTER TABLE ${FF_TABLE} ADD COLUMN IF NOT EXISTS declined_email_sent_at timestamptz;`);
   await p.query(`
     CREATE UNIQUE INDEX IF NOT EXISTS friends_family_rsvps_email_lower_idx
     ON ${FF_TABLE} (lower(email));
@@ -89,8 +101,8 @@ const defaultSendEmail: SendEmail = async (to, email) => {
   const apiKey = process.env.RESEND_API_KEY?.trim();
   const from = process.env.RESEND_FROM_EMAIL?.trim();
   if (!apiKey || !from) {
-    console.warn('[ff-rsvp] RESEND_API_KEY or RESEND_FROM_EMAIL not set; skipping email.');
-    return;
+    // Throw so callers report "not sent" (never claim an email went out when it didn't).
+    throw new Error('RESEND_API_KEY or RESEND_FROM_EMAIL not set; email not sent.');
   }
   const resend = new Resend(apiKey);
   const { error } = await resend.emails.send({
@@ -126,6 +138,8 @@ type RsvpRow = {
   status: FfStatus;
   arrived: boolean;
   checked_in_at: Date | null;
+  approved_email_sent_at?: Date | null;
+  declined_email_sent_at?: Date | null;
   created_at: Date;
   updated_at: Date;
 };
@@ -141,6 +155,8 @@ function toApi(row: RsvpRow) {
     status: row.status,
     arrived: row.arrived,
     checkedInAt: row.checked_in_at ? new Date(row.checked_in_at).toISOString() : null,
+    approvedEmailSentAt: row.approved_email_sent_at ? new Date(row.approved_email_sent_at).toISOString() : null,
+    declinedEmailSentAt: row.declined_email_sent_at ? new Date(row.declined_email_sent_at).toISOString() : null,
     createdAt: new Date(row.created_at).toISOString(),
     updatedAt: new Date(row.updated_at).toISOString(),
   };
@@ -262,7 +278,7 @@ export function registerFriendsFamilyRoutes(app: Express, deps: FriendsFamilyDep
     try {
       const result = await p.query<RsvpRow>(
         `SELECT id, first_name, surname, mobile, email, attending, status, arrived,
-                checked_in_at, created_at, updated_at
+                checked_in_at, created_at, updated_at, approved_email_sent_at, declined_email_sent_at
          FROM ${FF_TABLE} ORDER BY created_at DESC`,
       );
       res.json({ rsvps: result.rows.map(toApi) });
@@ -288,14 +304,57 @@ export function registerFriendsFamilyRoutes(app: Express, deps: FriendsFamilyDep
       const result = await p.query<RsvpRow>(
         `UPDATE ${FF_TABLE} SET status = $2, updated_at = now() WHERE id = $1
          RETURNING id, first_name, surname, mobile, email, attending, status, arrived,
-                   checked_in_at, created_at, updated_at`,
+                   checked_in_at, created_at, updated_at, approved_email_sent_at, declined_email_sent_at`,
         [id, status],
       );
-      if (!result.rows[0]) {
+      let row = result.rows[0];
+      if (!row) {
         res.status(404).json({ error: 'Not found' });
         return;
       }
-      res.json({ rsvp: toApi(result.rows[0]) });
+
+      // Decision email: once per decision, only to guests who said they're attending.
+      let email: DecisionEmailResult = 'none';
+      if (status === 'approved' || status === 'declined') {
+        const col = status === 'approved' ? 'approved_email_sent_at' : 'declined_email_sent_at';
+        if (!row.attending) {
+          email = 'not-attending';
+        } else if (row[col]) {
+          email = 'already-sent';
+        } else {
+          // Claim the send atomically so two quick presses can never email twice.
+          const claim = await p.query<RsvpRow>(
+            `UPDATE ${FF_TABLE} SET ${col} = now() WHERE id = $1 AND ${col} IS NULL
+             RETURNING id, first_name, surname, mobile, email, attending, status, arrived,
+                       checked_in_at, created_at, updated_at, approved_email_sent_at, declined_email_sent_at`,
+            [id],
+          );
+          if (!claim.rows[0]) {
+            email = 'already-sent';
+          } else {
+            row = claim.rows[0];
+            try {
+              const content =
+                status === 'approved'
+                  ? renderFfApprovedEmail(row.first_name)
+                  : renderFfDeclinedEmail(row.first_name);
+              await sendEmail(row.email, content);
+              email = 'sent';
+            } catch (mailErr) {
+              console.error(`[ff-rsvp] ${status} email failed (status saved)`, mailErr);
+              const undo = await p.query<RsvpRow>(
+                `UPDATE ${FF_TABLE} SET ${col} = NULL WHERE id = $1
+                 RETURNING id, first_name, surname, mobile, email, attending, status, arrived,
+                           checked_in_at, created_at, updated_at, approved_email_sent_at, declined_email_sent_at`,
+                [id],
+              );
+              row = undo.rows[0] ?? row;
+              email = 'failed';
+            }
+          }
+        }
+      }
+      res.json({ rsvp: toApi(row), email });
     } catch (err) {
       console.error('[ff-rsvp] status update failed', err);
       res.status(500).json({ error: 'Could not save that change' });
@@ -322,7 +381,7 @@ export function registerFriendsFamilyRoutes(app: Express, deps: FriendsFamilyDep
              updated_at = now()
          WHERE id = $1
          RETURNING id, first_name, surname, mobile, email, attending, status, arrived,
-                   checked_in_at, created_at, updated_at`,
+                   checked_in_at, created_at, updated_at, approved_email_sent_at, declined_email_sent_at`,
         [id, arrived],
       );
       if (!result.rows[0]) {
