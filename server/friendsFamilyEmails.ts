@@ -186,7 +186,7 @@ export function renderFfApprovedEmail(firstName: string): EmailContent {
   const subject = 'You are on the final guest list · Friends & Family';
   const lead = 'Your invitation is fully confirmed. You are on the final guest list for Friends & Family.';
   const body =
-    'Your name is on the guest list at the door. We look forward to sharing good food, good music and even better company with you.';
+    "Your name is on the guest list at the door. Please note this invitation is for you only (one guest), so we're unable to accommodate a plus one. We look forward to sharing good food, good music and even better company with you.";
   return {
     subject,
     html: shell(
