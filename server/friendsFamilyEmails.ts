@@ -185,15 +185,17 @@ export function renderFfApprovedEmail(firstName: string): EmailContent {
   const name = escapeHtml(firstName);
   const subject = 'You are on the final guest list · Friends & Family';
   const lead = 'Your invitation is fully confirmed. You are on the final guest list for Friends & Family.';
-  const body =
-    "Your name is on the guest list at the door. Please note this invitation is for you only (one guest), so we're unable to accommodate a plus one. We look forward to sharing good food, good music and even better company with you.";
+  const oneGuest = 'Please note this invitation is for you only (one guest)';
+  const body = `Your name is on the guest list at the door. ${oneGuest}, so we're unable to accommodate a plus one. We look forward to sharing good food, good music and even better company with you.`;
+  // HTML version: the one-guest note in bold (plain text can't be bold).
+  const bodyHtml = body.replace(oneGuest, `<strong style="font-weight:700;">${oneGuest}</strong>`);
   return {
     subject,
     html: shell(
       subject,
       heading(`You are confirmed, ${name}.`) +
         para(lead, { italic: true }) +
-        para(body) +
+        para(bodyHtml) +
         detailsBlock(),
     ),
     text:
