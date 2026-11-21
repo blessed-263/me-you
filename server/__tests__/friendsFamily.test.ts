@@ -81,6 +81,26 @@ function fakePool() {
       const [r] = rows.splice(i, 1);
       return { rows: [{ id: r.id }], rowCount: 1 };
     }
+    if (sql.includes('day_before_email_sent_at')) {
+      type DRow = Row & { day_before_email_sent_at?: Date | null };
+      const due = (x: DRow) => x.status === 'approved' && x.attending;
+      if (sql.includes('count(*)')) {
+        const n = (rows as DRow[]).filter((x) => due(x) && x.day_before_email_sent_at).length;
+        return { rows: [{ n: String(n) }], rowCount: 1 };
+      }
+      if (sql.trim().startsWith('SELECT id')) {
+        const list = (rows as DRow[]).filter((x) => due(x) && !x.day_before_email_sent_at).map((x) => ({ id: x.id }));
+        return { rows: list, rowCount: list.length };
+      }
+      const r = (rows as DRow[]).find((x) => x.id === params[0]);
+      if (sql.includes('= NULL')) {
+        if (r) r.day_before_email_sent_at = null;
+        return { rows: [], rowCount: r ? 1 : 0 };
+      }
+      if (!r || r.day_before_email_sent_at || !due(r)) return { rows: [], rowCount: 0 };
+      r.day_before_email_sent_at = new Date();
+      return { rows: [{ email: r.email, first_name: r.first_name }], rowCount: 1 };
+    }
     if (sql.includes('SET tags')) {
       const r = rows.find((x) => x.id === params[0]);
       if (r) Object.assign(r, { tags: params[1], guest_of: params[2] });
@@ -488,6 +508,31 @@ describe('Friends & Family API', () => {
     expect(email.html).toContain('styling-direction.jpg');
     expect(email.html).toContain('&lt;b&gt;Thandi');
     expect(email.attachments?.[0].filename).toBe('Friends-Family-Styling-Direction.jpg');
+  });
+
+  it('day-before send: approved + attending only, once each, failures retried', async () => {
+    const { pool, rows } = fakePool();
+    const app = await loadApp(pool);
+    const add = (n: number, attending = true) =>
+      request(app).post('/api/ff/rsvp').send({ ...guest, firstName: `G${n}`, email: `g${n}@example.com`, attending });
+    await add(1); await add(2); await add(3); await add(4, false);
+    rows[0].status = 'approved'; rows[1].status = 'approved'; rows[2].status = 'declined'; rows[3].status = 'approved';
+    const { session } = (await request(app).post('/api/ff/organiser/login').send({ passcode: PASSCODE })).body;
+    sent = [];
+    expect((await request(app).post('/api/ff/organiser/day-before-send').send({})).status).toBe(401);
+    const first = await request(app).post('/api/ff/organiser/day-before-send').send({ session });
+    expect(first.body).toMatchObject({ ok: true, sent: 2, failed: [], totalSentToDate: 2 });
+    expect(sent.map((s) => s.to).sort()).toEqual(['g1@example.com', 'g2@example.com']);
+    const again = await request(app).post('/api/ff/organiser/day-before-send').send({ session });
+    expect(again.body).toMatchObject({ sent: 0, totalSentToDate: 2 });
+    expect(sent).toHaveLength(2);
+    rows[2].status = 'approved';
+    failEmail = true;
+    const fail = await request(app).post('/api/ff/organiser/day-before-send').send({ session });
+    expect(fail.body).toMatchObject({ ok: false, sent: 0, failed: ['g3@example.com'] });
+    failEmail = false;
+    const retry = await request(app).post('/api/ff/organiser/day-before-send').send({ session });
+    expect(retry.body).toMatchObject({ ok: true, sent: 1, totalSentToDate: 3 });
   });
 
   it('changing the passcode ends existing sessions', async () => {
