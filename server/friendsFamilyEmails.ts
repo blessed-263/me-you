@@ -23,7 +23,13 @@ export function escapeHtml(value: string): string {
     .replace(/'/g, '&#39;');
 }
 
-export type EmailContent = { subject: string; html: string; text: string };
+export type EmailContent = {
+  subject: string;
+  html: string;
+  text: string;
+  /** Optional file attachments, fetched by Resend from a public URL. */
+  attachments?: { filename: string; path: string }[];
+};
 
 function shell(title: string, inner: string): string {
   const logo = `${ffSiteOrigin()}/images/friends-family/youme-wordmark.png`;
@@ -226,5 +232,53 @@ export function renderFfDeclinedEmail(firstName: string): EmailContent {
     text:
       `Thank you, ${firstName}.\n\n${lead}\n\n${body1}\n\n${body2}\n\nBuy tickets: ${FF_NEXT_EVENT.ticketsUrl}` +
       TEXT_FOOTER,
+  };
+}
+
+function sectionHeading(label: string): string {
+  return `<tr><td align="center" style="padding:24px 40px 0;">
+    <p style="margin:0;font-family:${sans};font-size:12px;font-weight:600;letter-spacing:0.28em;color:${c.ink};">${escapeHtml(label)}</p>
+  </td></tr>`;
+}
+
+/** Day-before note (21 November 2026): dress code with styling image, e-hailing, jacket. */
+export function renderFfDayBeforeEmail(firstName?: string): EmailContent {
+  const greeting = firstName ? `See you tomorrow, ${escapeHtml(firstName)}.` : 'See you tomorrow.';
+  const subject = 'See you tomorrow · Friends & Family';
+  const imageUrl = `${ffSiteOrigin()}/images/friends-family/styling-direction.jpg`;
+  const lead = "We're so happy to see you tomorrow at Friends & Family.";
+  const dress =
+    'Please be advised of the dress code: relaxed, elegant summer. Think neutral tones (cream, white, sand, beige), linen and soft tailoring, with denim or a soft stripe welcome. See the styling direction below (also attached).';
+  const dressHtml = dress.replace('relaxed, elegant summer', '<strong style="font-weight:700;">relaxed, elegant summer</strong>');
+  const travel = 'We encourage you to use an e-hailing service such as Uber or Bolt, so you can relax and enjoy the afternoon.';
+  const weather = 'Due to the weather, please bring a jacket.';
+  const oneGuest = 'Please note this invitation is for you only (one guest)';
+  const oneGuestLine = `${oneGuest}, so we're unable to accommodate a plus one.`;
+  const imageRow = `<tr><td align="center" style="padding:16px 24px 0;">
+    <img src="${escapeHtml(imageUrl)}" alt="Styling direction: relaxed neutral summer looks in cream, white, sand and denim" width="512" style="display:block;width:100%;max-width:512px;height:auto;border:0;" />
+  </td></tr>`;
+  return {
+    subject,
+    html: shell(
+      subject,
+      heading(greeting) +
+        para(lead, { italic: true }) +
+        sectionHeading('DRESS CODE') +
+        para(dressHtml) +
+        imageRow +
+        sectionHeading('GETTING THERE') +
+        para(travel) +
+        sectionHeading('THE WEATHER') +
+        para(weather) +
+        detailsBlock() +
+        para(oneGuestLine.replace(oneGuest, `<strong style="font-weight:700;">${oneGuest}</strong>`)) +
+        para('See you tomorrow.', { italic: true }),
+    ),
+    text:
+      `${firstName ? `Hi ${firstName},` : 'Hello,'}\n\n${lead}\n\nDRESS CODE\n${dress}\n\nGETTING THERE\n${travel}\n\nTHE WEATHER\n${weather}\n\n` +
+      `${FF_EVENT.dateLong}\n${FF_EVENT.time}\n${FF_EVENT.venueName} · ${FF_EVENT.venueStreet}, ${FF_EVENT.venueArea}\n\n` +
+      `${oneGuestLine}\n\nSee you tomorrow.` +
+      TEXT_FOOTER,
+    attachments: [{ filename: 'Friends-Family-Styling-Direction.jpg', path: imageUrl }],
   };
 }

@@ -474,6 +474,22 @@ describe('Friends & Family API', () => {
     });
   });
 
+  it('day-before test email: one address only, session required, has image attachment', async () => {
+    const app = await loadApp(fakePool().pool);
+    const { session } = (await request(app).post('/api/ff/organiser/login').send({ passcode: PASSCODE })).body;
+    sent = [];
+    expect((await request(app).post('/api/ff/organiser/day-before-test').send({ to: 'x@example.com' })).status).toBe(401);
+    expect((await request(app).post('/api/ff/organiser/day-before-test').send({ session, to: 'nope' })).status).toBe(400);
+    const res = await request(app).post('/api/ff/organiser/day-before-test').send({ session, to: 'Me@Example.com' });
+    expect(res.body).toEqual({ ok: true, email: 'sent' });
+    expect(sent).toEqual([{ to: 'me@example.com', subject: 'See you tomorrow · Friends & Family' }]);
+    const { renderFfDayBeforeEmail } = await import('../friendsFamilyEmails.js');
+    const email = renderFfDayBeforeEmail('<b>Thandi</b>');
+    expect(email.html).toContain('styling-direction.jpg');
+    expect(email.html).toContain('&lt;b&gt;Thandi');
+    expect(email.attachments?.[0].filename).toBe('Friends-Family-Styling-Direction.jpg');
+  });
+
   it('changing the passcode ends existing sessions', async () => {
     const app = await loadApp(fakePool().pool);
     const { session } = (await request(app).post('/api/ff/organiser/login').send({ passcode: PASSCODE })).body;

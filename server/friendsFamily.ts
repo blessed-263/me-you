@@ -12,6 +12,7 @@ import {
 } from './friendsFamilyAuth.js';
 import {
   renderFfApprovedEmail,
+  renderFfDayBeforeEmail,
   renderFfDeclinedEmail,
   renderFfGuestEmail,
   renderFfHostNotifyEmail,
@@ -122,6 +123,7 @@ const defaultSendEmail: SendEmail = async (to, email) => {
     subject: email.subject,
     html: email.html,
     text: email.text,
+    ...(email.attachments ? { attachments: email.attachments } : {}),
   });
   if (error) {
     throw new Error(`Resend error: ${error.message}`);
@@ -373,6 +375,24 @@ export function registerFriendsFamilyRoutes(app: Express, deps: FriendsFamilyDep
     } catch (err) {
       console.error('[ff-rsvp] status update failed', err);
       res.status(500).json({ error: 'Could not save that change' });
+    }
+  });
+
+  // Day-before email: TEST send to one address only (organiser session required).
+  app.post('/api/ff/organiser/day-before-test', organiserLimit, async (req, res) => {
+    if (!requireSession(req, res)) return;
+    const to = typeof req.body?.to === 'string' ? req.body.to.trim().toLowerCase() : '';
+    const firstName = typeof req.body?.firstName === 'string' ? req.body.firstName.trim().slice(0, 80) : '';
+    if (!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(to) || to.length > 160) {
+      res.status(400).json({ error: 'Valid email is required' });
+      return;
+    }
+    try {
+      await sendEmail(to, renderFfDayBeforeEmail(firstName || undefined));
+      res.json({ ok: true, email: 'sent' });
+    } catch (err) {
+      console.error('[ff-rsvp] day-before test email failed', err);
+      res.json({ ok: false, email: 'failed' });
     }
   });
 
