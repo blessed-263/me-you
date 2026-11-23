@@ -282,3 +282,32 @@ export function renderFfDayBeforeEmail(firstName?: string): EmailContent {
     attachments: [{ filename: 'Friends-Family-Styling-Direction.jpg', path: imageUrl }],
   };
 }
+
+/** Thank-you note after the event (23 November 2026), with tickets for 6 December. */
+export function renderFfThankYouEmail(firstName?: string): EmailContent {
+  const greeting = firstName ? `Thank you, ${escapeHtml(firstName)}.` : 'Thank you.';
+  const subject = 'Thank you for joining us · Friends & Family';
+  const lead = 'What an afternoon.';
+  const p1 =
+    'Thank you for spending Sunday with us at Friends & Family. Good food, good music and even better company: you made it exactly what we hoped it would be.';
+  const p2 = 'A special thank you to our partners Martell and Kaya 959 for bringing the afternoon to life, and to everyone who helped make it happen.';
+  const p2Html = p2.replace('Martell and Kaya 959', '<strong style="font-weight:700;">Martell</strong> and <strong style="font-weight:700;">Kaya 959</strong>');
+  const p3 = `The table doesn't stop here. We'd love to see you at the next You&Me gathering on ${FF_NEXT_EVENT.dateLong}. Tickets are on sale now.`;
+  const p3Html = escapeHtml(p3).replace(escapeHtml(FF_NEXT_EVENT.dateLong), `<strong style="font-weight:700;">${escapeHtml(FF_NEXT_EVENT.dateLong)}</strong>`);
+  return {
+    subject,
+    html: shell(
+      subject,
+      heading(greeting) +
+        para(lead, { italic: true }) +
+        para(p1) +
+        para(p2Html) +
+        para(p3Html) +
+        buttonRow('BUY TICKETS', FF_NEXT_EVENT.ticketsUrl) +
+        para('Until next time.', { italic: true }),
+    ),
+    text:
+      `${firstName ? `Thank you, ${firstName}.` : 'Thank you.'}\n\n${lead}\n\n${p1}\n\n${p2}\n\n${p3}\n\nBuy tickets: ${FF_NEXT_EVENT.ticketsUrl}\n\nUntil next time.` +
+      TEXT_FOOTER,
+  };
+}
