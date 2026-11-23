@@ -81,6 +81,24 @@ function fakePool() {
       const [r] = rows.splice(i, 1);
       return { rows: [{ id: r.id }], rowCount: 1 };
     }
+    if (sql.includes('thank_you_email_sent_at')) {
+      type TRow = Row & { thank_you_email_sent_at?: Date | null };
+      if (sql.includes('count(*)')) {
+        return { rows: [{ n: String((rows as TRow[]).filter((x) => x.thank_you_email_sent_at).length) }], rowCount: 1 };
+      }
+      if (sql.trim().startsWith('SELECT id')) {
+        const list = (rows as TRow[]).filter((x) => !x.thank_you_email_sent_at).map((x) => ({ id: x.id }));
+        return { rows: list, rowCount: list.length };
+      }
+      const r = (rows as TRow[]).find((x) => x.id === params[0]);
+      if (sql.includes('= NULL')) {
+        if (r) r.thank_you_email_sent_at = null;
+        return { rows: [], rowCount: r ? 1 : 0 };
+      }
+      if (!r || r.thank_you_email_sent_at) return { rows: [], rowCount: 0 };
+      r.thank_you_email_sent_at = new Date();
+      return { rows: [{ email: r.email, first_name: r.first_name }], rowCount: 1 };
+    }
     if (sql.includes('day_before_email_sent_at')) {
       type DRow = Row & { day_before_email_sent_at?: Date | null };
       const due = (x: DRow) => x.status === 'approved' && x.attending;
@@ -533,6 +551,27 @@ describe('Friends & Family API', () => {
     failEmail = false;
     const retry = await request(app).post('/api/ff/organiser/day-before-send').send({ session });
     expect(retry.body).toMatchObject({ ok: true, sent: 1, totalSentToDate: 3 });
+  });
+
+  it('thank-you: test goes to one address; all goes to every RSVP once each', async () => {
+    const { pool, rows } = fakePool();
+    const app = await loadApp(pool);
+    for (const n of [1, 2, 3]) {
+      await request(app).post('/api/ff/rsvp').send({ ...guest, firstName: `T${n}`, email: `t${n}@example.com` });
+    }
+    rows[0].status = 'approved'; rows[1].status = 'declined';
+    const { session } = (await request(app).post('/api/ff/organiser/login').send({ passcode: PASSCODE })).body;
+    const send = (body: Record<string, unknown>) => request(app).post('/api/ff/organiser/thank-you-send').send({ session, ...body });
+    sent = [];
+    expect((await request(app).post('/api/ff/organiser/thank-you-send').send({ all: true })).status).toBe(401);
+    expect((await send({})).status).toBe(400);
+    expect((await send({ test: 'Me@Example.com', firstName: 'Robby' })).body).toEqual({ ok: true, test: true, email: 'sent' });
+    expect(sent).toEqual([{ to: 'me@example.com', subject: 'Thank you for joining us · Friends & Family' }]);
+    sent = [];
+    expect((await send({ all: true })).body).toMatchObject({ ok: true, sent: 3, totalSentToDate: 3 });
+    expect(sent.map((s) => s.to).sort()).toEqual(['t1@example.com', 't2@example.com', 't3@example.com']);
+    expect((await send({ all: true })).body).toMatchObject({ sent: 0, totalSentToDate: 3 });
+    expect(sent).toHaveLength(3);
   });
 
   it('changing the passcode ends existing sessions', async () => {

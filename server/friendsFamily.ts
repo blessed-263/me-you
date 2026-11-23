@@ -13,6 +13,7 @@ import {
 import {
   renderFfApprovedEmail,
   renderFfDayBeforeEmail,
+  renderFfThankYouEmail,
   renderFfDeclinedEmail,
   renderFfGuestEmail,
   renderFfHostNotifyEmail,
@@ -98,6 +99,8 @@ export async function ensureFriendsFamilyTable(getPool: () => Pool | null): Prom
   await p.query(`ALTER TABLE ${FF_TABLE} ADD COLUMN IF NOT EXISTS guest_of text;`);
   // When the day-before email (dress code etc.) was sent to this guest (once only).
   await p.query(`ALTER TABLE ${FF_TABLE} ADD COLUMN IF NOT EXISTS day_before_email_sent_at timestamptz;`);
+  // When the post-event thank-you email was sent to this guest (once only).
+  await p.query(`ALTER TABLE ${FF_TABLE} ADD COLUMN IF NOT EXISTS thank_you_email_sent_at timestamptz;`);
   await p.query(`
     CREATE UNIQUE INDEX IF NOT EXISTS friends_family_rsvps_email_lower_idx
     ON ${FF_TABLE} (lower(email));
@@ -377,6 +380,71 @@ export function registerFriendsFamilyRoutes(app: Express, deps: FriendsFamilyDep
     } catch (err) {
       console.error('[ff-rsvp] status update failed', err);
       res.status(500).json({ error: 'Could not save that change' });
+    }
+  });
+
+  // Thank-you email. { test: "<address>" } sends one test only; { all: true } sends to
+  // every RSVP on the list, each at most once (claimed atomically, failures released).
+  app.post('/api/ff/organiser/thank-you-send', organiserLimit, async (req, res) => {
+    if (!requireSession(req, res)) return;
+    const testTo = typeof req.body?.test === 'string' ? req.body.test.trim().toLowerCase() : '';
+    if (testTo) {
+      if (!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(testTo) || testTo.length > 160) {
+        res.status(400).json({ error: 'Valid email is required' });
+        return;
+      }
+      const name = typeof req.body?.firstName === 'string' ? req.body.firstName.trim().slice(0, 80) : '';
+      try {
+        await sendEmail(testTo, renderFfThankYouEmail(name || undefined));
+        res.json({ ok: true, test: true, email: 'sent' });
+      } catch (err) {
+        console.error('[ff-rsvp] thank-you test email failed', err);
+        res.json({ ok: false, test: true, email: 'failed' });
+      }
+      return;
+    }
+    if (req.body?.all !== true) {
+      res.status(400).json({ error: 'Send { test: "<email>" } or { all: true }' });
+      return;
+    }
+    const p = deps.getPool();
+    if (!p) {
+      res.status(503).json({ error: 'Database not configured' });
+      return;
+    }
+    const pauseMs = deps.sendEmail ? 0 : 600;
+    try {
+      const due = await p.query<{ id: string }>(
+        `SELECT id FROM ${FF_TABLE} WHERE thank_you_email_sent_at IS NULL ORDER BY created_at`,
+      );
+      let sentCount = 0;
+      const failed: string[] = [];
+      for (const { id } of due.rows) {
+        const claim = await p.query<{ email: string; first_name: string }>(
+          `UPDATE ${FF_TABLE} SET thank_you_email_sent_at = now()
+           WHERE id = $1 AND thank_you_email_sent_at IS NULL
+           RETURNING email, first_name`,
+          [id],
+        );
+        const g = claim.rows[0];
+        if (!g) continue;
+        try {
+          await sendEmail(g.email, renderFfThankYouEmail(g.first_name));
+          sentCount += 1;
+        } catch (mailErr) {
+          console.error('[ff-rsvp] thank-you email failed for one guest', mailErr);
+          await p.query(`UPDATE ${FF_TABLE} SET thank_you_email_sent_at = NULL WHERE id = $1`, [id]);
+          failed.push(g.email);
+        }
+        if (pauseMs) await new Promise((r) => setTimeout(r, pauseMs));
+      }
+      const done = await p.query<{ n: string }>(
+        `SELECT count(*)::text AS n FROM ${FF_TABLE} WHERE thank_you_email_sent_at IS NOT NULL`,
+      );
+      res.json({ ok: failed.length === 0, sent: sentCount, failed, totalSentToDate: Number(done.rows[0]?.n ?? 0) });
+    } catch (err) {
+      console.error('[ff-rsvp] thank-you send failed', err);
+      res.status(500).json({ error: 'Could not send' });
     }
   });
 
